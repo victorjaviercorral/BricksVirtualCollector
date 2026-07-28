@@ -4,14 +4,25 @@
 **Framework:** Spec VJC Framework v0.1.1
 **Fecha PRD heredado:** 2026-07-26 · **Fecha `/spec-init`:** 2026-07-27
 
-## Tier: Ligero
+## Tier: Medio (reclasificado en `/specify`, 2026-07-27 — ver historial abajo)
 
-**Justificacion** (triaje constitution B.7, 3 preguntas):
-1. Usuarios externos reales o datos personales de terceros en v1: **No** — Fase 1 es de uso propio/cerrado, confirmado por el usuario y por el PRD heredado (seccion 2.4: "Fase 1 (prototipo personal): uso propio, sin usuarios externos").
-2. Mas de un stakeholder con intereses distintos: **No** — el usuario es el unico stakeholder/decisor.
-3. Problema/mercado incierto o conocido de primera mano: **Conocido de primera mano** — el usuario es coleccionista LEGO Star Wars desde hace 5-6 anos (PRD 1.1).
+**Justificacion actual** (constitution B.7): v1 sera una **beta controlada** — el autor invita
+a un grupo curado de personas interesadas, con cuenta propia (autenticacion real) y subiendo
+sus propias fotos/colecciones. Son usuarios externos reales con datos propios desde v1,
+aunque el acceso este invitado/controlado y no sea publico abierto. La constitucion no
+distingue "controlado" de "publico" — el criterio es la existencia de usuarios externos
+reales con datos propios, que aqui se cumple. Efecto practico: el quality gate de spec en
+adelante exige **>= 7** (no >= 6.5). El research/discovery ya existe en el PRD heredado
+(3 sesiones Mom Test), por lo que el requisito adicional de "research ligero" de tier Medio
+ya esta cubierto retroactivamente.
 
-**Nota de trazabilidad:** el `_index.md` del repo y el PRD heredado describen una vision futura (Fase 2: museo publico con comunidad anonima, usuarios externos subiendo colecciones, moderacion). Esa vision NO es el alcance de v1 y no cambia la clasificacion Ligero actual. Cuando el proyecto avance a Fase 2, este tier debe reevaluarse (probablemente sube a Medio: usuarios externos + datos de terceros).
+**Historial de clasificacion:**
+1. `/spec-init` (2026-07-26): clasificado **Ligero** — triaje asumia "Fase 1 = uso propio de
+   Victor, sin usuarios externos" (PRD heredado 2.4).
+2. `/specify` (2026-07-27): al confirmar que las metricas Go/No-Go del PRD (50 vitrinas, 100
+   usuarios en 3 meses) exigen multi-usuario desde v1, y que v1 sera una beta con testers
+   reales subiendo sus propios datos, se reclasifica a **Medio**. Decision explicita del
+   usuario tras dos rondas de confirmacion.
 
 ## Insumo heredado
 
@@ -26,15 +37,16 @@ Este PRD es la base real para `/prd-lite` — no se reconstruye desde cero (cons
 
 ## Stack previsto
 
-`[PENDIENTE: no confirmado aun como decision tecnica de este framework]`. El PRD heredado
-menciona Supabase (tier gratuito) como backend estimado para Fase 1-2, con umbral de
-migracion a Supabase Pro si se supera el tier gratuito — pendiente de confirmar en `/specify`.
+**Next.js (React) + Supabase (Postgres/Auth/Storage/RLS) + Netlify (hosting).** Confirmado en
+`/specify`, 2026-07-27 — ver [[06-decisiones/ADR-001-stack-tecnico]].
 
-## Criterios de parada de gates (tier Ligero)
+## Criterios de parada de gates (tier Medio)
 
 - 1 (una) revision de quality gate por defecto (constitution B.5).
 - Rondas adicionales: maximo 2, solo si el usuario las solicita explicitamente.
-- Banda de avance: PASS o CONDICIONAL con puntuacion **>= 6.5** permite avanzar.
+- Banda de avance: PASS o CONDICIONAL con puntuacion **>= 7.0** permite avanzar (tier Medio).
+  El PRD-lite ya fue aprobado bajo el criterio Ligero (>=6.5, obtuvo 7.0) antes de la
+  reclasificacion; no se re-abre. De aqui en adelante (spec y siguientes) aplica >=7.0.
 - Revision ciega en sub-agente fresco sin acceso a la autoevaluacion del autor (constitution B.6).
 
 ## Identidad de diseno
