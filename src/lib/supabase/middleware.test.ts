@@ -90,7 +90,7 @@ describe('Supabase Middleware', () => {
     const req = mockRequest('/public-route');
     await updateSession(req);
 
-    const configCall = vi.mocked(createServerClient).mock.calls[0][2];
+    const configCall = vi.mocked(createServerClient).mock.calls[0][2] as any;
     
     // Simulate setting cookies in SSR client
     configCall?.cookies?.setAll?.([{ name: 'session', value: '123', options: {} }]);

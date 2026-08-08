@@ -30,7 +30,7 @@ describe('Supabase Client (Server)', () => {
     await createClient();
 
     expect(createServerClient).toHaveBeenCalled();
-    const configCall = vi.mocked(createServerClient).mock.calls[0][2];
+    const configCall = vi.mocked(createServerClient).mock.calls[0][2] as any;
     expect(configCall?.cookies).toBeDefined();
 
     // Probamos getAll
@@ -54,7 +54,7 @@ describe('Supabase Client (Server)', () => {
     });
 
     await createClient();
-    const configCall = vi.mocked(createServerClient).mock.calls[0][2];
+    const configCall = vi.mocked(createServerClient).mock.calls[0][2] as any;
     
     // No debe lanzar excepción hacia arriba (catch silencioso intencional por SSR de Next)
     expect(() => {

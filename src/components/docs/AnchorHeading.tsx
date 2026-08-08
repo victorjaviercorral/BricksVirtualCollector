@@ -20,7 +20,7 @@ interface AnchorHeadingProps {
 
 export default function AnchorHeading({ level, children, className = '' }: AnchorHeadingProps) {
   const [copied, setCopied] = useState(false);
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as any;
   const id = generateSlug(children);
 
   const copyToClipboard = async () => {
