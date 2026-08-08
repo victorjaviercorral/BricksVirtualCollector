@@ -6,6 +6,10 @@ resumen: Configura la privacidad de tu vitrina.
 
 Tienes control total sobre quién puede acceder a tus colecciones. Cada vitrina puede tener un nivel de visibilidad diferente que puedes cambiar en cualquier momento.
 
+```diagram
+visibilidad-levels
+```
+
 ## Niveles de visibilidad
 
 | Nivel de visibilidad | Quién puede acceder | ¿Aparece en "Explorar"? | Notas adicionales |

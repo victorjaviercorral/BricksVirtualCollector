@@ -6,6 +6,10 @@ resumen: Detalles sobre cómo garantizamos que tu identidad y ubicación estén 
 
 Tu privacidad es nuestro pilar fundamental. Hemos implementado medidas técnicas para asegurar que tu identidad y ubicación permanezcan completamente ocultas.
 
+```diagram
+anonimato-flow
+```
+
 ## Mecanismos de protección
 
 *   **Borrado de Metadatos (EXIF):** Tu navegador elimina automáticamente los datos GPS y EXIF ocultos de las fotos antes de subirlas. La imagen original con metadatos nunca se almacena en nuestros servidores.

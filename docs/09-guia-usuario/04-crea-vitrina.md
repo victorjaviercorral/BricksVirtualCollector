@@ -14,4 +14,8 @@ Las vitrinas son el espacio donde agrupas tus sets de LEGO, ya sea por temática
 4.  Rellena los **datos opcionales** si lo deseas: fecha de lanzamiento, código identificador, número de piezas y temática.
 5.  Haz clic en **Guardar**.
 
+```diagram
+vitrina-structure
+```
+
 La vitrina se creará inicialmente en estado de **Borrador**, visible únicamente para ti.

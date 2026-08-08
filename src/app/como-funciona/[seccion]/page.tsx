@@ -6,6 +6,7 @@ import Breadcrumb from '@/components/docs/Breadcrumb';
 import TableOfContents from '@/components/docs/TableOfContents';
 import AnchorHeading from '@/components/docs/AnchorHeading';
 import PageNavigation from '@/components/docs/PageNavigation';
+import DocDiagram from '@/components/docs/DocDiagram';
 
 export const dynamicParams = false;
 
@@ -68,6 +69,14 @@ export default async function DocSectionPage({ params }: { params: Promise<{ sec
               ),
               th: ({ children }) => <th className="px-4 py-3 bg-black/5 dark:bg-white/5 font-bold border border-black/10 dark:border-white/10">{children}</th>,
               td: ({ children }) => <td className="px-4 py-3 border border-black/10 dark:border-white/10">{children}</td>,
+              code: ({ className, children, ...props }: any) => {
+                const match = /language-(\w+)/.exec(className || '');
+                if (match && match[1] === 'diagram') {
+                  const type = String(children).replace(/\n$/, '');
+                  return <DocDiagram type={type} />;
+                }
+                return <code className={className} {...props}>{children}</code>;
+              },
             }}
           >
             {section.content}
