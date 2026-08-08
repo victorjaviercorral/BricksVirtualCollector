@@ -69,6 +69,13 @@ export default async function DocSectionPage({ params }: { params: Promise<{ sec
               ),
               th: ({ children }) => <th className="px-4 py-3 bg-black/5 dark:bg-white/5 font-bold border border-black/10 dark:border-white/10">{children}</th>,
               td: ({ children }) => <td className="px-4 py-3 border border-black/10 dark:border-white/10">{children}</td>,
+              pre: ({ children, ...props }: any) => {
+                const child = Array.isArray(children) ? children[0] : children;
+                if (child?.props?.className?.includes('language-diagram')) {
+                  return <>{children}</>;
+                }
+                return <pre {...props}>{children}</pre>;
+              },
               code: ({ className, children, ...props }: any) => {
                 const match = /language-(\w+)/.exec(className || '');
                 if (match && match[1] === 'diagram') {

@@ -5,13 +5,14 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export function Navbar({ user, profile }: { user: any, profile?: any }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const handleLogout = async () => {
@@ -52,19 +53,31 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
 
         {/* Desktop Nav */}
         <nav className="hidden sm:flex flex-1 items-center justify-end gap-6 text-sm font-medium">
-          <Link href="/" className="hover:text-brand-blue transition-colors">
+          <Link 
+            href="/" 
+            className={`transition-colors ${pathname === '/' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+          >
             Explorar
           </Link>
-          <Link href="/como-funciona" className="hover:text-brand-blue transition-colors">
+          <Link 
+            href="/como-funciona" 
+            className={`transition-colors ${pathname.startsWith('/como-funciona') ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+          >
             Cómo funciona
           </Link>
 
           {user && (
             <>
-              <Link href="/dashboard" className="hover:text-brand-blue transition-colors">
+              <Link 
+                href="/dashboard" 
+                className={`transition-colors ${pathname === '/dashboard' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+              >
                 Mis Vitrinas
               </Link>
-              <Link href="/dashboard/participaciones" className="hover:text-brand-yellow font-black transition-colors">
+              <Link 
+                href="/dashboard/participaciones" 
+                className={`transition-colors ${pathname === '/dashboard/participaciones' ? 'text-brand-yellow font-bold' : 'hover:text-brand-yellow'}`}
+              >
                 Participaciones
               </Link>
             </>
@@ -146,14 +159,14 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
+              className={`p-2 rounded-lg ${pathname === '/' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
             >
               Explorar
             </Link>
             <Link
               href="/como-funciona"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
+              className={`p-2 rounded-lg ${pathname.startsWith('/como-funciona') ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
             >
               Cómo funciona
             </Link>
@@ -163,14 +176,14 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 <Link
                   href="/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
+                  className={`p-2 rounded-lg ${pathname === '/dashboard' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
                   Mis Vitrinas
                 </Link>
                 <Link
                   href="/dashboard/participaciones"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-brand-yellow font-black hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
+                  className={`p-2 rounded-lg ${pathname === '/dashboard/participaciones' ? 'bg-black/5 dark:bg-white/5 text-brand-yellow font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
                   Participaciones
                 </Link>
