@@ -1,0 +1,30 @@
+name: Testing and Coverage Gate
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Vitest with Coverage
+      # The npm script test:coverage uses vitest --coverage, which checks the 
+      # coverage thresholds configured in vitest.config.ts (85%).
+      # If coverage falls below this, the command will exit with a non-zero code,
+      # failing the build and preventing the merge.
+      run: npm run test:coverage

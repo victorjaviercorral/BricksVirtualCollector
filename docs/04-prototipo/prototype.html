@@ -1,0 +1,1897 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lego Virtual Museum — Prototipo</title>
+<meta name="robots" content="noindex">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  /* ============ TOKENS ============ */
+  :root{
+    --ink:#101113; --paper:#FFFFFF; --panel:#F4F4EF;
+    --rojo:#D6392E; --amarillo:#E8A927; --azul:#2C6CA8; --verde:#3F8552;
+    --line: rgba(16,17,19,0.14);
+    --shadow: 0 1px 2px rgba(16,17,19,0.06), 0 8px 24px rgba(16,17,19,0.08);
+    --radius-s:8px; --radius-m:14px; --radius-l:22px;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+    --font-display:'Space Grotesk', system-ui, sans-serif;
+    --font-body:'DM Sans', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --dur-fast: 140ms; --dur-mid: 220ms; --dur-slow: 380ms;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"]{
+    --ink:#F1F1EC; --paper:#0B0B0C; --panel:#17181A;
+    --rojo:#FF6B5C; --amarillo:#F5C14B; --azul:#6FA8DC; --verde:#6BBF7E;
+    --line: rgba(241,241,236,0.14);
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F1F1EC; --paper:#0B0B0C; --panel:#17181A;
+      --rojo:#FF6B5C; --amarillo:#F5C14B; --azul:#6FA8DC; --verde:#6BBF7E;
+      --line: rgba(241,241,236,0.14);
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
+      color-scheme: dark;
+    }
+  }
+  html[data-reduced-motion="true"] *{
+    animation-duration: 1ms !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* ============ BASE ============ */
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    transition: background var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
+  }
+  h1,h2,h3{ font-family:var(--font-display); font-weight:600; margin:0 0 var(--sp-2); }
+  h1{ font-size:clamp(1.8rem,4vw,2.6rem); line-height:1.05; letter-spacing:-0.02em; }
+  h2{ font-size:clamp(1.3rem,2.6vw,1.7rem); line-height:1.15; letter-spacing:-0.01em; }
+  h3{ font-size:1.05rem; letter-spacing:0; }
+  p{ margin:0 0 var(--sp-3); color:var(--ink); opacity:0.85; }
+  .mono{ font-family:var(--font-mono); letter-spacing:0.01em; }
+  a{ color:inherit; }
+  button{ font-family:var(--font-body); }
+  :focus-visible{ outline:2px solid var(--azul); outline-offset:2px; border-radius:4px; }
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* ============ SHELL ============ */
+  .app-shell{ max-width:960px; margin:0 auto; padding:0 var(--sp-5) var(--sp-7); }
+  header.top{
+    display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
+    padding:var(--sp-4) 0; border-bottom:1px solid var(--line); margin-bottom:var(--sp-6);
+    position:sticky; top:0; background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(14px) saturate(160%); z-index:20;
+  }
+  .brand{ display:flex; align-items:center; gap:var(--sp-2); font-family:var(--font-display); font-weight:700; font-size:1.05rem; }
+  .brand-mark{ width:26px; height:26px; border-radius:6px; background:var(--rojo); display:grid; place-items:center; color:#fff; font-size:0.8rem; }
+  .top-controls{ display:flex; align-items:center; gap:var(--sp-2); }
+  .icon-btn{
+    border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    border-radius:var(--radius-s); padding:var(--sp-2) var(--sp-3); font-size:0.8rem; cursor:pointer;
+    display:flex; align-items:center; gap:6px; transition:transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
+  }
+  .icon-btn:active{ transform:scale(0.96); }
+  .icon-btn:hover{ background:color-mix(in srgb, var(--panel) 70%, var(--ink) 8%); }
+
+  .watermark{
+    position:fixed; right:var(--sp-4); bottom:var(--sp-4); z-index:50;
+    background:var(--ink); color:var(--paper); font-family:var(--font-mono);
+    font-size:0.68rem; letter-spacing:0.04em; padding:6px 10px; border-radius:999px;
+    box-shadow:var(--shadow); opacity:0.88; pointer-events:none; text-transform:uppercase;
+  }
+  /* En móvil, fijo en cualquier esquina tapaba controles reales (ACC-08: contenido
+     superpuesto no debe ocultar el foco). Pasa a flujo normal, como una franja fija
+     al pie que nunca se superpone a nada. */
+  @media (max-width:480px){
+    .watermark{
+      position:fixed; top:auto; right:0; bottom:0; left:0; width:100%;
+      border-radius:0; text-align:center; font-size:0.62rem; padding:6px 0;
+      box-shadow:0 -1px 0 var(--line);
+    }
+    .app-shell{ padding-bottom:calc(var(--sp-7) + 34px); }
+  }
+
+  section.view{ display:none; }
+  section.view.is-active{ display:block; animation:fadeUp var(--dur-slow) var(--ease-out); }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+  html[data-reduced-motion="true"] section.view.is-active{ animation:fade var(--dur-fast) linear; }
+  @keyframes fade{ from{ opacity:0; } to{ opacity:1; } }
+
+  .eyebrow{ font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--azul); margin-bottom:var(--sp-2); }
+
+  /* ============ CARDS / PANELS ============ */
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-m);
+    padding:var(--sp-5); box-shadow: 0 1px 0 var(--line);
+  }
+  :root[data-theme="light"] .card, :root:not([data-theme]) .card{ box-shadow:var(--shadow); }
+
+  /* ============ FORMS ============ */
+  .field{ margin-bottom:var(--sp-4); }
+  .field label{ display:block; font-size:0.86rem; font-weight:500; margin-bottom:6px; }
+  .field .hint{ font-size:0.78rem; opacity:0.6; margin-top:4px; }
+  .field input[type="text"], .field input[type="email"], .field input[type="password"],
+  .field input[type="date"], .field input[type="number"], .field select, .field textarea{
+    width:100%; padding:10px 12px; font-size:0.95rem; font-family:var(--font-body);
+    background:var(--paper); color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius-s);
+    transition:border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color:var(--azul); box-shadow:0 0 0 3px color-mix(in srgb, var(--azul) 22%, transparent); outline:none;
+  }
+  .field.has-error input{ border-color:var(--rojo); }
+  .field .error-msg{ color:var(--rojo); font-size:0.82rem; margin-top:6px; display:flex; gap:6px; align-items:flex-start; }
+  .required-mark{ color:var(--rojo); }
+  .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); }
+  @media (max-width:520px){ .row-2{ grid-template-columns:1fr; } }
+  .checkbox-row{ display:flex; align-items:flex-start; gap:10px; font-size:0.85rem; }
+  .checkbox-row input{ margin-top:3px; width:18px; height:18px; accent-color:var(--azul); }
+
+  /* ============ BUTTONS ============ */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-body); font-weight:600; font-size:0.92rem; cursor:pointer;
+    border-radius:var(--radius-s); padding:12px 20px; border:1.5px solid transparent;
+    transition:transform var(--dur-fast) var(--ease-out), background var(--dur-fast), opacity var(--dur-fast);
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .btn-primary{ background:var(--ink); color:var(--paper); }
+  .btn-primary:hover:not(:disabled){ opacity:0.9; }
+  .btn-ghost{ background:transparent; border-color:var(--line); color:var(--ink); }
+  .btn-ghost:hover{ background:var(--panel); }
+  .btn-danger-ghost{ background:transparent; border-color:var(--line); color:var(--rojo); }
+  .btn-block{ width:100%; }
+  .btn-sm{ padding:8px 14px; font-size:0.82rem; }
+  .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent; animation:spin 0.6s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ============ AVATAR PICKER ============ */
+  .avatar-grid{ display:flex; flex-wrap:wrap; gap:var(--sp-3); }
+  .avatar-opt{
+    width:52px; height:52px; border-radius:50%; border:2.5px solid transparent; cursor:pointer;
+    display:grid; place-items:center; font-size:1.3rem; transition:transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast);
+  }
+  .avatar-opt[aria-pressed="true"]{ border-color:var(--ink); }
+  .avatar-opt:active{ transform:scale(0.92); }
+
+  /* ============ MESA / TOKENS ============ */
+  .mesa{
+    display:flex; flex-wrap:wrap; gap:var(--sp-3); min-height:120px;
+    padding:var(--sp-4); border:2px dashed var(--line); border-radius:var(--radius-m);
+    background:color-mix(in srgb, var(--panel) 60%, transparent); margin-bottom:var(--sp-4);
+    position:relative;
+  }
+  .mesa.is-empty{ align-items:center; justify-content:center; }
+  .empty-msg{ text-align:center; opacity:0.6; font-size:0.9rem; max-width:280px; }
+  .token{
+    width:168px; background:var(--paper); border:1.5px solid var(--line); border-radius:var(--radius-m);
+    box-shadow:var(--shadow); padding:var(--sp-3); cursor:grab; touch-action:none; user-select:none;
+    will-change:transform; position:relative;
+  }
+  .token:active{ cursor:grabbing; }
+  .token.is-dragging{ z-index:30; box-shadow:0 18px 40px rgba(0,0,0,0.22); cursor:grabbing; }
+  .token-theme-bar{ height:5px; border-radius:3px; margin-bottom:8px; }
+  .token h3{ font-size:0.92rem; margin-bottom:2px; }
+  .token .token-meta{ font-size:0.72rem; opacity:0.65; }
+  .token .token-photo{
+    margin-top:8px; height:64px; border-radius:8px; background:var(--panel); display:flex;
+    align-items:center; justify-content:center; font-size:0.68rem; opacity:0.6; overflow:hidden; position:relative;
+  }
+  .token .token-photo img{ width:100%; height:100%; object-fit:cover; }
+  .token-actions{ display:flex; justify-content:space-between; margin-top:8px; gap:4px; }
+  .reorder-btn{ background:none; border:1px solid var(--line); border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:0.75rem; color:var(--ink); }
+  .reorder-btn:disabled{ opacity:0.3; cursor:default; }
+  .upload-btn{ font-size:0.7rem; border:1px dashed var(--line); background:none; border-radius:6px; padding:4px 8px; cursor:pointer; color:var(--ink); }
+
+  /* ============ SEGMENTED VISIBILITY ============ */
+  .segmented{ display:flex; border:1.5px solid var(--line); border-radius:var(--radius-s); overflow:hidden; }
+  .segmented button{
+    flex:1; padding:10px 8px; font-size:0.8rem; background:var(--paper); border:none; cursor:pointer; color:var(--ink);
+    border-right:1px solid var(--line); transition:background var(--dur-fast), color var(--dur-fast);
+  }
+  .segmented button:last-child{ border-right:none; }
+  .segmented button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+  .visibility-hint{ font-size:0.8rem; opacity:0.65; margin-top:8px; }
+
+  /* ============ VITRINA PÚBLICA / GALLERY ============ */
+  .vitrina-header{ display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-5); flex-wrap:wrap; }
+  .profile-pill{ display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:8px 14px 8px 8px; }
+  .stat-strip{ display:flex; gap:var(--sp-5); margin:var(--sp-4) 0 var(--sp-5); flex-wrap:wrap; }
+  .stat{ }
+  .stat .num{ font-family:var(--font-mono); font-size:1.3rem; font-weight:500; }
+  .stat .lbl{ font-size:0.72rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.05em; }
+
+  .gallery-wrap{ position:relative; }
+  .gallery-viewport{ overflow:hidden; border-radius:var(--radius-m); }
+  .gallery-track{ display:flex; gap:var(--sp-4); will-change:transform; padding:2px; }
+  .set-card{
+    flex:0 0 220px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-m);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .set-photo{ height:150px; background:linear-gradient(135deg,var(--azul),var(--verde)); position:relative; }
+  .set-body{ padding:var(--sp-3) var(--sp-4) var(--sp-4); }
+  .set-body h3{ margin-bottom:4px; }
+  .set-meta-row{ display:flex; justify-content:space-between; font-size:0.72rem; opacity:0.65; margin-bottom:10px; }
+  .gallery-nav{ display:flex; gap:var(--sp-2); justify-content:center; margin-top:var(--sp-3); }
+  .gallery-nav button{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper);
+    cursor:pointer; font-size:1rem; color:var(--ink); transition:transform var(--dur-fast) var(--ease-out);
+  }
+  .gallery-nav button:active{ transform:scale(0.92); }
+  .gallery-nav button:disabled{ opacity:0.3; cursor:default; }
+
+  /* ============ MISC ============ */
+  .link-box{ display:flex; gap:8px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-s); padding:10px 12px; font-family:var(--font-mono); font-size:0.82rem; }
+  .link-box input{ flex:1; border:none; background:none; font-family:var(--font-mono); font-size:0.82rem; color:var(--ink); }
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(0);
+    background:var(--ink); color:var(--paper); padding:12px 20px; border-radius:999px; box-shadow:var(--shadow);
+    font-size:0.85rem; z-index:60; opacity:0; pointer-events:none; transition:opacity var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out);
+  }
+  .toast.is-visible{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+
+  .modal-scrim{
+    position:fixed; inset:0; background:rgba(10,10,10,0.4); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; padding:var(--sp-4); z-index:70;
+    opacity:0; pointer-events:none; transition:opacity var(--dur-mid) var(--ease-out);
+  }
+  .modal-scrim.is-open{ opacity:1; pointer-events:auto; }
+  .modal{
+    background:var(--paper); border-radius:var(--radius-l); padding:var(--sp-5); max-width:400px; width:100%;
+    box-shadow:var(--shadow); transform:scale(0.95); opacity:0; transition:transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+  }
+  .modal-scrim.is-open .modal{ transform:scale(1); opacity:1; }
+
+  .empty-state, .error-state{ text-align:center; padding:var(--sp-7) var(--sp-4); }
+  .error-state{ color:var(--rojo); }
+  .state-icon{ font-size:2.2rem; margin-bottom:var(--sp-2); }
+
+  .step-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:var(--sp-5); gap:var(--sp-3); flex-wrap:wrap; }
+  .theme-swatch{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+  /* ============ APP NAV (v0.3) ============ */
+  .app-nav{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+  .nav-link{
+    border:none; background:none; color:var(--ink); opacity:0.7; font-size:0.82rem; font-weight:500;
+    padding:6px 10px; border-radius:var(--radius-s); cursor:pointer; transition:background var(--dur-fast), opacity var(--dur-fast);
+  }
+  .nav-link:hover{ background:var(--panel); opacity:1; }
+  .nav-link.is-current{ background:var(--panel); opacity:1; font-weight:600; }
+  .nav-authed-group{ display:inline-flex; gap:4px; padding-left:8px; margin-left:4px; border-left:1px solid var(--line); flex-wrap:wrap; }
+  .nav-authed-group[hidden]{ display:none; }
+  #nav-admin{ color:var(--rojo); }
+  @media (max-width:760px){ .app-nav{ order:3; width:100%; justify-content:flex-start; padding-top:6px; } header.top{ flex-wrap:wrap; } }
+
+  /* ============ STATE SWITCH (solo prototipo, v0.3) ============ */
+  .state-switch{
+    display:inline-flex; gap:2px; border:1px solid var(--line); border-radius:999px; padding:3px;
+    margin-bottom:var(--sp-5); background:var(--panel); flex-wrap:wrap;
+  }
+  .state-switch button{
+    border:none; background:none; color:var(--ink); font-size:0.72rem; font-family:var(--font-mono);
+    padding:5px 10px; border-radius:999px; cursor:pointer; opacity:0.6;
+  }
+  .state-switch button[aria-pressed="true"]{ background:var(--paper); opacity:1; box-shadow:var(--shadow); }
+  .state-switch-label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; opacity:0.45; margin-right:6px; align-self:center; }
+  .skeleton{ background:linear-gradient(90deg, var(--panel) 25%, color-mix(in srgb, var(--panel) 60%, var(--ink) 8%) 37%, var(--panel) 63%); background-size:400% 100%; animation:shimmer 1.6s ease-in-out infinite; border-radius:var(--radius-s); }
+  @keyframes shimmer{ 0%{ background-position:100% 0; } 100%{ background-position:0 0; } }
+  html[data-reduced-motion="true"] .skeleton{ animation:none; opacity:0.6; }
+
+  /* ============ EXPLORAR / GRID DE VITRINAS ============ */
+  .filter-bar{ display:flex; flex-wrap:wrap; gap:var(--sp-4); align-items:flex-end; margin-bottom:var(--sp-5); }
+  .chip-group{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    border:1.5px solid var(--line); background:var(--paper); color:var(--ink); border-radius:999px;
+    padding:6px 12px; font-size:0.78rem; cursor:pointer; transition:background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .chip[aria-pressed="true"]{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .explorar-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:var(--sp-4); }
+  .vitrina-card{
+    text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-m);
+    box-shadow:var(--shadow); overflow:hidden; cursor:pointer; padding:0; display:block; width:100%;
+    transition:transform var(--dur-fast) var(--ease-out); font-family:var(--font-body); color:var(--ink);
+  }
+  .vitrina-card:hover{ transform:translateY(-2px); }
+  .vitrina-card:active{ transform:scale(0.98); }
+  .vitrina-card .vc-photo{ height:110px; background-position:center; background-size:cover; }
+  .vitrina-card .vc-body{ padding:var(--sp-3) var(--sp-4) var(--sp-4); }
+  .vitrina-card h3{ font-size:0.95rem; margin-bottom:6px; }
+  .vitrina-card .vc-meta{ font-size:0.72rem; opacity:0.65; display:flex; justify-content:space-between; }
+
+  /* ============ DASHBOARD ============ */
+  .dash-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:var(--sp-4); margin-bottom:var(--sp-5); }
+  .dash-stat{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-m); padding:var(--sp-4); }
+  .dash-stat .num{ font-family:var(--font-mono); font-size:1.6rem; font-weight:600; display:block; }
+  .dash-stat .lbl{ font-size:0.76rem; opacity:0.65; margin-top:4px; }
+  .dash-actions{ display:flex; gap:var(--sp-3); flex-wrap:wrap; }
+
+  /* ============ MIS VITRINAS ============ */
+  .vitrina-row{
+    display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; padding:var(--sp-4);
+    border:1px solid var(--line); border-radius:var(--radius-m); background:var(--panel); margin-bottom:var(--sp-3);
+  }
+  .vitrina-row .vr-title{ flex:1 1 200px; min-width:0; }
+  .vitrina-row h3{ margin-bottom:4px; font-size:0.95rem; }
+  .badge{ display:inline-flex; align-items:center; font-size:0.68rem; font-family:var(--font-mono); padding:3px 8px; border-radius:999px; border:1px solid var(--line); text-transform:uppercase; letter-spacing:0.04em; margin-right:4px; }
+  .badge-publicada{ background:color-mix(in srgb, var(--verde) 16%, transparent); border-color:var(--verde); color:var(--verde); }
+  .badge-borrador{ background:color-mix(in srgb, var(--amarillo) 18%, transparent); border-color:var(--amarillo); color:color-mix(in srgb, var(--amarillo) 55%, black); }
+  .vitrina-row .vr-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+
+  /* ============ DETALLE DE SET ============ */
+  .set-detail-photo{ height:260px; border-radius:var(--radius-m); background-position:center; background-size:cover; position:relative; overflow:hidden; margin-bottom:var(--sp-4); background-color:var(--panel); }
+  .set-detail-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .set-detail-nav{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; padding:0 var(--sp-3); }
+  .set-detail-nav button{ width:34px; height:34px; border-radius:50%; border:none; background:rgba(16,17,19,0.55); color:#fff; cursor:pointer; font-size:1rem; }
+  .set-detail-nav button:disabled{ opacity:0.25; cursor:default; }
+  .set-detail-counter{ position:absolute; bottom:10px; right:12px; background:rgba(16,17,19,0.6); color:#fff; font-size:0.7rem; font-family:var(--font-mono); padding:3px 8px; border-radius:999px; }
+  .set-detail-facts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:var(--sp-3); margin:var(--sp-4) 0; }
+  .set-detail-facts .fact .lbl{ font-size:0.7rem; opacity:0.6; text-transform:uppercase; letter-spacing:0.05em; }
+  .set-detail-facts .fact .val{ font-family:var(--font-mono); font-size:0.95rem; }
+
+  /* ============ AJUSTES DE CUENTA ============ */
+  .settings-section{ margin-bottom:var(--sp-5); }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); padding:var(--sp-3) 0; border-bottom:1px solid var(--line); }
+  .settings-row:last-child{ border-bottom:none; }
+  .switch{ position:relative; width:42px; height:24px; flex:none; display:inline-block; }
+  .switch input{ opacity:0; width:100%; height:100%; position:absolute; margin:0; cursor:pointer; z-index:1; }
+  .switch .track{ position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background var(--dur-fast); pointer-events:none; }
+  .switch .thumb{ position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--paper); box-shadow:var(--shadow); transition:transform var(--dur-fast) var(--ease-out); pointer-events:none; }
+  .switch input:checked + .track{ background:var(--azul); }
+  .switch input:checked ~ .thumb{ transform:translateX(18px); }
+  .switch input:focus-visible ~ .thumb{ outline:2px solid var(--azul); outline-offset:2px; }
+  .danger-zone{ border:1.5px solid var(--rojo); border-radius:var(--radius-m); padding:var(--sp-4); }
+
+  /* ============ COLA DE MODERACIÓN ============ */
+  .report-row{ padding:var(--sp-4); border:1px solid var(--line); border-radius:var(--radius-m); background:var(--panel); margin-bottom:var(--sp-3); }
+  .report-row .rr-top{ display:flex; justify-content:space-between; gap:var(--sp-3); margin-bottom:6px; flex-wrap:wrap; }
+  .report-row .rr-motivo{ font-size:0.88rem; }
+  .report-row .rr-actions{ display:flex; gap:8px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="watermark">Prototipo — datos ficticios</div>
+
+<div class="app-shell">
+  <header class="top">
+    <div class="brand"><span class="brand-mark">▮</span> Lego Virtual Museum</div>
+    <nav class="app-nav" id="app-nav" aria-label="Navegación de la aplicación">
+      <button type="button" class="nav-link" data-goto="view-explorar">Explorar</button>
+      <span class="nav-authed-group" id="nav-authed-group" hidden>
+        <button type="button" class="nav-link" data-goto="view-dashboard">Panel</button>
+        <button type="button" class="nav-link" data-goto="view-mis-vitrinas">Mis vitrinas</button>
+        <button type="button" class="nav-link" data-goto="view-ajustes">Ajustes</button>
+        <button type="button" class="nav-link" id="nav-admin" data-goto="view-moderacion">Moderación</button>
+      </span>
+    </nav>
+    <div class="top-controls">
+      <label class="icon-btn" style="cursor:pointer;">
+        <input type="checkbox" id="toggle-reduced" style="margin:0;"> Movimiento reducido
+      </label>
+      <button class="icon-btn" id="toggle-theme" type="button" aria-pressed="false">🌙 Oscuro</button>
+    </div>
+  </header>
+
+  <div id="sr-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
+
+  <!-- ============ VIEW 0: BIENVENIDA ============ -->
+  <section class="view is-active" id="view-bienvenida" aria-labelledby="h-bienvenida">
+    <div class="eyebrow">Museo virtual · anónimo · privado</div>
+    <h1 id="h-bienvenida">Expón tu colección. Sin dar la cara.</h1>
+    <p style="max-width:480px;">Crea una vitrina de tus sets, decide quién puede verla y compártela con quien de verdad entiende por qué guardas la caja original. Sin fotos de perfil, sin dirección, sin chat.</p>
+    <div class="step-actions" style="justify-content:flex-start;">
+      <button class="btn btn-primary" id="btn-crear-cuenta" type="button">Crear mi cuenta</button>
+      <button class="btn btn-ghost" id="btn-ya-tengo" type="button">Ya tengo cuenta</button>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 1: REGISTRO ============ -->
+  <section class="view" id="view-registro" aria-labelledby="h-registro">
+    <div class="eyebrow">Paso 1 de 3</div>
+    <h2 id="h-registro">Crea tu cuenta</h2>
+    <p>Solo necesitamos un email y una contraseña. Nada de foto de perfil real ni dirección: eliges un avatar genérico.</p>
+    <form class="card" id="form-registro" novalidate>
+      <div class="field">
+        <label for="reg-email">Email <span class="required-mark">*</span></label>
+        <input type="email" id="reg-email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="reg-pass">Contraseña <span class="required-mark">*</span></label>
+        <input type="password" id="reg-pass" required autocomplete="new-password" minlength="8">
+        <div class="hint">Mínimo 8 caracteres. Puedes pegarla desde tu gestor de contraseñas.</div>
+      </div>
+      <div class="field">
+        <label>Elige tu avatar</label>
+        <div class="avatar-grid" role="group" aria-label="Selección de avatar genérico" id="avatar-grid"></div>
+      </div>
+      <div class="field checkbox-row">
+        <input type="checkbox" id="reg-consent" required>
+        <label for="reg-consent">Acepto la <a href="#" tabindex="-1">política de privacidad</a> y que no se cargará ningún script de analítica hasta que yo lo acepte por separado.</label>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-registrar" type="submit">
+        <span class="btn-label">Crear cuenta</span>
+      </button>
+    </form>
+  </section>
+
+  <!-- ============ VIEW 2: MESA DE TRABAJO ============ -->
+  <section class="view" id="view-mesa" aria-labelledby="h-mesa">
+    <div class="eyebrow">Paso 2 de 3</div>
+    <h2 id="h-mesa">Tu mesa de trabajo</h2>
+    <p>Añade tus sets, arrástralos para ordenarlos como quieras verlos en tu vitrina, y sube una foto de cada uno — limpiamos la ubicación automáticamente.</p>
+
+    <div class="card" style="margin-bottom:var(--sp-5);">
+      <div class="field">
+        <label for="vitrina-titulo">Título de tu vitrina <span class="required-mark">*</span></label>
+        <input type="text" id="vitrina-titulo" value="Mi colección Star Wars">
+      </div>
+
+      <h3 style="margin-top:var(--sp-4);">Añadir un set</h3>
+      <form id="form-set" novalidate>
+        <div class="field" id="field-nombre">
+          <label for="set-nombre">Nombre del set <span class="required-mark">*</span></label>
+          <input type="text" id="set-nombre" placeholder="Ej. Halcón Milenario UCS">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="set-fecha">Fecha de lanzamiento</label>
+            <input type="date" id="set-fecha">
+          </div>
+          <div class="field">
+            <label for="set-codigo">Código identificador</label>
+            <input type="text" id="set-codigo" class="mono" placeholder="75192">
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="set-piezas">Número de piezas</label>
+            <input type="number" id="set-piezas" min="1" placeholder="7541">
+          </div>
+          <div class="field">
+            <label for="set-tema">Temática</label>
+            <select id="set-tema">
+              <option value="Star Wars">Star Wars</option>
+              <option value="Harry Potter">Harry Potter</option>
+              <option value="El Señor de los Anillos">El Señor de los Anillos</option>
+              <option value="Ciudad">Ciudad</option>
+              <option value="Técnic">Técnic</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="btn-add-set" type="submit">+ Añadir a la mesa</button>
+      </form>
+    </div>
+
+    <h3>Tu mesa <span class="mono" style="font-weight:400; opacity:0.6; font-size:0.8rem;" id="mesa-count">(0 sets)</span></h3>
+    <p style="font-size:0.82rem; opacity:0.65;">Arrastra un set para reordenarlo, o usa las flechas si prefieres el teclado.</p>
+    <div class="mesa is-empty" id="mesa" aria-label="Sets de tu vitrina, orden actual">
+      <div class="empty-msg" id="mesa-empty">Tu mesa está vacía todavía. Añade tu primer set arriba para empezar tu vitrina.</div>
+    </div>
+
+    <div class="card">
+      <h3>¿Quién puede ver tu vitrina?</h3>
+      <div class="segmented" role="group" aria-label="Nivel de visibilidad" id="visibilidad-grupo">
+        <button type="button" data-vis="publica" aria-pressed="true">Pública</button>
+        <button type="button" data-vis="privada">Privada</button>
+        <button type="button" data-vis="privada_enlace">Con enlace</button>
+      </div>
+      <div class="visibility-hint" id="visibilidad-hint">Cualquiera con el enlace puede verla. No aparece en buscadores por defecto.</div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-ghost" id="btn-volver-registro" type="button">Atrás</button>
+      <button class="btn btn-primary" id="btn-publicar" type="button">
+        <span class="btn-label">Publicar vitrina</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 3: VITRINA PÚBLICA ============ -->
+  <section class="view" id="view-vitrina" aria-labelledby="h-vitrina">
+    <div class="eyebrow" id="vitrina-eyebrow">Vitrina publicada</div>
+    <div class="vitrina-header">
+      <h2 id="h-vitrina" style="margin:0;">Mi colección Star Wars</h2>
+    </div>
+
+    <div class="profile-pill" id="perfil-pill-trigger" tabindex="0" role="button" aria-label="Ver perfil público del coleccionista" style="cursor:pointer;">
+      <span id="perfil-avatar" style="font-size:1.4rem;">🧱</span>
+      <div>
+        <div style="font-size:0.85rem; font-weight:600;">Coleccionista anónimo</div>
+        <div style="font-size:0.72rem; opacity:0.6;">Vista de un visitante · ver perfil</div>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat"><div class="num mono" id="stat-nsets">0</div><div class="lbl">Sets en la vitrina</div></div>
+      <div class="stat"><div class="num" id="stat-tema">—</div><div class="lbl">Temática predominante</div></div>
+    </div>
+
+    <div class="card" id="link-card" style="display:none; margin-bottom:var(--sp-5);">
+      <h3>Enlace de invitación</h3>
+      <div class="link-box">
+        <input type="text" readonly id="link-invitacion" value="https://legovirtualmuseum.vercel.app/v/9f2c-invite">
+        <button class="btn btn-sm btn-ghost" id="btn-copiar-enlace" type="button">Copiar</button>
+      </div>
+    </div>
+
+    <div class="gallery-wrap">
+      <div class="gallery-viewport" id="gallery-viewport">
+        <div class="gallery-track" id="gallery-track"></div>
+      </div>
+      <div class="gallery-nav">
+        <button type="button" id="gallery-prev" aria-label="Set anterior">←</button>
+        <button type="button" id="gallery-next" aria-label="Set siguiente">→</button>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-ghost" id="btn-volver-mesa" type="button">← Volver a editar</button>
+      <button class="btn btn-danger-ghost btn-sm" id="btn-ver-privada" type="button">Simular acceso sin permiso</button>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 4: ERROR (404 anti-enumeración) ============ -->
+  <section class="view" id="view-error" aria-labelledby="h-error">
+    <div class="error-state">
+      <div class="state-icon">🧩</div>
+      <h2 id="h-error">Esta vitrina no existe o no tienes acceso</h2>
+      <p style="color:var(--ink); opacity:0.75;">Si crees que deberías poder verla, pide a quien la compartió un enlace de invitación válido.</p>
+      <button class="btn btn-ghost" id="btn-volver-de-error" type="button">Volver a mi vitrina</button>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 5: EXPLORAR (R-08, Flujo E) ============ -->
+  <section class="view" id="view-explorar" aria-labelledby="h-explorar">
+    <div class="eyebrow">Explorar · sin necesidad de cuenta</div>
+    <h2 id="h-explorar">Descubre vitrinas de otros coleccionistas</h2>
+    <p style="max-width:520px;">Solo vitrinas públicas y publicadas. Una vitrina privada o en borrador nunca aparece aquí.</p>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-explorar">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="filter-bar">
+      <div>
+        <label style="display:block; font-size:0.8rem; font-weight:500; margin-bottom:6px;">Temática</label>
+        <div class="chip-group" id="explorar-temas"></div>
+      </div>
+      <div class="field" style="margin:0; min-width:170px;">
+        <label for="explorar-orden">Orden</label>
+        <select id="explorar-orden">
+          <option value="recientes">Más recientes</option>
+          <option value="nsets">Nº de sets</option>
+          <option value="piezas">Nº de piezas</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0; flex:1; min-width:200px;">
+        <label for="explorar-buscar">Buscar</label>
+        <input type="text" id="explorar-buscar" placeholder="Título o nombre de set…">
+      </div>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="explorar-grid">
+        <div class="skeleton" style="height:180px;"></div>
+        <div class="skeleton" style="height:180px;"></div>
+        <div class="skeleton" style="height:180px;"></div>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar Explorar</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">🔍</div>
+        <h3>Ninguna vitrina coincide con tus filtros</h3>
+        <p>Prueba a quitar alguna temática o a cambiar el texto de búsqueda.</p>
+        <button class="btn btn-ghost" type="button" id="explorar-limpiar">Limpiar filtros</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div class="explorar-grid" id="explorar-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 6: DASHBOARD (R-10, Flujo F) ============ -->
+  <section class="view" id="view-dashboard" aria-labelledby="h-dashboard">
+    <div class="eyebrow">Tu panel</div>
+    <h2 id="h-dashboard">Panel</h2>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-dashboard">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="dash-stats">
+        <div class="skeleton" style="height:76px;"></div>
+        <div class="skeleton" style="height:76px;"></div>
+        <div class="skeleton" style="height:76px;"></div>
+        <div class="skeleton" style="height:76px;"></div>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar tu panel</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">📦</div>
+        <h3>Todavía no tienes vitrinas</h3>
+        <p>Crea la primera para empezar a ver aquí tus estadísticas.</p>
+        <button class="btn btn-primary" type="button" id="dash-empty-crear">Crear mi primera vitrina</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div class="dash-stats">
+        <div class="dash-stat"><span class="num mono" id="dash-vitrinas">0</span><div class="lbl" id="dash-estado">—</div></div>
+        <div class="dash-stat"><span class="num mono" id="dash-sets">0</span><div class="lbl">Sets totales</div></div>
+        <div class="dash-stat"><span class="num mono" id="dash-piezas">0</span><div class="lbl">Piezas totales</div></div>
+        <div class="dash-stat"><span class="num mono" id="dash-visitas">0</span><div class="lbl">Visitas acumuladas</div></div>
+        <div class="dash-stat"><span class="num" id="dash-tema">—</span><div class="lbl">Temática predominante</div></div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-primary" type="button" id="dash-nueva">+ Nueva vitrina</button>
+        <button class="btn btn-ghost" type="button" id="dash-ultima">Ir a la última editada</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 7: MIS VITRINAS (R-11, Flujo G) ============ -->
+  <section class="view" id="view-mis-vitrinas" aria-labelledby="h-mis-vitrinas">
+    <div class="eyebrow">Gestión</div>
+    <h2 id="h-mis-vitrinas">Mis vitrinas</h2>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-mis-vitrinas">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="skeleton" style="height:88px; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:88px; margin-bottom:12px;"></div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar tus vitrinas</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">🗂️</div>
+        <h3>Todavía no has creado ninguna vitrina</h3>
+        <p>Empieza por catalogar tu primer set.</p>
+        <button class="btn btn-primary" type="button" id="mv-empty-crear">Crear mi primera vitrina</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div id="mis-vitrinas-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 8: DETALLE DE SET (R-12, Flujo H) ============ -->
+  <section class="view" id="view-detalle-set" aria-labelledby="h-detalle-set">
+    <button class="btn btn-ghost btn-sm" type="button" id="btn-detalle-volver">← Volver</button>
+    <h2 id="h-detalle-set" style="margin-top:var(--sp-3);">Set</h2>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-detalle-set">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="skeleton" style="height:260px;"></div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar esta ficha</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">🖼️</div>
+        <h3>Este set todavía no tiene fotos</h3>
+        <p>Su dueño aún no ha subido ninguna imagen.</p>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div class="set-detail-photo" id="detalle-foto">
+        <div class="set-detail-nav">
+          <button type="button" id="detalle-prev" aria-label="Set anterior">←</button>
+          <button type="button" id="detalle-next" aria-label="Set siguiente">→</button>
+        </div>
+        <div class="set-detail-counter" id="detalle-counter">1 / 1</div>
+      </div>
+      <div class="set-detail-facts">
+        <div class="fact"><div class="lbl">Código</div><div class="val mono" id="detalle-codigo">—</div></div>
+        <div class="fact"><div class="lbl">Fecha de lanzamiento</div><div class="val mono" id="detalle-fecha">—</div></div>
+        <div class="fact"><div class="lbl">Nº de piezas</div><div class="val mono" id="detalle-piezas">—</div></div>
+        <div class="fact"><div class="lbl">Temática</div><div class="val" id="detalle-tema">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 9: PERFIL PÚBLICO (R-13, Flujo I) ============ -->
+  <section class="view" id="view-perfil" aria-labelledby="h-perfil">
+    <div class="eyebrow">Perfil público</div>
+    <h2 id="h-perfil">Coleccionista anónimo</h2>
+    <p style="font-size:0.82rem; opacity:0.65; max-width:480px;">Sin email, sin fecha de registro, sin ninguna vía de contacto directo. Solo lo que el coleccionista decide hacer público.</p>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-perfil">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="skeleton" style="height:80px; margin-bottom:16px;"></div>
+      <div class="explorar-grid"><div class="skeleton" style="height:150px;"></div><div class="skeleton" style="height:150px;"></div></div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar este perfil</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">🧱</div>
+        <h3>Este coleccionista todavía no tiene vitrinas públicas</h3>
+        <p>Vuelve más adelante.</p>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div class="stat-strip">
+        <div class="stat"><div class="num mono" id="perfil-nvitrinas">0</div><div class="lbl">Vitrinas públicas</div></div>
+        <div class="stat"><div class="num mono" id="perfil-nsets">0</div><div class="lbl">Sets</div></div>
+        <div class="stat"><div class="num" id="perfil-tema">—</div><div class="lbl">Temática predominante</div></div>
+      </div>
+      <h3>Sus vitrinas públicas</h3>
+      <div class="explorar-grid" id="perfil-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 10: AJUSTES DE CUENTA (R-14, Flujo C) ============ -->
+  <section class="view" id="view-ajustes" aria-labelledby="h-ajustes">
+    <div class="eyebrow">Tu cuenta</div>
+    <h2 id="h-ajustes">Ajustes de cuenta</h2>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-ajustes">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="skeleton" style="height:140px; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:100px;"></div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar tus ajustes</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">🔔</div>
+        <h3>Aún no has registrado ninguna preferencia de privacidad</h3>
+        <p>Elige si aceptas analítica de uso para empezar.</p>
+        <button class="btn btn-primary" type="button" id="ajustes-empty-aceptar">Configurar ahora</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div class="settings-section card">
+        <h3>Avatar</h3>
+        <div class="avatar-grid" role="group" aria-label="Cambiar avatar genérico" id="avatar-grid-ajustes"></div>
+      </div>
+      <div class="settings-section card">
+        <h3>Privacidad</h3>
+        <div class="settings-row">
+          <div><strong>Analítica de uso</strong><div class="hint">Plausible, sin cookies. Retira tu consentimiento cuando quieras, con la misma facilidad con la que lo diste.</div></div>
+          <label class="switch"><input type="checkbox" id="toggle-consentimiento" checked><span class="track"></span><span class="thumb"></span></label>
+        </div>
+      </div>
+      <div class="settings-section danger-zone">
+        <h3>Eliminar cuenta</h3>
+        <p style="font-size:0.85rem;">Borra tu cuenta, vitrinas, sets y fotos de forma permanente. Los backups técnicos se purgan en un máximo de 30 días.</p>
+        <button class="btn btn-danger-ghost" id="btn-eliminar-cuenta" type="button">Eliminar mi cuenta</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW 11: COLA DE MODERACIÓN (R-15, Flujo B2, rol admin) ============ -->
+  <section class="view" id="view-moderacion" aria-labelledby="h-moderacion">
+    <div class="eyebrow">Solo administrador</div>
+    <h2 id="h-moderacion">Cola de moderación</h2>
+    <p style="font-size:0.85rem; max-width:520px;">Reportes pendientes de revisión. La identidad de quien reporta nunca se muestra a quien es reportado.</p>
+
+    <div class="state-switch" role="group" aria-label="Simular estado (solo prototipo)" data-view-switch="view-moderacion">
+      <span class="state-switch-label">Prototipo</span>
+      <button type="button" data-state="loading">Carga</button>
+      <button type="button" data-state="empty">Vacío</button>
+      <button type="button" data-state="error">Error</button>
+      <button type="button" data-state="content" aria-pressed="true">Con datos</button>
+    </div>
+
+    <div class="state-block" data-state-block="loading" hidden aria-busy="true">
+      <div class="skeleton" style="height:96px; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:96px;"></div>
+    </div>
+    <div class="state-block" data-state-block="error" hidden>
+      <div class="error-state">
+        <div class="state-icon">⚠️</div>
+        <h3>No hemos podido cargar la cola</h3>
+        <p style="color:var(--ink); opacity:0.75;">Puede ser un problema temporal de conexión.</p>
+        <button class="btn btn-ghost" type="button" data-retry>Reintentar</button>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="empty" hidden>
+      <div class="empty-state">
+        <div class="state-icon">✅</div>
+        <h3>No hay reportes pendientes</h3>
+        <p>La cola está al día.</p>
+      </div>
+    </div>
+    <div class="state-block" data-state-block="content">
+      <div id="moderacion-list"></div>
+    </div>
+
+    <p style="margin-top:var(--sp-6);">
+      <button class="btn btn-ghost btn-sm" id="btn-simular-sin-admin" type="button">Simular acceso sin rol admin</button>
+    </p>
+  </section>
+</div>
+
+<!-- ============ MODAL: REPORTAR ============ -->
+<div class="modal-scrim" id="modal-reportar">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="h-modal-reportar">
+    <h3 id="h-modal-reportar">Reportar este set</h3>
+    <p style="font-size:0.85rem;">Tu identidad nunca se muestra a quien publicó esta vitrina. Solo la revisa un moderador.</p>
+    <form id="form-reportar">
+      <div class="field">
+        <label for="motivo-reporte">Motivo</label>
+        <textarea id="motivo-reporte" rows="3" placeholder="Cuéntanos qué has visto…"></textarea>
+      </div>
+      <div class="step-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-cancelar-reporte">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="btn-enviar-reporte">Enviar reporte</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: ELIMINAR VITRINA (R-11) ============ -->
+<div class="modal-scrim" id="modal-eliminar-vitrina">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="h-modal-eliminar-vitrina">
+    <h3 id="h-modal-eliminar-vitrina">¿Eliminar esta vitrina?</h3>
+    <p style="font-size:0.85rem;" id="eliminar-vitrina-desc">Se borrarán sus sets y fotos. No se puede deshacer.</p>
+    <div class="step-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="btn-cancelar-eliminar-vitrina">Cancelar</button>
+      <button type="button" class="btn btn-danger-ghost btn-sm" id="btn-confirmar-eliminar-vitrina">Eliminar definitivamente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ELIMINAR CUENTA (R-14, Flujo C) ============ -->
+<div class="modal-scrim" id="modal-eliminar-cuenta">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="h-modal-eliminar-cuenta">
+    <h3 id="h-modal-eliminar-cuenta">Confirma tu contraseña</h3>
+    <p style="font-size:0.85rem;">Por seguridad, vuelve a introducir tu contraseña para eliminar tu cuenta de forma permanente. Tus vitrinas, sets y fotos se borran en cascada; los backups técnicos se purgan en ≤30 días.</p>
+    <form id="form-eliminar-cuenta">
+      <div class="field">
+        <label for="reauth-pass">Contraseña</label>
+        <input type="password" id="reauth-pass" autocomplete="current-password">
+      </div>
+      <div class="step-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-cancelar-eliminar-cuenta">Cancelar</button>
+        <button type="submit" class="btn btn-danger-ghost btn-sm">Eliminar definitivamente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     UTILIDADES: motion (apple-design + emil-design-eng)
+     ============================================================ */
+  const mqReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const state = { reducedMotion: mqReduced.matches, theme: 'light', authed: false };
+
+  function applyReducedMotion(){
+    document.documentElement.setAttribute('data-reduced-motion', state.reducedMotion ? 'true' : 'false');
+  }
+  mqReduced.addEventListener('change', e => { state.reducedMotion = e.matches || document.getElementById('toggle-reduced').checked; applyReducedMotion(); });
+
+  // Spring físico (damping ratio + response, según WWDC "Designing Fluid Interfaces")
+  function stepSpring(current, target, velocity, stiffness, damping, mass, dt){
+    const Fs = -stiffness * (current - target);
+    const Fd = -damping * velocity;
+    const acc = (Fs + Fd) / mass;
+    velocity += acc * dt;
+    current += velocity * dt;
+    return [current, velocity];
+  }
+  function springConfig(dampingRatio, response, mass){
+    mass = mass || 1;
+    const angFreq = 2 * Math.PI / response;
+    const stiffness = mass * angFreq * angFreq;
+    const damping = 4 * Math.PI * mass * dampingRatio / response;
+    return { stiffness, damping, mass };
+  }
+  function animateSpring(getCurrent, setCurrent, target, opts, onSettle){
+    if (state.reducedMotion){ setCurrent(target, 0); if (onSettle) onSettle(); return { cancel(){} }; }
+    const cfg = springConfig(opts.dampingRatio || 1, opts.response || 0.35, 1);
+    let velocity = opts.velocity || 0;
+    let raf, last = performance.now();
+    let cancelled = false;
+    function frame(now){
+      if (cancelled) return;
+      const dt = Math.min((now - last) / 1000, 0.032); last = now;
+      let current = getCurrent();
+      [current, velocity] = stepSpring(current, target, velocity, cfg.stiffness, cfg.damping, cfg.mass, dt);
+      setCurrent(current, velocity);
+      if (Math.abs(current - target) < 0.4 && Math.abs(velocity) < 4){
+        setCurrent(target, 0);
+        if (onSettle) onSettle();
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return { cancel(){ cancelled = true; cancelAnimationFrame(raf); } };
+  }
+  // Rubber-band: resistencia progresiva al pasar el límite (apple-design §9)
+  function rubberband(overshoot, dimension, constant){
+    constant = constant || 0.55;
+    const sign = overshoot < 0 ? -1 : 1;
+    const a = Math.abs(overshoot);
+    return sign * (a * dimension * constant) / (dimension + constant * a);
+  }
+  function announce(msg){
+    const el = document.getElementById('sr-announcer');
+    el.textContent = '';
+    requestAnimationFrame(() => { el.textContent = msg; });
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('is-visible');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('is-visible'), 2600);
+  }
+
+  /* ============================================================
+     THEME + REDUCED MOTION TOGGLES
+     ============================================================ */
+  const themeBtn = document.getElementById('toggle-theme');
+  themeBtn.addEventListener('click', () => {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    themeBtn.textContent = state.theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+    themeBtn.setAttribute('aria-pressed', state.theme === 'dark');
+  });
+  document.getElementById('toggle-reduced').addEventListener('change', (e) => {
+    state.reducedMotion = e.target.checked || mqReduced.matches;
+    applyReducedMotion();
+  });
+  applyReducedMotion();
+
+  /* ============================================================
+     NAVEGACIÓN ENTRE VISTAS
+     ============================================================ */
+  function showView(id){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
+    const target = document.getElementById(id);
+    target.classList.add('is-active');
+    const heading = target.querySelector('h1,h2');
+    if (heading){ heading.setAttribute('tabindex','-1'); heading.focus({preventScroll:false}); }
+    window.scrollTo({ top:0, behavior: state.reducedMotion ? 'auto' : 'smooth' });
+  }
+  document.getElementById('btn-crear-cuenta').addEventListener('click', () => showView('view-registro'));
+  document.getElementById('btn-ya-tengo').addEventListener('click', () => showView('view-registro'));
+  document.getElementById('btn-volver-registro').addEventListener('click', () => showView('view-registro'));
+  document.getElementById('btn-volver-de-error').addEventListener('click', () => showView('view-vitrina'));
+  // btn-volver-mesa: destino dinámico según origen (mesa / Explorar / perfil), ver updateVitrinaBackButton() más abajo.
+
+  /* ============================================================
+     AVATAR PICKER
+     ============================================================ */
+  const avatars = ['🧱','🚀','🛰️','🧩','🪐','🔧'];
+  const avatarGrid = document.getElementById('avatar-grid');
+  let selectedAvatar = 0;
+  avatars.forEach((a, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'avatar-opt'; b.textContent = a;
+    b.style.background = 'var(--panel)';
+    b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.setAttribute('aria-label', 'Avatar genérico ' + (i+1));
+    b.addEventListener('click', () => {
+      avatarGrid.querySelectorAll('.avatar-opt').forEach(x => x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      selectedAvatar = i;
+    });
+    avatarGrid.appendChild(b);
+  });
+
+  /* ============================================================
+     Limpieza de error en vivo: en cuanto el usuario corrige el
+     campo, el mensaje desaparece — no espera a un nuevo envío.
+     ============================================================ */
+  function clearFieldError(field){
+    const wrap = field.closest('.field');
+    wrap.classList.remove('has-error');
+    const msg = wrap.querySelector('.error-msg');
+    if (msg) msg.remove();
+  }
+  ['reg-email','reg-pass','set-nombre'].forEach(id => {
+    const f = document.getElementById(id);
+    f.addEventListener('input', () => clearFieldError(f));
+  });
+
+  /* ============================================================
+     REGISTRO (con estado de carga y validación humana)
+     ============================================================ */
+  document.getElementById('form-registro').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('reg-email');
+    const pass = document.getElementById('reg-pass');
+    const consent = document.getElementById('reg-consent');
+    let ok = true;
+    [email, pass].forEach(f => f.closest('.field').classList.remove('has-error'));
+    document.querySelectorAll('#form-registro .error-msg').forEach(n => n.remove());
+
+    function markError(field, msg){
+      const wrap = field.closest('.field');
+      wrap.classList.add('has-error');
+      const p = document.createElement('div');
+      p.className = 'error-msg'; p.textContent = '⚠ ' + msg;
+      wrap.appendChild(p);
+      ok = false;
+    }
+    if (!email.value || !email.value.includes('@')) markError(email, 'Necesitamos un email válido para poder acceder a tu cuenta.');
+    if (!pass.value || pass.value.length < 8) markError(pass, 'La contraseña debe tener al menos 8 caracteres.');
+    if (!consent.checked){ ok = false; showToast('Necesitas aceptar la política de privacidad para continuar.'); }
+    if (!ok) return;
+
+    const btn = document.getElementById('btn-registrar');
+    setLoading(btn, true, 'Creando cuenta…');
+    setTimeout(() => {
+      setLoading(btn, false, 'Crear cuenta');
+      announce('Cuenta creada. Avatar asignado: ' + avatars[selectedAvatar]);
+      document.getElementById('perfil-avatar').textContent = avatars[selectedAvatar];
+      setAuthed(true);
+      showView('view-mesa');
+    }, 700);
+  });
+
+  function setLoading(btn, isLoading, label){
+    btn.disabled = isLoading;
+    btn.innerHTML = isLoading ? '<span class="spinner" aria-hidden="true"></span> ' + label : label;
+  }
+
+  /* ============================================================
+     MESA DE TRABAJO — sets + drag reorder (apple-design: 1:1, spring, interrumpible)
+     ============================================================ */
+  const temaColor = {
+    'Star Wars':'var(--rojo)', 'Harry Potter':'var(--amarillo)',
+    'El Señor de los Anillos':'var(--verde)', 'Ciudad':'var(--azul)',
+    'Técnic':'var(--ink)', 'Otro':'var(--ink)'
+  };
+  let sets = [];
+  let idSeq = 1;
+  const mesaEl = document.getElementById('mesa');
+
+  document.getElementById('form-set').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nombreEl = document.getElementById('set-nombre');
+    const fieldNombre = document.getElementById('field-nombre');
+    fieldNombre.classList.remove('has-error');
+    const prevErr = fieldNombre.querySelector('.error-msg'); if (prevErr) prevErr.remove();
+
+    if (!nombreEl.value.trim()){
+      fieldNombre.classList.add('has-error');
+      const p = document.createElement('div');
+      p.className = 'error-msg';
+      p.textContent = '⚠ Este set necesita un nombre para poder añadirse a tu vitrina.';
+      fieldNombre.appendChild(p);
+      nombreEl.focus();
+      return;
+    }
+    const set = {
+      id: idSeq++,
+      nombre: nombreEl.value.trim(),
+      fecha: document.getElementById('set-fecha').value,
+      codigo: document.getElementById('set-codigo').value.trim(),
+      piezas: document.getElementById('set-piezas').value,
+      tema: document.getElementById('set-tema').value,
+      foto: null
+    };
+    sets.push(set);
+    renderMesa();
+    announce('Set "' + set.nombre + '" añadido a la mesa.');
+    e.target.reset();
+    nombreEl.focus();
+  });
+
+  function renderMesa(){
+    document.getElementById('mesa-count').textContent = '(' + sets.length + (sets.length === 1 ? ' set)' : ' sets)');
+    mesaEl.innerHTML = '';
+    if (sets.length === 0){
+      mesaEl.classList.add('is-empty');
+      const d = document.createElement('div');
+      d.className = 'empty-msg'; d.id = 'mesa-empty';
+      d.textContent = 'Tu mesa está vacía todavía. Añade tu primer set arriba para empezar tu vitrina.';
+      mesaEl.appendChild(d);
+      return;
+    }
+    mesaEl.classList.remove('is-empty');
+    sets.forEach((set, idx) => mesaEl.appendChild(buildToken(set, idx)));
+  }
+
+  function buildToken(set, idx){
+    const el = document.createElement('div');
+    el.className = 'token';
+    el.dataset.id = set.id;
+    el.setAttribute('tabindex','0');
+    el.setAttribute('role','group');
+    el.setAttribute('aria-label', set.nombre + ', posición ' + (idx+1) + ' de ' + sets.length);
+    el.innerHTML =
+      '<div class="token-theme-bar" style="background:' + (temaColor[set.tema]||'var(--ink)') + '"></div>' +
+      '<h3>' + escapeHtml(set.nombre) + '</h3>' +
+      '<div class="token-meta mono">' + (set.codigo ? '#' + escapeHtml(set.codigo) + ' · ' : '') + (set.piezas ? escapeHtml(set.piezas) + ' pzs' : 'nº piezas: —') + '</div>' +
+      '<div class="token-photo" data-role="photo">' + (set.foto ? '<img src="'+set.foto+'" alt="Foto de '+escapeHtml(set.nombre)+'">' : 'Sin foto') + '</div>' +
+      '<div class="token-actions">' +
+        '<button class="upload-btn" type="button" data-action="upload">📷 Subir foto</button>' +
+        '<div>' +
+          '<button class="reorder-btn" type="button" data-action="left" ' + (idx===0?'disabled':'') + ' aria-label="Mover antes">←</button> ' +
+          '<button class="reorder-btn" type="button" data-action="right" ' + (idx===sets.length-1?'disabled':'') + ' aria-label="Mover después">→</button>' +
+        '</div>' +
+      '</div>';
+
+    el.querySelector('[data-action="left"]').addEventListener('click', () => moveSet(idx, idx-1));
+    el.querySelector('[data-action="right"]').addEventListener('click', () => moveSet(idx, idx+1));
+    el.querySelector('[data-action="upload"]').addEventListener('click', () => simulateUpload(set, el));
+    attachDrag(el, idx);
+    return el;
+  }
+
+  function moveSet(from, to){
+    if (to < 0 || to >= sets.length) return;
+    const [s] = sets.splice(from, 1);
+    sets.splice(to, 0, s);
+    renderMesa();
+    announce(s.nombre + ' movido a la posición ' + (to+1) + '.');
+    const moved = mesaEl.querySelector('[data-id="'+s.id+'"]');
+    if (moved) moved.focus();
+  }
+
+  function simulateUpload(set, tokenEl){
+    const photoBox = tokenEl.querySelector('[data-role="photo"]');
+    photoBox.textContent = 'Limpiando metadatos EXIF/GPS…';
+    announce('Subiendo foto de ' + set.nombre + '. Eliminando metadatos de ubicación.');
+    setTimeout(() => {
+      const hues = ['#D6392E','#E8A927','#2C6CA8','#3F8552'];
+      const c1 = hues[set.id % hues.length], c2 = hues[(set.id+2) % hues.length];
+      const svg = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="140"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs><rect width="200" height="140" fill="url(#g)"/></svg>'
+      );
+      set.foto = svg;
+      photoBox.innerHTML = '<img src="'+svg+'" alt="Foto de '+escapeHtml(set.nombre)+', sin datos de ubicación">';
+      announce('Foto de ' + set.nombre + ' subida. Sin metadatos de ubicación.');
+    }, 900);
+  }
+
+  // Drag reorder: seguimiento 1:1, offset de agarre, spring de asentamiento, interrumpible
+  function attachDrag(el, idx){
+    let dragging = false, startX=0, startY=0, originRect=null;
+    let history = [];
+    let activeSpring = null;
+
+    el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button')) return; // no arrastrar desde botones
+      try { el.setPointerCapture(e.pointerId); } catch(err) { /* degrada sin romper el arrastre */ }
+      dragging = true;
+      el.classList.add('is-dragging');
+      if (activeSpring) activeSpring.cancel();
+      originRect = el.getBoundingClientRect();
+      startX = e.clientX; startY = e.clientY;
+      history = [{x:e.clientX, y:e.clientY, t:performance.now()}];
+      el.style.transition = 'none';
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      history.push({x:e.clientX, y:e.clientY, t:performance.now()});
+      if (history.length > 5) history.shift();
+
+      // Reordenar si el centro cruza a un vecino
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+      const siblings = Array.from(mesaEl.children);
+      for (const sib of siblings){
+        if (sib === el) continue;
+        const sRect = sib.getBoundingClientRect();
+        if (cx > sRect.left && cx < sRect.right && cy > sRect.top && cy < sRect.bottom){
+          const fromIdx = sets.findIndex(s => String(s.id) === el.dataset.id);
+          const toIdx = sets.findIndex(s => String(s.id) === sib.dataset.id);
+          if (fromIdx !== -1 && toIdx !== -1){
+            const [moved] = sets.splice(fromIdx, 1);
+            sets.splice(toIdx, 0, moved);
+            const liveTransform = el.style.transform;
+            renderMesa();
+            const newEl = mesaEl.querySelector('[data-id="'+moved.id+'"]');
+            if (newEl){
+              newEl.classList.add('is-dragging');
+              newEl.style.transition = 'none';
+              newEl.style.transform = liveTransform;
+              rebindDragTarget(newEl, e);
+            }
+          }
+          break;
+        }
+      }
+    });
+
+    function rebindDragTarget(newEl, e){
+      // El token físico cambió tras el re-render; migramos el estado de arrastre
+      el = newEl; el.setPointerCapture(e.pointerId);
+    }
+
+    function endDrag(e){
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove('is-dragging');
+      const last = history[history.length-1] || {x:e.clientX,y:e.clientY,t:performance.now()};
+      const first = history[0] || last;
+      const dt = Math.max(last.t - first.t, 1);
+      const vx = (last.x - first.x) / dt * 1000, vy = (last.y - first.y) / dt * 1000;
+      const currentMatch = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(el.style.transform) || [0,'0','0'];
+      let cx = parseFloat(currentMatch[1]) || 0, cy = parseFloat(currentMatch[2]) || 0;
+      el.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+      activeSpring = animateSpring(
+        () => cx, (v) => { cx = v; el.style.transform = 'translate(' + cx + 'px,' + cy2() + 'px)'; },
+        0, { dampingRatio: 0.86, response: 0.32, velocity: vx }
+      );
+      let cy2val = cy;
+      function cy2(){ return cy2val; }
+      animateSpring(() => cy2val, (v) => { cy2val = v; }, 0, { dampingRatio: 0.86, response: 0.32, velocity: vy });
+    }
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+
+    el.addEventListener('keydown', (e) => {
+      const currentIdx = sets.findIndex(s => String(s.id) === el.dataset.id);
+      if (e.key === 'ArrowLeft'){ e.preventDefault(); moveSet(currentIdx, currentIdx-1); }
+      if (e.key === 'ArrowRight'){ e.preventDefault(); moveSet(currentIdx, currentIdx+1); }
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ============================================================
+     VISIBILIDAD
+     ============================================================ */
+  let visibilidad = 'publica';
+  const visHints = {
+    publica: 'Cualquiera con el enlace puede verla. No aparece en buscadores por defecto.',
+    privada: 'Solo tú puedes verla. Nadie más tiene acceso, ni con enlace.',
+    privada_enlace: 'Solo quien tenga tu enlace de invitación puede verla. Ideal para compartir en un grupo cerrado.'
+  };
+  document.getElementById('visibilidad-grupo').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-vis]');
+    if (!btn) return;
+    document.querySelectorAll('#visibilidad-grupo button').forEach(b => b.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+    visibilidad = btn.dataset.vis;
+    document.getElementById('visibilidad-hint').textContent = visHints[visibilidad];
+  });
+
+  /* ============================================================
+     PUBLICAR → VITRINA PÚBLICA
+     ============================================================ */
+  document.getElementById('btn-publicar').addEventListener('click', () => {
+    if (sets.length === 0){
+      showToast('Añade al menos un set antes de publicar tu vitrina.');
+      return;
+    }
+    const btn = document.getElementById('btn-publicar');
+    setLoading(btn, true, 'Publicando…');
+    setTimeout(() => {
+      setLoading(btn, false, 'Publicar vitrina');
+      buildVitrinaPublica();
+      announce('Vitrina publicada correctamente.');
+      showToast('¡Vitrina publicada! Ya puedes compartirla.');
+      showView('view-vitrina');
+    }, 800);
+  });
+
+  function buildVitrinaPublica(){
+    vitrinaBack = 'view-mesa';
+    document.getElementById('h-vitrina').textContent = document.getElementById('vitrina-titulo').value || 'Mi vitrina';
+    document.getElementById('vitrina-eyebrow').textContent =
+      visibilidad === 'publica' ? 'Vitrina pública' : visibilidad === 'privada' ? 'Vitrina privada' : 'Vitrina privada · con enlace';
+    document.getElementById('link-card').style.display = visibilidad === 'privada_enlace' ? 'block' : 'none';
+
+    document.getElementById('stat-nsets').textContent = sets.length;
+    const counts = {};
+    sets.forEach(s => counts[s.tema] = (counts[s.tema]||0) + 1);
+    const predominante = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('stat-tema').textContent = predominante ? predominante[0] : '—';
+
+    const track = document.getElementById('gallery-track');
+    track.innerHTML = '';
+    sets.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = 'set-card';
+      card.innerHTML =
+        '<div class="set-photo">' + (s.foto ? '<img src="'+s.foto+'" alt="Foto de '+escapeHtml(s.nombre)+'" style="width:100%;height:100%;object-fit:cover;">' : '') + '</div>' +
+        '<div class="set-body">' +
+          '<h3>' + escapeHtml(s.nombre) + '</h3>' +
+          '<div class="set-meta-row mono"><span>' + (s.piezas || '—') + ' pzs</span><span>' + escapeHtml(s.tema) + '</span></div>' +
+          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+            '<button class="btn btn-sm btn-ghost" data-open-set="'+idx+'" type="button">Ver ficha</button>' +
+            '<button class="btn btn-sm btn-ghost" data-report="'+s.id+'" type="button">Reportar</button>' +
+          '</div>' +
+        '</div>';
+      track.appendChild(card);
+    });
+    track.querySelectorAll('[data-report]').forEach(b => b.addEventListener('click', () => openReportModal(b.dataset.report)));
+    track.querySelectorAll('[data-open-set]').forEach(b => b.addEventListener('click', () => openSetDetail(sets, Number(b.dataset.openSet), 'view-vitrina')));
+    resetGalleryScroll();
+    updateVitrinaBackButton();
+  }
+
+  /* ============================================================
+     GALERÍA — momentum + rubber-banding (apple-design §6, §9)
+     ============================================================ */
+  const viewport = document.getElementById('gallery-viewport');
+  const track = document.getElementById('gallery-track');
+  let scrollX = 0, gallerySpring = null;
+
+  function bounds(){
+    const max = 0;
+    const min = Math.min(0, viewport.clientWidth - track.scrollWidth);
+    return { min, max };
+  }
+  function setScroll(x){ scrollX = x; track.style.transform = 'translateX(' + x + 'px)'; }
+  function resetGalleryScroll(){ setScroll(0); }
+
+  let dragging=false, dragStartX=0, startScroll=0, history=[];
+  viewport.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    try { viewport.setPointerCapture(e.pointerId); } catch(err) { /* degrada sin romper el scroll */ }
+    if (gallerySpring) gallerySpring.cancel();
+    dragStartX = e.clientX; startScroll = scrollX;
+    history = [{x:e.clientX, t:performance.now()}];
+    track.style.transition = 'none';
+  });
+  viewport.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const { min, max } = bounds();
+    let next = startScroll + (e.clientX - dragStartX);
+    if (next > max) next = max + rubberband(next - max, viewport.clientWidth);
+    if (next < min) next = min - rubberband(min - next, viewport.clientWidth);
+    setScroll(next);
+    history.push({x:e.clientX, t:performance.now()});
+    if (history.length > 6) history.shift();
+  });
+  function endGalleryDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    const last = history[history.length-1] || {x:e.clientX, t:performance.now()};
+    const first = history[0] || last;
+    const dt = Math.max(last.t - first.t, 1);
+    const velocity = (last.x - first.x) / dt * 1000; // px/s
+    const { min, max } = bounds();
+    const projected = scrollX + (velocity/1000) * 0.998 / (1 - 0.998);
+    const target = Math.max(min, Math.min(max, projected));
+    gallerySpring = animateSpring(() => scrollX, (v) => setScroll(v), target, { dampingRatio: 1, response: 0.4, velocity });
+  }
+  viewport.addEventListener('pointerup', endGalleryDrag);
+  viewport.addEventListener('pointercancel', endGalleryDrag);
+
+  document.getElementById('gallery-prev').addEventListener('click', () => {
+    const { min } = bounds();
+    const target = Math.min(0, scrollX + 240);
+    if (gallerySpring) gallerySpring.cancel();
+    gallerySpring = animateSpring(() => scrollX, setScroll, Math.max(min, target), { dampingRatio: 1, response: 0.35 });
+  });
+  document.getElementById('gallery-next').addEventListener('click', () => {
+    const { min } = bounds();
+    const target = Math.max(min, scrollX - 240);
+    if (gallerySpring) gallerySpring.cancel();
+    gallerySpring = animateSpring(() => scrollX, setScroll, target, { dampingRatio: 1, response: 0.35 });
+  });
+
+  /* ============================================================
+     REPORTAR CONTENIDO (Flujo B)
+     ============================================================ */
+  const modal = document.getElementById('modal-reportar');
+  const reportedIds = new Set();
+  let reportingId = null;
+  function openReportModal(id){
+    if (reportedIds.has(id)){ showToast('Ya has reportado este contenido. Un moderador lo está revisando.'); return; }
+    reportingId = id;
+    modal.classList.add('is-open');
+    document.getElementById('motivo-reporte').focus();
+  }
+  function closeReportModal(){ modal.classList.remove('is-open'); reportingId = null; }
+  document.getElementById('btn-cancelar-reporte').addEventListener('click', closeReportModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeReportModal(); });
+  document.getElementById('form-reportar').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const motivo = document.getElementById('motivo-reporte');
+    if (!motivo.value.trim()){ showToast('Cuéntanos brevemente el motivo antes de enviar.'); return; }
+    reportedIds.add(reportingId);
+    closeReportModal();
+    motivo.value = '';
+    announce('Reporte enviado. Un moderador lo revisará.');
+    showToast('Gracias. Un moderador revisará este contenido pronto.');
+  });
+
+  /* ============================================================
+     ESTADO DE ERROR (anti-enumeración, spec sección 4)
+     ============================================================ */
+  document.getElementById('btn-ver-privada').addEventListener('click', () => showView('view-error'));
+
+  document.getElementById('btn-copiar-enlace').addEventListener('click', () => {
+    const input = document.getElementById('link-invitacion');
+    input.select();
+    showToast('Enlace copiado al portapapeles.');
+  });
+
+  /* ============================================================
+     ADDENDUM v0.3 — pantallas nuevas (R-08 a R-16)
+     Datos de demostración: fixtures del prototipo, no representan
+     datos reales. Todo lo de abajo vive en el mismo IIFE que el
+     flujo original y reutiliza sus utilidades (showView, escapeHtml,
+     showToast, announce, avatars, selectedAvatar, sets…).
+     ============================================================ */
+
+  /* ---------- estado de sesión (nav autenticada) ---------- */
+  function setAuthed(v){
+    state.authed = v;
+    document.getElementById('nav-authed-group').hidden = !v;
+  }
+
+  /* ---------- selector de estado (carga/vacío/error/con datos) ---------- */
+  function setViewState(viewId, stateName){
+    const view = document.getElementById(viewId);
+    view.querySelectorAll('[data-state-block]').forEach(b => { b.hidden = b.dataset.stateBlock !== stateName; });
+    const sw = view.querySelector('.state-switch');
+    if (sw) sw.querySelectorAll('button[data-state]').forEach(b => b.setAttribute('aria-pressed', b.dataset.state === stateName ? 'true' : 'false'));
+  }
+  function rerenderContent(viewId){
+    if (viewId === 'view-explorar') renderExplorar();
+    else if (viewId === 'view-dashboard') renderDashboard();
+    else if (viewId === 'view-mis-vitrinas') renderMisVitrinas();
+    else if (viewId === 'view-moderacion') renderModeracion();
+    else if (viewId === 'view-perfil') renderPerfilContent();
+    else if (viewId === 'view-detalle-set') renderSetDetail();
+  }
+  document.querySelectorAll('.state-switch').forEach(sw => {
+    const viewId = sw.dataset.viewSwitch;
+    sw.querySelectorAll('button[data-state]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setViewState(viewId, btn.dataset.state);
+        if (btn.dataset.state === 'content') rerenderContent(viewId);
+      });
+    });
+  });
+  document.querySelectorAll('[data-retry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.closest('.view');
+      const contentBtn = view.querySelector('.state-switch button[data-state="content"]');
+      if (contentBtn) contentBtn.click();
+    });
+  });
+
+  /* ---------- fixtures ---------- */
+  const temas = ['Star Wars','Harry Potter','El Señor de los Anillos','Ciudad','Técnic'];
+  const nombresSetDemo = ['Halcón Milenario','Torre de Hogwarts','Excavadora Técnic','Estación Espacial','Castillo de Rivendel','AT-AT'];
+  function demoPhoto(seed){
+    const hues = ['#D6392E','#E8A927','#2C6CA8','#3F8552'];
+    const c1 = hues[seed % hues.length], c2 = hues[(seed+2) % hues.length];
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs><rect width="300" height="220" fill="url(#g)"/></svg>'
+    );
+  }
+  function demoSets(vitrinaId, tema, n){
+    const out = [];
+    for (let i = 0; i < n; i++){
+      out.push({
+        id: vitrinaId + '-s' + i,
+        nombre: nombresSetDemo[(i + vitrinaId.length) % nombresSetDemo.length],
+        codigo: String(75000 + i*37),
+        fecha: '2024-0' + ((i%9)+1) + '-15',
+        piezas: 1200 + i*340,
+        tema: tema,
+        foto: demoPhoto(i + vitrinaId.length)
+      });
+    }
+    return out;
+  }
+  let demoVitrinas = [
+    { id:'v1', titulo:'Naves de la Trilogía Original', tematica:'Star Wars', visibilidad:'publica', estado:'publicada', mine:true, creado_en:'2026-07-20', visitas:212 },
+    { id:'v2', titulo:'Hogwarts pieza a pieza', tematica:'Harry Potter', visibilidad:'publica', estado:'publicada', mine:false, creado_en:'2026-07-15', visitas:340 },
+    { id:'v3', titulo:'Técnic de garaje', tematica:'Técnic', visibilidad:'privada', estado:'borrador', mine:true, creado_en:'2026-07-24', visitas:0 },
+    { id:'v4', titulo:'La Comarca en miniatura', tematica:'El Señor de los Anillos', visibilidad:'publica', estado:'publicada', mine:false, creado_en:'2026-06-30', visitas:98 },
+    { id:'v5', titulo:'Skyline urbano', tematica:'Ciudad', visibilidad:'privada_enlace', estado:'publicada', mine:true, creado_en:'2026-07-05', visitas:41 }
+  ];
+  demoVitrinas.forEach(v => { v.sets = demoSets(v.id, v.tematica, 2 + (v.id.charCodeAt(1) % 3)); });
+  function nsetsOf(v){ return v.sets.length; }
+  function piezasOf(v){ return v.sets.reduce((a,s) => a + s.piezas, 0); }
+  function buildDemoCard(v, onOpen){
+    const card = document.createElement('button');
+    card.type = 'button'; card.className = 'vitrina-card';
+    card.innerHTML =
+      '<div class="vc-photo" style="background-image:url(\''+v.sets[0].foto+'\')"></div>' +
+      '<div class="vc-body"><h3>'+escapeHtml(v.titulo)+'</h3>' +
+      '<div class="vc-meta mono"><span>'+nsetsOf(v)+' sets</span><span>'+escapeHtml(v.tematica)+'</span></div></div>';
+    card.addEventListener('click', onOpen);
+    return card;
+  }
+
+  /* ---------- vitrina pública reutilizada (Explorar / Mis vitrinas / Perfil → vitrina) ---------- */
+  let vitrinaBack = 'view-mesa';
+  function updateVitrinaBackButton(){
+    const btn = document.getElementById('btn-volver-mesa');
+    const map = {
+      'view-mesa': ['← Volver a editar', 'view-mesa'],
+      'view-explorar': ['← Volver a Explorar', 'view-explorar'],
+      'view-perfil': ['← Volver al perfil', 'view-perfil'],
+      'view-mis-vitrinas': ['← Volver a mis vitrinas', 'view-mis-vitrinas']
+    };
+    const [label, target] = map[vitrinaBack] || map['view-mesa'];
+    btn.textContent = label;
+    btn.onclick = () => showView(target);
+  }
+  function openVitrinaDemo(v, returnView){
+    vitrinaBack = returnView || 'view-explorar';
+    document.getElementById('h-vitrina').textContent = v.titulo;
+    document.getElementById('vitrina-eyebrow').textContent = 'Vitrina pública';
+    document.getElementById('link-card').style.display = 'none';
+    document.getElementById('stat-nsets').textContent = nsetsOf(v);
+    document.getElementById('stat-tema').textContent = v.tematica;
+
+    const track = document.getElementById('gallery-track');
+    track.innerHTML = '';
+    v.sets.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = 'set-card';
+      card.innerHTML =
+        '<div class="set-photo"><img src="'+s.foto+'" alt="Foto de '+escapeHtml(s.nombre)+'" style="width:100%;height:100%;object-fit:cover;"></div>' +
+        '<div class="set-body">' +
+          '<h3>' + escapeHtml(s.nombre) + '</h3>' +
+          '<div class="set-meta-row mono"><span>' + s.piezas + ' pzs</span><span>' + escapeHtml(s.tema) + '</span></div>' +
+          '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+            '<button class="btn btn-sm btn-ghost" data-open-set="'+idx+'" type="button">Ver ficha</button>' +
+            '<button class="btn btn-sm btn-ghost" data-report="'+s.id+'" type="button">Reportar</button>' +
+          '</div>' +
+        '</div>';
+      track.appendChild(card);
+    });
+    track.querySelectorAll('[data-report]').forEach(b => b.addEventListener('click', () => openReportModal(b.dataset.report)));
+    track.querySelectorAll('[data-open-set]').forEach(b => b.addEventListener('click', () => openSetDetail(v.sets, Number(b.dataset.openSet), 'view-vitrina')));
+    resetGalleryScroll();
+    updateVitrinaBackButton();
+    showView('view-vitrina');
+  }
+  const perfilTrigger = document.getElementById('perfil-pill-trigger');
+  perfilTrigger.addEventListener('click', () => openPerfilDemo());
+  perfilTrigger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openPerfilDemo(); } });
+
+  /* ---------- VIEW: Explorar (R-08, Flujo E) ---------- */
+  const explorarState = { temas: new Set(), orden: 'recientes', q: '' };
+  const explorarTemasEl = document.getElementById('explorar-temas');
+  temas.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = t; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', on ? 'false' : 'true');
+      if (on) explorarState.temas.delete(t); else explorarState.temas.add(t);
+      renderExplorar();
+    });
+    explorarTemasEl.appendChild(b);
+  });
+  document.getElementById('explorar-orden').addEventListener('change', (e) => { explorarState.orden = e.target.value; renderExplorar(); });
+  document.getElementById('explorar-buscar').addEventListener('input', (e) => { explorarState.q = e.target.value; renderExplorar(); });
+  document.getElementById('explorar-limpiar').addEventListener('click', () => {
+    explorarState.temas.clear(); explorarState.orden = 'recientes'; explorarState.q = '';
+    document.getElementById('explorar-orden').value = 'recientes';
+    document.getElementById('explorar-buscar').value = '';
+    explorarTemasEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+    renderExplorar();
+  });
+  function renderExplorar(){
+    let list = demoVitrinas.filter(v => v.visibilidad === 'publica' && v.estado === 'publicada');
+    if (explorarState.temas.size) list = list.filter(v => explorarState.temas.has(v.tematica));
+    if (explorarState.q.trim()){
+      const q = explorarState.q.trim().toLowerCase();
+      list = list.filter(v => v.titulo.toLowerCase().includes(q) || v.sets.some(s => s.nombre.toLowerCase().includes(q)));
+    }
+    list = list.slice();
+    if (explorarState.orden === 'recientes') list.sort((a,b) => a.creado_en < b.creado_en ? 1 : -1);
+    if (explorarState.orden === 'nsets') list.sort((a,b) => nsetsOf(b) - nsetsOf(a));
+    if (explorarState.orden === 'piezas') list.sort((a,b) => piezasOf(b) - piezasOf(a));
+
+    setViewState('view-explorar', list.length ? 'content' : 'empty');
+    const grid = document.getElementById('explorar-grid');
+    grid.innerHTML = '';
+    list.forEach(v => grid.appendChild(buildDemoCard(v, () => openVitrinaDemo(v, 'view-explorar'))));
+  }
+
+  /* ---------- VIEW: Dashboard (R-10, Flujo F) ---------- */
+  document.getElementById('dash-nueva').addEventListener('click', () => showView('view-mesa'));
+  document.getElementById('dash-ultima').addEventListener('click', () => showView('view-mesa'));
+  document.getElementById('dash-empty-crear').addEventListener('click', () => showView('view-mesa'));
+  function renderDashboard(){
+    const mine = demoVitrinas.filter(v => v.mine);
+    setViewState('view-dashboard', mine.length ? 'content' : 'empty');
+    if (!mine.length) return;
+    const publicadas = mine.filter(v => v.estado === 'publicada').length;
+    const borradores = mine.filter(v => v.estado === 'borrador').length;
+    document.getElementById('dash-vitrinas').textContent = mine.length;
+    document.getElementById('dash-estado').textContent = publicadas + ' publicada' + (publicadas===1?'':'s') + ' · ' + borradores + ' borrador' + (borradores===1?'':'es');
+    document.getElementById('dash-sets').textContent = mine.reduce((a,v) => a + nsetsOf(v), 0);
+    document.getElementById('dash-piezas').textContent = mine.reduce((a,v) => a + piezasOf(v), 0).toLocaleString('es-ES');
+    document.getElementById('dash-visitas').textContent = mine.reduce((a,v) => a + v.visitas, 0);
+    const counts = {};
+    mine.forEach(v => counts[v.tematica] = (counts[v.tematica]||0) + 1);
+    const pred = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('dash-tema').textContent = pred ? pred[0] : '—';
+  }
+
+  /* ---------- VIEW: Mis vitrinas (R-11, Flujo G) ---------- */
+  document.getElementById('mv-empty-crear').addEventListener('click', () => showView('view-mesa'));
+  function renderMisVitrinas(){
+    const list = demoVitrinas.filter(v => v.mine);
+    setViewState('view-mis-vitrinas', list.length ? 'content' : 'empty');
+    const wrap = document.getElementById('mis-vitrinas-list');
+    wrap.innerHTML = '';
+    list.forEach(v => wrap.appendChild(buildVitrinaRow(v)));
+  }
+  const visLabel = { publica:'Pública', privada:'Privada', privada_enlace:'Con enlace' };
+  function buildVitrinaRow(v){
+    const row = document.createElement('div');
+    row.className = 'vitrina-row';
+    row.innerHTML =
+      '<div class="vr-title"><h3>'+escapeHtml(v.titulo)+'</h3>' +
+      '<span class="badge badge-'+v.estado+'">'+(v.estado==='publicada'?'Publicada':'Borrador')+'</span>' +
+      '<span class="badge">'+visLabel[v.visibilidad]+'</span></div>' +
+      '<div class="vr-actions">' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-act="editar">Editar</button>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-act="visibilidad">Cambiar visibilidad</button>' +
+        (v.estado === 'publicada' ? '<button class="btn btn-ghost btn-sm" type="button" data-act="despublicar">Despublicar</button>' : '') +
+        '<button class="btn btn-ghost btn-sm" type="button" data-act="copiar">Copiar enlace</button>' +
+        '<button class="btn btn-danger-ghost btn-sm" type="button" data-act="eliminar">Eliminar</button>' +
+      '</div>';
+    row.querySelector('[data-act="editar"]').addEventListener('click', () => { showToast('Abriendo "'+v.titulo+'" en la mesa de trabajo (demo).'); showView('view-mesa'); });
+    row.querySelector('[data-act="visibilidad"]').addEventListener('click', () => {
+      const orden = ['publica','privada_enlace','privada'];
+      v.visibilidad = orden[(orden.indexOf(v.visibilidad)+1) % orden.length];
+      renderMisVitrinas();
+      if (document.getElementById('view-explorar').classList.contains('is-active')) renderExplorar();
+      announce('Visibilidad de "'+v.titulo+'" cambiada a '+visLabel[v.visibilidad]+'.');
+      showToast(v.visibilidad === 'publica' ? 'Ahora es pública: ya aparece en Explorar.' : 'Ya no aparece en Explorar.');
+    });
+    const despub = row.querySelector('[data-act="despublicar"]');
+    if (despub) despub.addEventListener('click', () => { v.estado = 'borrador'; renderMisVitrinas(); showToast('Vitrina despublicada.'); });
+    row.querySelector('[data-act="copiar"]').addEventListener('click', () => showToast('Enlace copiado al portapapeles.'));
+    row.querySelector('[data-act="eliminar"]').addEventListener('click', () => openDeleteVitrinaModal(v));
+    return row;
+  }
+  let vitrinaAEliminar = null;
+  function openDeleteVitrinaModal(v){
+    vitrinaAEliminar = v;
+    document.getElementById('eliminar-vitrina-desc').textContent = 'Se eliminará "'+v.titulo+'" con sus sets y fotos. No se puede deshacer.';
+    document.getElementById('modal-eliminar-vitrina').classList.add('is-open');
+  }
+  document.getElementById('btn-cancelar-eliminar-vitrina').addEventListener('click', () => document.getElementById('modal-eliminar-vitrina').classList.remove('is-open'));
+  document.getElementById('modal-eliminar-vitrina').addEventListener('click', (e) => { if (e.target.id === 'modal-eliminar-vitrina') e.target.classList.remove('is-open'); });
+  document.getElementById('btn-confirmar-eliminar-vitrina').addEventListener('click', () => {
+    demoVitrinas = demoVitrinas.filter(x => x !== vitrinaAEliminar);
+    document.getElementById('modal-eliminar-vitrina').classList.remove('is-open');
+    renderMisVitrinas();
+    showToast('Vitrina eliminada.');
+  });
+
+  /* ---------- VIEW: Detalle de set (R-12, Flujo H) ---------- */
+  let setDetailCtx = { list: demoVitrinas[0].sets, idx: 0, back: 'view-explorar' };
+  function openSetDetail(list, idx, back){
+    setDetailCtx = { list, idx, back };
+    renderSetDetail();
+    showView('view-detalle-set');
+  }
+  function renderSetDetail(){
+    const { list, idx } = setDetailCtx;
+    const s = list[idx];
+    setViewState('view-detalle-set', s.foto ? 'content' : 'empty');
+    document.getElementById('h-detalle-set').textContent = s.nombre;
+    if (!s.foto) return;
+    document.getElementById('detalle-foto').innerHTML =
+      '<div class="set-detail-nav"><button type="button" id="detalle-prev" aria-label="Set anterior">←</button><button type="button" id="detalle-next" aria-label="Set siguiente">→</button></div>' +
+      '<div class="set-detail-counter">' + (idx+1) + ' / ' + list.length + '</div>' +
+      '<img src="'+s.foto+'" alt="Foto de '+escapeHtml(s.nombre)+'">';
+    document.getElementById('detalle-codigo').textContent = s.codigo || '—';
+    document.getElementById('detalle-fecha').textContent = s.fecha || '—';
+    document.getElementById('detalle-piezas').textContent = s.piezas ? s.piezas + ' piezas' : '—';
+    document.getElementById('detalle-tema').textContent = s.tema || '—';
+    const prevBtn = document.getElementById('detalle-prev'), nextBtn = document.getElementById('detalle-next');
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === list.length - 1;
+    prevBtn.addEventListener('click', () => { if (setDetailCtx.idx > 0){ setDetailCtx.idx--; renderSetDetail(); announce('Set anterior: ' + setDetailCtx.list[setDetailCtx.idx].nombre); } });
+    nextBtn.addEventListener('click', () => { if (setDetailCtx.idx < setDetailCtx.list.length - 1){ setDetailCtx.idx++; renderSetDetail(); announce('Set siguiente: ' + setDetailCtx.list[setDetailCtx.idx].nombre); } });
+  }
+  document.getElementById('btn-detalle-volver').addEventListener('click', () => showView(setDetailCtx.back));
+
+  /* ---------- VIEW: Perfil público (R-13, Flujo I) ---------- */
+  function renderPerfilContent(){
+    const publicas = demoVitrinas.filter(v => v.visibilidad === 'publica' && v.estado === 'publicada');
+    setViewState('view-perfil', publicas.length ? 'content' : 'empty');
+    if (!publicas.length) return;
+    document.getElementById('perfil-nvitrinas').textContent = publicas.length;
+    document.getElementById('perfil-nsets').textContent = publicas.reduce((a,v) => a + nsetsOf(v), 0);
+    const counts = {};
+    publicas.forEach(v => counts[v.tematica] = (counts[v.tematica]||0) + 1);
+    const pred = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('perfil-tema').textContent = pred ? pred[0] : '—';
+    const grid = document.getElementById('perfil-grid');
+    grid.innerHTML = '';
+    publicas.forEach(v => grid.appendChild(buildDemoCard(v, () => openVitrinaDemo(v, 'view-perfil'))));
+  }
+  function openPerfilDemo(){
+    renderPerfilContent();
+    showView('view-perfil');
+  }
+
+  /* ---------- VIEW: Ajustes de cuenta (R-14, Flujo C) ---------- */
+  const avatarGridAjustes = document.getElementById('avatar-grid-ajustes');
+  avatars.forEach((a, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'avatar-opt'; b.textContent = a; b.style.background = 'var(--panel)';
+    b.setAttribute('aria-pressed', i === selectedAvatar ? 'true' : 'false');
+    b.setAttribute('aria-label', 'Avatar genérico ' + (i+1));
+    b.addEventListener('click', () => {
+      avatarGridAjustes.querySelectorAll('.avatar-opt').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      selectedAvatar = i;
+      document.getElementById('perfil-avatar').textContent = avatars[i];
+      showToast('Avatar actualizado.');
+    });
+    avatarGridAjustes.appendChild(b);
+  });
+  document.getElementById('toggle-consentimiento').addEventListener('change', (e) => {
+    showToast(e.target.checked ? 'Consentimiento de analítica concedido.' : 'Consentimiento retirado. Dejamos de enviar eventos de analítica.');
+  });
+  document.getElementById('ajustes-empty-aceptar').addEventListener('click', () => {
+    setViewState('view-ajustes', 'content');
+    showToast('Preferencia guardada.');
+  });
+  document.getElementById('btn-eliminar-cuenta').addEventListener('click', () => document.getElementById('modal-eliminar-cuenta').classList.add('is-open'));
+  document.getElementById('btn-cancelar-eliminar-cuenta').addEventListener('click', () => document.getElementById('modal-eliminar-cuenta').classList.remove('is-open'));
+  document.getElementById('modal-eliminar-cuenta').addEventListener('click', (e) => { if (e.target.id === 'modal-eliminar-cuenta') e.target.classList.remove('is-open'); });
+  document.getElementById('form-eliminar-cuenta').addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('modal-eliminar-cuenta').classList.remove('is-open');
+    document.getElementById('reauth-pass').value = '';
+    showToast('Cuenta marcada para borrado. Cascada ejecutada; backups se purgan en ≤30 días.');
+    announce('Cuenta eliminada.');
+    setAuthed(false);
+    showView('view-bienvenida');
+  });
+
+  /* ---------- VIEW: Cola de moderación (R-15, Flujo B2) ---------- */
+  let reportesDemo = [
+    { id:'r1', contenido:'Set "Halcón Milenario" en "Naves de la Trilogía Original"', motivo:'Puede que la foto muestre un reflejo con datos identificables, sin querer.', fecha:'2026-07-27' },
+    { id:'r2', contenido:'Vitrina "Skyline urbano"', motivo:'Título con lenguaje inapropiado.', fecha:'2026-07-26' }
+  ];
+  function renderModeracion(){
+    setViewState('view-moderacion', reportesDemo.length ? 'content' : 'empty');
+    const list = document.getElementById('moderacion-list');
+    list.innerHTML = '';
+    reportesDemo.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'report-row';
+      row.innerHTML =
+        '<div class="rr-top"><strong>'+escapeHtml(r.contenido)+'</strong><span class="mono" style="font-size:0.7rem; opacity:0.6;">'+r.fecha+'</span></div>' +
+        '<div class="rr-motivo">'+escapeHtml(r.motivo)+'</div>' +
+        '<div class="rr-actions">' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-act="ok">Marcar revisado</button>' +
+          '<button class="btn btn-danger-ghost btn-sm" type="button" data-act="eliminar">Ocultar contenido</button>' +
+        '</div>';
+      row.querySelector('[data-act="ok"]').addEventListener('click', () => resolverReporte(r.id, 'revisado_ok'));
+      row.querySelector('[data-act="eliminar"]').addEventListener('click', () => resolverReporte(r.id, 'revisado_eliminado'));
+      list.appendChild(row);
+    });
+  }
+  function resolverReporte(id, estado){
+    reportesDemo = reportesDemo.filter(r => r.id !== id);
+    renderModeracion();
+    showToast(estado === 'revisado_ok' ? 'Reporte marcado como revisado.' : 'Contenido ocultado.');
+  }
+  document.getElementById('btn-simular-sin-admin').addEventListener('click', () => showView('view-error'));
+
+  /* ---------- Navegación superior (Explorar + grupo autenticado) ---------- */
+  const navButtons = document.querySelectorAll('.nav-link[data-goto]');
+  navButtons.forEach(b => b.addEventListener('click', () => {
+    const viewId = b.dataset.goto;
+    rerenderContent(viewId);
+    showView(viewId);
+    navButtons.forEach(x => x.classList.toggle('is-current', x === b));
+  }));
+
+  /* ---------- Render inicial de las pantallas nuevas ---------- */
+  renderExplorar();
+  renderDashboard();
+  renderMisVitrinas();
+  renderModeracion();
+  renderPerfilContent();
+  renderSetDetail();
+
+  renderMesa();
+})();
+</script>
+</body>
+</html>
