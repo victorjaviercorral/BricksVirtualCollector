@@ -55,7 +55,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
           <Link href="/" className="hover:text-brand-blue transition-colors">
             Explorar
           </Link>
-          <Link href="/docs" className="hover:text-brand-blue transition-colors">
+          <Link href="/como-funciona" className="hover:text-brand-blue transition-colors">
             Cómo funciona
           </Link>
 
@@ -151,7 +151,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
               Explorar
             </Link>
             <Link
-              href="/docs"
+              href="/como-funciona"
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"
             >
