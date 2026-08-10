@@ -12,6 +12,8 @@
   --color-brand-yellow: #E8A927;
   --color-brand-blue: #2C6CA8;
   --color-brand-green: #3F8552;
+  --color-brand-purple: #8C43C4;
+  --color-brand-teal: #009F75;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
@@ -49,5 +51,15 @@ body {
 @layer utilities {
   .glass {
     @apply bg-white/70 dark:bg-black/70 backdrop-blur-md border border-white/20 dark:border-white/10;
+  }
+  
+  .neo-brutalism {
+    @apply border-[3px] border-foreground rounded-2xl;
+    box-shadow: 4px 6px 0px 0px var(--foreground);
+  }
+  
+  .neo-brutalism-sm {
+    @apply border-2 border-foreground rounded-full;
+    box-shadow: 2px 3px 0px 0px var(--foreground);
   }
 }
