@@ -1,1 +1,0 @@
-export default function Page() { return (<div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-fluid"><h1 className="text-3xl font-display font-bold">Pantalla Moderación</h1><p className="text-muted-foreground">Contenido simulado para verificar el flujo.</p></div>); }
