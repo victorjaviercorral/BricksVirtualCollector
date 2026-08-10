@@ -16,8 +16,7 @@ export async function generateStaticParams() {
   ];
 }
 
-export default async function LegalPage({ params }: { params: { slug: string } }) {
-  // Await the params before using them as required by Next.js 15+ (if using newer Next)
+export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
   const allowedSlugs = [
