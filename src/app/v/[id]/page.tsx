@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { PackageOpen, Map, ArrowRight, Share2 } from "lucide-react";
+import { getVitrinaPublicaById } from "@/lib/queries/vitrinas";
 
 type Props = {
   params: Promise<{ id: string }>
@@ -14,13 +14,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  
-  const supabase = await createClient();
-  const { data: vitrina } = await supabase
-    .from('vitrinas')
-    .select('nombre, descripcion, usuarios_perfil(alias, username)')
-    .eq('id', id)
-    .single();
+
+  const vitrina = await getVitrinaPublicaById(id);
 
   if (!vitrina) return { title: 'Vitrina no encontrada' };
 
@@ -40,30 +35,10 @@ export async function generateMetadata(
 export default async function PublicVitrinaPage({ params }: Props) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
-  
-  const supabase = await createClient();
-  
-  const { data: vitrina } = await supabase
-    .from('vitrinas')
-    .select(`
-      *,
-      usuarios_perfil (
-        username,
-        alias,
-        avatar_url
-      ),
-      sets (
-        id,
-        nombre,
-        num_piezas,
-        tematica,
-        fotos (
-          url
-        )
-      )
-    `)
-    .eq('id', id)
-    .single();
+
+  // Misma consulta que generateMetadata() de más arriba, cacheada por request (React cache()):
+  // esta llamada reutiliza el resultado en vez de generar un segundo round trip a Supabase.
+  const vitrina = await getVitrinaPublicaById(id);
 
   if (!vitrina) {
     notFound();
