@@ -1,15 +1,15 @@
 # Política de Cookies
 
-**Última actualización:** ⚠️ PENDIENTE: [Fecha]
+**Última actualización:** 10 de agosto de 2026
 
-En cumplimiento del artículo 22.2 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), esta Política explica qué son las cookies, cuáles utilizamos en **Lego Virtual Museum** y cómo puedes gestionarlas.
+En cumplimiento del artículo 22.2 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), esta Política explica qué son las cookies, cuáles utilizamos en **BricksVirtualCollector** y cómo puedes gestionarlas.
 
 ## 1. ¿Qué son las cookies?
 Las cookies son pequeños archivos de texto que los sitios web almacenan en el navegador del usuario para recordar sus preferencias, mantener la sesión iniciada o recopilar estadísticas de uso.
 
-## 2. Cookies que utilizamos en Lego Virtual Museum
+## 2. Cookies que utilizamos en BricksVirtualCollector
 
-Actualmente, **Lego Virtual Museum SOLO utiliza cookies estrictamente necesarias (técnicas)**. No utilizamos cookies analíticas, de rastreo ni publicitarias de terceros.
+Actualmente, **BricksVirtualCollector SOLO utiliza cookies estrictamente necesarias (técnicas)**. No utilizamos cookies analíticas, de rastreo ni publicitarias de terceros.
 
 Al ser cookies técnicas, **están exentas de la obligación de obtener el consentimiento** del usuario según la LSSI-CE, ya que son imprescindibles para prestar el servicio solicitado.
 

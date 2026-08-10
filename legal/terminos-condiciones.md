@@ -1,8 +1,15 @@
 # Términos y Condiciones de Uso
 
-**Última actualización:** ⚠️ PENDIENTE: [Fecha]
+**Última actualización:** 10 de agosto de 2026
 
-Al registrarte y utilizar **Lego Virtual Museum** (en adelante, la "Plataforma"), aceptas someterte a estos Términos y Condiciones. Si no estás de acuerdo, no debes utilizar nuestros servicios.
+> **Aviso de prototipo.** **BricksVirtualCollector** es un prototipo de demostración técnica con
+> fines de portfolio. No es un producto comercial y **el registro de nuevos usuarios está
+> cerrado**: el acceso se realiza mediante una cuenta de demostración de solo lectura, con
+> contenido ficticio. Las cláusulas relativas a cuentas de usuario, contenido subido y moderación
+> describen el funcionamiento previsto de la plataforma y quedarán plenamente operativas si el
+> proyecto abre el registro. Hasta entonces no resultan de aplicación práctica.
+
+Al utilizar **BricksVirtualCollector** (en adelante, la "Plataforma"), aceptas someterte a estos Términos y Condiciones. Si no estás de acuerdo, no debes utilizar el servicio.
 
 ## 1. Naturaleza del Servicio y Cuentas de Usuario
 1.1. La Plataforma permite a coleccionistas adultos crear un inventario virtual y exponer fotos de sus construcciones de LEGO®. 
@@ -31,4 +38,7 @@ Nos esforzamos por cumplir con los estándares de accesibilidad aplicables, en l
 Nos reservamos el derecho de modificar estos Términos en cualquier momento. Te notificaremos sobre cambios sustanciales a través del correo electrónico asociado a tu cuenta con una antelación mínima de 15 días.
 
 ## 7. Ley Aplicable y Jurisdicción
-Estos Términos se rigen por la legislación española. Para cualquier controversia, las partes se someten a los juzgados y tribunales de la ciudad de ⚠️ PENDIENTE: [Tu Ciudad, ej. Madrid, España], salvo que la ley imponga otra jurisdicción de forma imperativa (ej. defensa de consumidores).
+Estos Términos se rigen por la legislación española. Para cualquier controversia, las partes se someten a los juzgados y tribunales de la ciudad de **Málaga (España)**, salvo que la ley imponga otra jurisdicción de forma imperativa (ej. defensa de consumidores).
+
+## 8. Marcas de terceros
+LEGO® es una marca registrada de The LEGO Group, que no patrocina, autoriza ni avala esta Plataforma. Véase la [Política de Propiedad Intelectual y Marcas](politica-propiedad-intelectual.md).

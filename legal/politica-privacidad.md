@@ -1,42 +1,73 @@
 # Política de Privacidad
 
-**Última actualización:** ⚠️ PENDIENTE: [Fecha]
+**Última actualización:** 10 de agosto de 2026
 
-En cumplimiento del Reglamento (UE) 2016/679 General de Protección de Datos (RGPD) y la Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD), te informamos sobre cómo tratamos tus datos personales en **Lego Virtual Museum**.
+> **Aviso de prototipo.** Este sitio es un prototipo de demostración técnica con fines de
+> portfolio. **El registro de nuevos usuarios está cerrado** y el contenido mostrado es ficticio.
+> En consecuencia, este sitio **no trata datos personales de usuarios registrados**. Lo que sigue
+> describe el único tratamiento que sí existe: los datos técnicos inherentes a servir una página
+> web.
+
+En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y de la Ley Orgánica 3/2018 (LOPDGDD), se
+informa de lo siguiente.
 
 ## 1. Responsable del Tratamiento
-- **Titular:** ⚠️ PENDIENTE: [Tu Nombre o Razón Social]
-- **NIF/CIF:** ⚠️ PENDIENTE: [Tu NIF]
-- **Dirección:** ⚠️ PENDIENTE: [Tu Dirección]
-- **Correo electrónico de contacto:** ⚠️ PENDIENTE: [Tu Email de Privacidad]
 
-## 2. Datos que recopilamos, finalidad y legitimación (Art. 6 RGPD)
+- **Titular:** Víctor Javier Corral (persona física, sin actividad económica asociada al sitio).
+- **Canal de contacto y ejercicio de derechos:** a través del repositorio del proyecto en GitHub
+  ([abrir una incidencia](https://github.com/victorjaviercorral/LegoVirtualMuseum/issues)) o del
+  perfil profesional de LinkedIn del titular.
 
-Tratamos tus datos exclusivamente para las siguientes finalidades:
+No se publican NIF ni domicilio particular: véase la justificación en el
+[Aviso Legal](aviso-legal.md) §1.
 
-| Finalidad | Datos Tratados | Base Jurídica | Plazo de Conservación |
+## 2. Datos que se tratan, finalidad y legitimación (Art. 6 RGPD)
+
+| Finalidad | Datos tratados | Base jurídica | Conservación |
 | :--- | :--- | :--- | :--- |
-| **Gestión de tu cuenta y acceso** | Email, contraseña (cifrada), nombre de usuario, foto de perfil (avatar). | **Ejecución de contrato** (aceptación de Términos y Condiciones). | Hasta que decidas eliminar tu cuenta. |
-| **Publicación de tu colección** | Imágenes de los sets, nombre, descripción y otros datos aportados en tu vitrina. | **Ejecución de contrato** y **Consentimiento** explícito al subir el contenido. | Mientras mantengas el contenido publicado o hasta borrar tu cuenta. |
-| **Gamificación (Sistema de Bricks)** | Identificador cifrado (hash) de tu sesión/dispositivo. | **Interés Legítimo** para evitar fraude (ej. votos múltiples). | 14 días (rotación estándar de logs/hashes). |
-| **Mantenimiento y Seguridad** | Dirección IP, User-Agent, datos de navegación. | **Interés Legítimo** (mantener la seguridad de la red y prevenir ataques). | 30 días en los logs del servidor. |
-| **Moderación (Ley de Servicios Digitales - DSA)** | Contenido reportado y motivo del reporte. | **Obligación Legal** (Art. 16 DSA) e Interés Legítimo. | Hasta resolución del reporte y prescripción de responsabilidades legales. |
+| **Servir la página y mantener la seguridad** | Dirección IP, User-Agent y metadatos de la petición, registrados automáticamente por los proveedores de infraestructura. | **Interés legítimo** (art. 6.1.f): funcionamiento y seguridad de la red. | Según la política de retención de cada proveedor. |
+| **Diagnóstico de errores** | Mensajes de error, ruta afectada y marca temporal, en la tabla propia `system_logs`. | **Interés legítimo**: detectar y corregir fallos. | 30 días. |
+| **Mantener la sesión de la cuenta de demostración** | Cookie técnica de sesión emitida por Supabase Auth. | **Necesaria para prestar el servicio solicitado** (art. 22.2 LSSI: exenta de consentimiento). | Hasta cierre de sesión o caducidad del token. |
 
-> [!NOTE] 
-> **Privacidad desde el Diseño (Imágenes):** Cuando subes fotos de tus colecciones, nuestro sistema elimina automáticamente los metadatos ocultos (datos EXIF), como la geolocalización o el modelo de tu cámara, antes de guardarlas en nuestros servidores. 
+**No se realiza** ninguna de las siguientes actividades: registro de usuarios, formularios de
+contacto, newsletter, publicidad, analítica web, elaboración de perfiles, decisiones automatizadas
+ni venta o cesión de datos a terceros.
 
-## 3. Destinatarios y Proveedores (Encargados de Tratamiento)
-No vendemos ni cedemos tus datos a terceros. Para prestar el servicio, nos apoyamos en proveedores tecnológicos que actúan como nuestros Encargados de Tratamiento (Art. 28 RGPD):
-- **Base de datos y autenticación:** Supabase. Servidores ubicados en **Frankfurt (Unión Europea)**.
-- **Alojamiento web (Hosting):** ⚠️ PENDIENTE: [Vercel / Netlify]. Servidores ubicados en la **Unión Europea**.
+## 3. Destinatarios y Proveedores (Encargados del Tratamiento, Art. 28 RGPD)
 
-No realizamos transferencias internacionales de datos fuera del Espacio Económico Europeo (EEE). Las tipografías del sitio web están alojadas en nuestro propio servidor, por lo que no enviamos tu IP a Google Fonts.
+- **Base de datos y autenticación:** Supabase. Proyecto alojado en **Frankfurt (Alemania, Unión
+  Europea)**.
+- **Alojamiento web:** Vercel. Servidores en la Unión Europea.
 
-## 4. Menores de Edad
-Lego Virtual Museum está dirigido a adultos y coleccionistas. **No está permitido el registro a menores de 14 años** (Art. 7 LOPDGDD). Si detectamos que un menor ha creado una cuenta, procederemos a su bloqueo y eliminación inmediata.
+**No se realizan transferencias internacionales de datos fuera del Espacio Económico Europeo.**
 
-## 5. Tus Derechos
-Puedes ejercer en cualquier momento tus derechos de **acceso, rectificación, supresión, limitación, oposición y portabilidad** de tus datos.
-Para ejercerlos, envíanos un correo electrónico a ⚠️ PENDIENTE: [Tu Email de Privacidad] indicando en el asunto "Ejercicio de Derechos RGPD".
-  
-Asimismo, te informamos de que tienes derecho a presentar una reclamación ante la **Agencia Española de Protección de Datos (AEPD)** (www.aepd.es) si consideras que el tratamiento no se ajusta a la normativa vigente.
+Las tipografías del sitio se sirven desde el propio dominio: se descargan e incorporan en el
+proceso de compilación, por lo que **no se envía tu dirección IP a Google Fonts** ni a ningún otro
+servicio externo durante la navegación.
+
+## 4. Menores de edad
+
+El sitio está dirigido a un público adulto. Al estar el registro cerrado, no se recogen datos de
+ninguna persona, menor o adulta.
+
+## 5. Tus derechos
+
+Puedes ejercer en cualquier momento tus derechos de **acceso, rectificación, supresión,
+limitación, oposición y portabilidad**, a través de cualquiera de los canales indicados en la
+sección 1.
+
+> **Nota sobre el canal de contacto.** El canal principal es público (incidencias de GitHub). Si
+> tu solicitud incluyera información que no deseas hacer pública, utiliza el canal privado de
+> LinkedIn. Dado que este sitio no mantiene cuentas de usuario ni almacena datos personales
+> identificables más allá de los logs técnicos de los proveedores, en la práctica no existen datos
+> propios sobre los que ejercer estos derechos.
+
+Asimismo, tienes derecho a presentar una reclamación ante la **Agencia Española de Protección de
+Datos (AEPD)**, [www.aepd.es](https://www.aepd.es), si consideras que el tratamiento no se ajusta
+a la normativa vigente.
+
+## 6. Cambios en esta política
+
+Si el proyecto abriera el registro de usuarios o incorporara analítica, publicidad u otras
+funcionalidades que impliquen tratamiento de datos personales, esta política se actualizará
+**antes** de dicho cambio y, cuando proceda, se solicitará el consentimiento correspondiente.
