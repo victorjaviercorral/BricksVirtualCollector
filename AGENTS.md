@@ -36,6 +36,12 @@ Antes de dar por terminada cualquier nueva funcionalidad, fase de diseño o mejo
 2. **Compartimentar el Conocimiento:** Crear o actualizar la documentación pertinente dentro de las carpetas específicas en `docs/` (ej. `docs/03-diseno/`, `docs/legal/`, `docs/testing/`). 
 3. **No fallar en la ejecución:** Esta es una tarea de alto impacto. La información es poder y es vital para el trabajo de los próximos agentes que asistan en el proyecto.
 
+### 4. Investigación Previa Obligatoria (Contexto Real vs Documental)
+**Regla Estricta:** Antes de generar documentación, planificar mejoras o describir flujos de usuario, **estás obligado a leer el código fuente real implementado (componentes, rutas, APIs).**
+1. **No asumas:** Los PRDs (Product Requirements Documents) son documentos vivos que pueden quedar desactualizados frente a la realidad del código (MVP iterativo).
+2. **Verifica:** Usa herramientas como `view_file` o `list_dir` para inspeccionar la carpeta `src/app/` y `src/components/` antes de afirmar cómo funciona un flujo.
+3. **Contexto:** Si te falta contexto sobre una funcionalidad, averígualo leyendo la base de código. Generar documentación inventada o basada en suposiciones socava la confianza y calidad del proyecto.
+
 ### 4. Gestión de Entregas y Checkpoints (Versionado y Rollback)
 Para asegurar la estabilidad del código base y permitir volver a un estado funcional si algo sale mal, debes seguir esta política de versionado al finalizar tareas importantes:
 1. **Commits Estructurados y Semánticos:** Agrupa los cambios lógicamente antes de hacer commit. Usa convenciones (ej. `feat:`, `fix:`, `docs:`, `chore:`).
