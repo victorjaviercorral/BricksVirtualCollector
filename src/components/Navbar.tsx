@@ -95,6 +95,8 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                aria-label="Menú de perfil"
+                aria-expanded={isProfileDropdownOpen}
                 className="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-black/10 dark:hover:border-white/10"
               >
                 <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-xs shadow-sm overflow-hidden border border-foreground/10">
@@ -151,6 +153,8 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
           <ThemeToggle />
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={isMobileMenuOpen}
             className="p-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

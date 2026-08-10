@@ -50,8 +50,9 @@ export default function UpdatePassword() {
 
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold mb-2">Nueva Contraseña</label>
+            <label htmlFor="update-password-new" className="block text-sm font-bold mb-2">Nueva Contraseña</label>
             <input
+              id="update-password-new"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

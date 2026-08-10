@@ -150,19 +150,21 @@ export default async function SystemHealthPage() {
             <form action={updateRateLimit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Peticiones (Reqs)</label>
-                  <input 
-                    name="requests" 
-                    type="number" 
+                  <label htmlFor="rate-limit-requests" className="block text-xs font-medium text-slate-400 mb-1">Peticiones (Reqs)</label>
+                  <input
+                    id="rate-limit-requests"
+                    name="requests"
+                    type="number"
                     defaultValue={rateLimit.requests}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[#2C6CA8]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Ventana (Segundos)</label>
-                  <input 
-                    name="window_seconds" 
-                    type="number" 
+                  <label htmlFor="rate-limit-window" className="block text-xs font-medium text-slate-400 mb-1">Ventana (Segundos)</label>
+                  <input
+                    id="rate-limit-window"
+                    name="window_seconds"
+                    type="number"
                     defaultValue={rateLimit.window_seconds}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[#2C6CA8]"
                   />

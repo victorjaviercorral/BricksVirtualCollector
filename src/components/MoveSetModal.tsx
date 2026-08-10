@@ -55,7 +55,7 @@ export default function MoveSetModal({ set, vitrinas }: { set: any, vitrinas: an
           <div className="bg-background border border-black/5 dark:border-white/5 shadow-2xl rounded-3xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5">
               <h3 className="font-display font-bold text-xl">Mover Set</h3>
-              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
+              <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -66,8 +66,8 @@ export default function MoveSetModal({ set, vitrinas }: { set: any, vitrinas: an
               </p>
 
               <div>
-                <label className="block text-sm font-bold mb-3">Vitrina de destino</label>
-                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2">
+                <label id="move-set-vitrina-label" className="block text-sm font-bold mb-3">Vitrina de destino</label>
+                <div role="group" aria-labelledby="move-set-vitrina-label" className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2">
                   {vitrinas.map(vitrina => (
                     <button
                       key={vitrina.id}

@@ -149,7 +149,7 @@ export default function PerfilPage() {
               )}
             </div>
             
-            <label className="absolute bottom-0 right-0 w-10 h-10 bg-brand-blue text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform">
+            <label aria-label="Cambiar foto de perfil" className="absolute bottom-0 right-0 w-10 h-10 bg-brand-blue text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform">
               <Camera size={18} />
               <input 
                 type="file" 
@@ -180,11 +180,12 @@ export default function PerfilPage() {
 
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           <div>
-            <label className="block text-sm font-bold mb-2">Alias (Opcional)</label>
+            <label htmlFor="perfil-alias" className="block text-sm font-bold mb-2">Alias (Opcional)</label>
             <p className="text-xs text-black/60 dark:text-white/60 mb-2">
               ¿Cómo quieres que te llame la comunidad en lugar de tu nombre de usuario?
             </p>
             <input
+              id="perfil-alias"
               type="text"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}

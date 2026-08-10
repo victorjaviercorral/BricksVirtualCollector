@@ -260,7 +260,7 @@ export default function MesaTrabajoClient() {
             
             {!vitrinaId && (
               <div className="flex flex-col gap-2 p-4 bg-brand-blue/5 border border-brand-blue/10 rounded-2xl mb-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-brand-blue ml-1 flex items-center gap-1">
+                <label htmlFor="mesa-vitrina-destino" className="text-xs font-bold uppercase tracking-wider text-brand-blue ml-1 flex items-center gap-1">
                   <Package size={14} /> Seleccionar Vitrina de destino
                 </label>
                 {isLoadingVitrinas ? (
@@ -268,7 +268,8 @@ export default function MesaTrabajoClient() {
                     <Loader2 size={16} className="animate-spin" /> Cargando tus vitrinas...
                   </div>
                 ) : (
-                  <select 
+                  <select
+                    id="mesa-vitrina-destino"
                     value={selectedVitrinaId}
                     onChange={(e) => setSelectedVitrinaId(e.target.value)}
                     className="w-full px-4 py-3 bg-white dark:bg-black rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none font-bold shadow-sm"
@@ -284,11 +285,12 @@ export default function MesaTrabajoClient() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Set</label>
+                <label htmlFor="mesa-num-set" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Set</label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                  <input 
-                    type="text" 
+                  <input
+                    id="mesa-num-set"
+                    type="text"
                     value={numSet}
                     onChange={(e) => setNumSet(e.target.value)}
                     placeholder="Ej. 75192" 
@@ -297,11 +299,12 @@ export default function MesaTrabajoClient() {
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Piezas</label>
+                <label htmlFor="mesa-num-piezas" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Piezas</label>
                 <div className="relative">
                   <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                  <input 
-                    type="number" 
+                  <input
+                    id="mesa-num-piezas"
+                    type="number"
                     value={numPiezas}
                     onChange={(e) => setNumPiezas(e.target.value)}
                     placeholder="Ej. 7541" 
@@ -312,10 +315,11 @@ export default function MesaTrabajoClient() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Temática</label>
+              <label htmlFor="mesa-tematica" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Temática</label>
               <div className="relative">
                 <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                <select 
+                <select
+                  id="mesa-tematica"
                   value={tematica}
                   onChange={(e) => setTematica(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none"
@@ -334,9 +338,10 @@ export default function MesaTrabajoClient() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Nombre del Set</label>
-              <input 
-                type="text" 
+              <label htmlFor="mesa-nombre-set" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Nombre del Set</label>
+              <input
+                id="mesa-nombre-set"
+                type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Halcón Milenario UCS" 
@@ -345,10 +350,11 @@ export default function MesaTrabajoClient() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Estado de conservación</label>
+              <label htmlFor="mesa-estado" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Estado de conservación</label>
               <div className="relative">
                 <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                <select 
+                <select
+                  id="mesa-estado"
                   value={estado}
                   onChange={(e) => setEstado(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none"
@@ -362,11 +368,12 @@ export default function MesaTrabajoClient() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1 flex items-center justify-between">
+              <label htmlFor="mesa-notas" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1 flex items-center justify-between">
                 Notas
                 <span className="text-brand-blue text-[10px] bg-brand-blue/10 px-2 py-0.5 rounded-full flex items-center gap-1"><Info size={12}/> Opcional</span>
               </label>
-              <textarea 
+              <textarea
+                id="mesa-notas"
                 rows={4}
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}

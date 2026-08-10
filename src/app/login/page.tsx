@@ -86,11 +86,12 @@ export default function Login() {
 
         <form className="flex flex-col gap-4" onSubmit={handleLogin}>
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Correo Electrónico</label>
+            <label htmlFor="login-email" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Correo Electrónico</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-              <input 
-                type="email" 
+              <input
+                id="login-email"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="coleccionista@ejemplo.com"
@@ -99,13 +100,14 @@ export default function Login() {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Contraseña</label>
+            <label htmlFor="login-password" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Contraseña</label>
             <div className="relative">
               <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-              <input 
-                type="password" 
+              <input
+                id="login-password"
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

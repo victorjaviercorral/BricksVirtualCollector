@@ -194,15 +194,15 @@ export default function AdminExposiciones() {
             <form onSubmit={handleCreate} className="p-6 flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
               <div>
                 <label htmlFor="titulo" className="block text-sm font-black mb-2">Título de la Campaña</label>
-                <input id="titulo" required type="text" value={titulo} onChange={e => setTitulo(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none font-medium" placeholder="Ej. Star Wars Week" />
+                <input id="titulo" required type="text" value={titulo} onChange={e => setTitulo(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-medium" placeholder="Ej. Star Wars Week" />
               </div>
               <div>
                 <label htmlFor="descripcion" className="block text-sm font-black mb-2">Descripción Corta</label>
-                <textarea id="descripcion" required value={descripcion} onChange={e => setDescripcion(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none resize-none h-20 font-medium" />
+                <textarea id="descripcion" required value={descripcion} onChange={e => setDescripcion(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue resize-none h-20 font-medium" />
               </div>
               <div>
                 <label htmlFor="requisitos" className="block text-sm font-black mb-2">Requisitos de Participación (Normas)</label>
-                <textarea id="requisitos" required value={requisitos} onChange={e => setRequisitos(e.target.value)} placeholder="Ej. Solo naves de la trilogía original. Mínimo 3 fotos." className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none resize-none h-24 font-medium" />
+                <textarea id="requisitos" required value={requisitos} onChange={e => setRequisitos(e.target.value)} placeholder="Ej. Solo naves de la trilogía original. Mínimo 3 fotos." className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue resize-none h-24 font-medium" />
               </div>
               
               <div className="border-2 border-foreground rounded-xl p-4 bg-background">
@@ -214,12 +214,12 @@ export default function AdminExposiciones() {
                  {!esContinua && (
                    <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t-2 border-foreground/20">
                      <div>
-                       <label className="block text-xs font-bold mb-1">Fecha de Inicio</label>
-                       <input required type="datetime-local" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="w-full p-2 border-2 border-foreground rounded-lg bg-panel" />
+                       <label htmlFor="fecha-inicio" className="block text-xs font-bold mb-1">Fecha de Inicio</label>
+                       <input id="fecha-inicio" required type="datetime-local" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="w-full p-2 border-2 border-foreground rounded-lg bg-panel" />
                      </div>
                      <div>
-                       <label className="block text-xs font-bold mb-1">Fecha de Fin</label>
-                       <input required type="datetime-local" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="w-full p-2 border-2 border-foreground rounded-lg bg-panel" />
+                       <label htmlFor="fecha-fin" className="block text-xs font-bold mb-1">Fecha de Fin</label>
+                       <input id="fecha-fin" required type="datetime-local" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="w-full p-2 border-2 border-foreground rounded-lg bg-panel" />
                      </div>
                    </div>
                  )}

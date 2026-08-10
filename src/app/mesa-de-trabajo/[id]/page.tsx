@@ -68,17 +68,17 @@ export default function EditarMesaTrabajo({ params }: { params: Promise<{ id: st
           <div className="glass p-6 sm:p-8 rounded-3xl flex flex-col gap-6 shadow-sm">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Set</label>
+                <label htmlFor="mesa-set-id" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Número de Set</label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                  <input type="text" defaultValue={set.id} className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50" />
+                  <input id="mesa-set-id" type="text" defaultValue={set.id} className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50" />
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Temática</label>
+                <label htmlFor="mesa-set-tematica" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Temática</label>
                 <div className="relative">
                   <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                  <select defaultValue={set.theme} className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none">
+                  <select id="mesa-set-tematica" defaultValue={set.theme} className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none">
                     <option>Star Wars</option>
                     <option>Icons</option>
                     <option>Architecture</option>
@@ -89,15 +89,15 @@ export default function EditarMesaTrabajo({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Nombre del Set</label>
-              <input type="text" defaultValue={set.name} className="w-full px-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50" />
+              <label htmlFor="mesa-set-nombre" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Nombre del Set</label>
+              <input id="mesa-set-nombre" type="text" defaultValue={set.name} className="w-full px-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50" />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Estado de conservación</label>
+              <label htmlFor="mesa-set-estado" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1">Estado de conservación</label>
               <div className="relative">
                 <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={18} />
-                <select defaultValue="Montado" className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none">
+                <select id="mesa-set-estado" defaultValue="Montado" className="w-full pl-11 pr-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 appearance-none">
                   <option>Nuevo en Caja (MISB)</option>
                   <option>Montado</option>
                   <option>Desmontado en bolsas</option>
@@ -107,11 +107,12 @@ export default function EditarMesaTrabajo({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1 flex items-center justify-between">
+              <label htmlFor="mesa-set-notas" className="text-xs font-bold uppercase tracking-wider text-black/50 ml-1 flex items-center justify-between">
                 Notas Privadas o Públicas
                 <span className="text-brand-blue text-[10px] bg-brand-blue/10 px-2 py-0.5 rounded-full flex items-center gap-1"><Info size={12}/> Opcional</span>
               </label>
-              <textarea 
+              <textarea
+                id="mesa-set-notas"
                 rows={4}
                 defaultValue="Conseguido en el mercado secundario. Le falta una pieza del motor."
                 className="w-full px-4 py-3 bg-black/5 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-brand-blue/50 resize-none"

@@ -50,16 +50,17 @@ export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
           <div className="bg-background border border-black/5 dark:border-white/5 shadow-2xl rounded-3xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5">
               <h3 className="font-display font-bold text-xl">Editar Vitrina</h3>
-              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
+              <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
                 <X size={20} />
               </button>
             </div>
             
             <form onSubmit={handleUpdate} className="p-6 flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-bold mb-2">Nombre de la Vitrina *</label>
-                <input 
-                  type="text" 
+                <label htmlFor="edit-vitrina-nombre" className="block text-sm font-bold mb-2">Nombre de la Vitrina *</label>
+                <input
+                  id="edit-vitrina-nombre"
+                  type="text"
                   required
                   value={nombre}
                   onChange={e => setNombre(e.target.value)}
@@ -68,8 +69,9 @@ export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
               </div>
               
               <div>
-                <label className="block text-sm font-bold mb-2">Descripción (Opcional)</label>
-                <textarea 
+                <label htmlFor="edit-vitrina-descripcion" className="block text-sm font-bold mb-2">Descripción (Opcional)</label>
+                <textarea
+                  id="edit-vitrina-descripcion"
                   value={descripcion}
                   onChange={e => setDescripcion(e.target.value)}
                   className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 outline-none focus:border-brand-blue transition-colors resize-none h-24"
@@ -78,8 +80,8 @@ export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2">Visibilidad</label>
-                <div className="grid grid-cols-2 gap-4">
+                <label id="edit-vitrina-visibilidad-label" className="block text-sm font-bold mb-2">Visibilidad</label>
+                <div role="group" aria-labelledby="edit-vitrina-visibilidad-label" className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setVisibilidad("privada")}

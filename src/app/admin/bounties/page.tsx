@@ -136,16 +136,16 @@ export default function AdminBounties() {
             </div>
             <form onSubmit={handleCreate} className="p-6 flex flex-col gap-5">
               <div>
-                <label className="block text-sm font-black mb-2">Nombre del Set Buscado</label>
-                <input required type="text" value={nombreSet} onChange={e => setNombreSet(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none font-medium" placeholder="Ej. Halcón Milenario UCS" />
+                <label htmlFor="bounty-nombre-set" className="block text-sm font-black mb-2">Nombre del Set Buscado</label>
+                <input id="bounty-nombre-set" required type="text" value={nombreSet} onChange={e => setNombreSet(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-medium" placeholder="Ej. Halcón Milenario UCS" />
               </div>
               <div>
-                <label className="block text-sm font-black mb-2">Temática (Tag)</label>
-                <input required type="text" value={tematica} onChange={e => setTematica(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none font-medium" placeholder="Ej. Star Wars" />
+                <label htmlFor="bounty-tematica" className="block text-sm font-black mb-2">Temática (Tag)</label>
+                <input id="bounty-tematica" required type="text" value={tematica} onChange={e => setTematica(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-medium" placeholder="Ej. Star Wars" />
               </div>
               <div>
-                <label className="block text-sm font-black mb-2">Recompensa (Bricks)</label>
-                <input required type="number" min="100" step="100" value={recompensa} onChange={e => setRecompensa(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none font-mono font-black text-xl text-brand-red" />
+                <label htmlFor="bounty-recompensa" className="block text-sm font-black mb-2">Recompensa (Bricks)</label>
+                <input id="bounty-recompensa" required type="number" min="100" step="100" value={recompensa} onChange={e => setRecompensa(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-mono font-black text-xl text-brand-red" />
               </div>
               
               <div className="mt-4 flex gap-4">

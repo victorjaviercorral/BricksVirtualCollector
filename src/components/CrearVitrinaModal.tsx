@@ -106,10 +106,12 @@ export function CrearVitrinaModal({ isOpen, onClose }: CrearVitrinaModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2">Privacidad</label>
+            <label id="crear-vitrina-privacidad-label" className="block text-sm font-bold mb-2">Privacidad</label>
             <p className="text-xs text-black/60 dark:text-white/60 mb-3">Selector el fin de visibilidad de privacidad.</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+            {/* Grupo de botones, no inputs nativos: se asocia con la etiqueta vía
+                aria-labelledby en lugar de htmlFor, que solo aplica a un control único. */}
+            <div role="group" aria-labelledby="crear-vitrina-privacidad-label" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Opción Privada */}
               <button 
                 type="button"

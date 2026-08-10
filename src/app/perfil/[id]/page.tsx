@@ -27,13 +27,13 @@ export default function PerfilPublico({ params }: { params: Promise<{ id: string
               <p className="font-bold text-xl">{MOCK_SETS[tourIndex].name}</p>
               <p className="text-white/60 font-mono text-sm">Vitrina {tourIndex + 1} de {MOCK_SETS.length}</p>
             </div>
-            <button onClick={() => setIsTourActive(false)} className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition">
+            <button onClick={() => setIsTourActive(false)} aria-label="Cerrar tour" className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition">
               <X size={24} />
             </button>
           </div>
           
           <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-            <button onClick={prevSlide} className="absolute left-4 sm:left-8 z-10 p-4 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+            <button onClick={prevSlide} aria-label="Anterior" className="absolute left-4 sm:left-8 z-10 p-4 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
               <ChevronLeft size={32} />
             </button>
             
@@ -44,7 +44,7 @@ export default function PerfilPublico({ params }: { params: Promise<{ id: string
               className="w-full h-full object-contain animate-in fade-in duration-700" 
             />
             
-            <button onClick={nextSlide} className="absolute right-4 sm:right-8 z-10 p-4 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
+            <button onClick={nextSlide} aria-label="Siguiente" className="absolute right-4 sm:right-8 z-10 p-4 rounded-full bg-black/50 hover:bg-black/80 transition-colors">
               <ChevronRight size={32} />
             </button>
           </div>
