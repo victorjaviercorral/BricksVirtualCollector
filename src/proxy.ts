@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 1. RATE LIMITING
   // Obtenemos la IP de los headers. En Vercel, x-real-ip o x-forwarded-for.
   const ip = request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for') || 'anonymous'
