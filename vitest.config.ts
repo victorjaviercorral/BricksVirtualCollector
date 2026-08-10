@@ -19,6 +19,12 @@ export default defineConfig({
       'src/app/bounties/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/api/bounties/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/components/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/queries/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/proxy.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/rate-limit.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/auth/confirm/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/api/bricks/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/api/auth/delete-account/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -43,7 +49,6 @@ export default defineConfig({
         'src/app/admin/moderacion/**',
         'src/app/admin/exposiciones/**',
         'src/app/dashboard/**',
-        'src/components/DashboardClient.tsx',
         'src/app/perfil/**',
         'src/app/vitrina/**',
         'src/components/EditVitrinaModal.tsx',
@@ -52,7 +57,14 @@ export default defineConfig({
         'src/app/bounties/**',
         'src/app/api/bounties/**',
         'src/components/BountiesClient.tsx',
-        'src/components/BountiesSectionClient.tsx'
+        'src/components/BountiesSectionClient.tsx',
+        // Fase 2 (F2.5 / F2.9): superficie de seguridad y capa de acceso a datos
+        'src/lib/queries/**',
+        'src/proxy.ts',
+        'src/lib/rate-limit.ts',
+        'src/app/auth/confirm/**',
+        'src/app/api/bricks/**',
+        'src/app/api/auth/delete-account/**'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [
