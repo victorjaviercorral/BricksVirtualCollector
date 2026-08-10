@@ -48,7 +48,7 @@ export default function SystemDocsPage() {
             <ul className="list-disc list-inside space-y-2 text-slate-400 ml-2">
               <li><strong>Vista Normal:</strong> Muestra los últimos 100 eventos cronológicamente.</li>
               <li><strong>Errores Agrupados:</strong> Utiliza esta vista cuando veas muchos errores seguidos. Agrupa los fallos con el mismo mensaje para entender rápidamente qué está roto sin inundar la pantalla.</li>
-              <li><strong>Retención:</strong> Para no llenar la base de datos, los logs de más de 30 días deberán purgarse periódicamente.</li>
+              <li><strong>Retención:</strong> Los logs de más de 30 días se purgan automáticamente cada noche mediante un job de <code>pg_cron</code> (ver <code>supabase/migrations/20260810130000_system_logs_purge.sql</code>). No requiere intervención manual; puedes verificar su ejecución en <code>cron.job_run_details</code> desde el SQL Editor de Supabase.</li>
             </ul>
           </div>
         </section>

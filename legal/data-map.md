@@ -42,8 +42,17 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 
 - **Sesión de Usuario**: Tokens de autenticación de Supabase (JWT) almacenados vía cookies / localStorage para mantener la sesión abierta.
 - **Gamificación / Sistema de "Bricks" (`bricks_recibidos`)**: Se recoge un `hash_visitante` para evitar que un usuario dé bricks ilimitados a un mismo set. Esto implica tratar identificadores únicos (probablemente un hash de la IP o token de sesión).
-- **Logs del Servidor / Hosting**: Vercel registra IP, User-Agent y metadatos de petición. ⚠️ Retención según la política del proveedor: **verificar en el panel de Vercel** y fijar aquí el plazo exacto.
-- **Logs propios (`system_logs`)**: la aplicación escribe nivel, mensaje, endpoint, `user_id` y contexto vía `src/lib/logger.ts`. Purga documentada a 30 días en el runbook interno, ⚠️ **aún no implementada** (no existe job de purga).
+- **Logs del Servidor / Hosting**: Vercel registra IP, User-Agent y metadatos de petición.
+  🔵 **Diferido a la fecha de despliegue (no verificable hoy).** El proyecto no está desplegado en
+  Vercel todavía, así que no hay proyecto en cuyo panel comprobar la retención. **Acción cuando se
+  despliegue:** entrar en Vercel → Project Settings → Log Drains / Data Retention, anotar aquí el
+  plazo exacto y trasladarlo a `politica-privacidad.md` §3 si difiere de "según política del
+  proveedor". No tratar este punto como resuelto hasta ese momento.
+- **Logs propios (`system_logs`)**: la aplicación escribe nivel, mensaje, endpoint, `user_id` y
+  contexto vía `src/lib/logger.ts`. Purga a 30 días **implementada** en
+  `supabase/migrations/20260810130000_system_logs_purge.sql` mediante `pg_cron` (job diario que
+  elimina registros con más de 30 días). Ver esa migración para instrucciones de verificación y
+  activación en Supabase.
 
 ---
 
@@ -75,4 +84,4 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 | **Publicación de Colecciones** | Textos, imágenes (sin EXIF), visibilidad | Usuarios registrados | Ejecución de contrato (para publicarlo) y Consentimiento | Hasta eliminación o retirada | Supabase (Público si visibilidad=pública) | RLS por usuario, borrado de EXIF. |
 | **Gamificación (Bricks/Visitas)** | `hash_visitante`, contadores | Usuarios | Interés Legítimo (evitar votos múltiples) | Mientras exista el set votado (borrado en cascada) | Supabase | ⚠️ **Discrepancia detectada:** pese al nombre de la columna, `src/app/api/bricks/route.ts:26` almacena el **UUID del usuario en claro**, no un hash. Debe renombrarse la columna o aplicarse un hash real. |
 | **Moderación y Reportes** | Motivos del reporte, IDs de contenido | Usuarios reportantes | Interés Legítimo / Obligación Legal (DSA) | Hasta resolución + bloqueo legal | Supabase | Acceso solo a administradores. |
-| **Mantenimiento y Seguridad** | IPs, User-Agents, logs de error | Visitantes de la web | Interés Legítimo (seguridad de la red) | Vercel: según política del proveedor (⚠️ verificar). `system_logs`: 30 días previstos, purga no implementada | Vercel, Supabase | Acceso a `system_logs` restringido a rol sysadmin por RLS. |
+| **Mantenimiento y Seguridad** | IPs, User-Agents, logs de error | Visitantes de la web | Interés Legítimo (seguridad de la red) | Vercel: diferido a fecha de despliegue (🔵 sin proyecto desplegado, no verificable hoy). `system_logs`: 30 días, purga automática vía `pg_cron` | Vercel, Supabase | Acceso a `system_logs` restringido a rol sysadmin por RLS. Purga automática programada. |
