@@ -1,108 +1,82 @@
-import { Suspense } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import EditarMesaTrabajo from './page';
-import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { redirect, notFound } from 'next/navigation';
 
-const mockPush = vi.fn();
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}));
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  redirect: vi.fn().mockImplementation(() => { throw new Error('redirect') }),
+  notFound: vi.fn().mockImplementation(() => { throw new Error('notFound') }),
 }));
 
-vi.mock('@/lib/data', () => ({
-  MOCK_SETS: [
-    {
-      id: 'set-mock-1',
-      name: 'Set de Prueba',
-      theme: 'Star Wars',
-      image: '/mock.jpg',
-    }
-  ]
+vi.mock('./EditarSetClient', () => ({
+  default: ({ set }: any) => <div data-testid="editar-set-client">{set.nombre}</div>,
 }));
 
-import * as React from 'react';
+/**
+ * Reescrito por completo (iteración 3, hallazgo R2). La página anterior ignoraba tanto la
+ * sesión como el id real y mostraba siempre MOCK_SETS[0] si no encontraba coincidencia -- ni
+ * siquiera comprobaba que el visitante hubiera iniciado sesión. Ahora exige sesión y ownership
+ * real (.eq('usuario_id', user.id)) antes de mostrar el formulario de edición.
+ */
+function mockSupabase({ user, set }: { user?: any; set?: any }) {
+  const single = vi.fn().mockResolvedValue({ data: set ?? null });
+  const eq2 = vi.fn().mockReturnValue({ single });
+  const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+  const select = vi.fn().mockReturnValue({ eq: eq1 });
+  const from = vi.fn().mockReturnValue({ select });
 
-// Mock de react para sobreescribir 'use' sin romper otras exportaciones
-vi.mock('react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react')>();
-  return {
-    ...actual,
-    use: vi.fn((p: any) => ({ id: 'set-mock-1' }))
-  };
-});
+  (createClient as any).mockResolvedValue({
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: user || null } }) },
+    from,
+  });
+  return { eq1, eq2 };
+}
 
-describe('EditarMesaTrabajo Page', () => {
+describe('EditarMesaTrabajo Page (SSR)', () => {
+  const mockParams = Promise.resolve({ id: 'set-1' });
+
   beforeEach(() => {
     vi.clearAllMocks();
-    window.confirm = vi.fn().mockReturnValue(true);
   });
 
-  it('debe renderizar la página con los datos del mock', () => {
-    render(<EditarMesaTrabajo params={Promise.resolve({ id: 'set-mock-1' })} />);
-    
-    expect(screen.getByText('Editar Vitrina')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Set de Prueba')).toBeInTheDocument();
+  it('redirecciona a /login si no hay sesión', async () => {
+    mockSupabase({ user: null });
+
+    await expect(EditarMesaTrabajo({ params: mockParams })).rejects.toThrow('redirect');
+    expect(redirect).toHaveBeenCalledWith('/login');
   });
 
-  it('debe renderizar el primer set por defecto si no se encuentra el ID', () => {
-    // Como el mock de use() siempre devuelve 'set-mock-1' actualmente, 
-    // necesitamos sobreescribirlo para esta prueba.
-    vi.mocked(React.use).mockImplementationOnce(() => ({ id: 'no-existe' }));
-    
-    render(<EditarMesaTrabajo params={Promise.resolve({ id: 'no-existe' })} />);
-    
-    // Debería usar el de fallback que es el primero en MOCK_SETS (que justo se llama igual 'Set de Prueba' en nuestro test)
-    expect(screen.getByDisplayValue('Set de Prueba')).toBeInTheDocument();
-  });
-
-  it('debe simular guardar cambios y redirigir', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    render(<EditarMesaTrabajo params={Promise.resolve({ id: 'set-mock-1' })} />);
-    
-    const saveButton = screen.getByRole('button', { name: /guardar cambios/i });
-    fireEvent.click(saveButton);
-    
-    expect(screen.getByText('Guardando...')).toBeInTheDocument();
-    
-    vi.advanceTimersByTime(1500);
-    
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+  it('filtra por id Y por usuario_id del solicitante (ownership)', async () => {
+    const { eq1, eq2 } = mockSupabase({
+      user: { id: 'u1' },
+      set: { id: 'set-1', nombre: 'AT-AT', vitrina_id: 'v1' },
     });
-    
-    vi.useRealTimers();
+
+    const jsx = await EditarMesaTrabajo({ params: mockParams });
+    render(jsx);
+
+    expect(eq1).toHaveBeenCalledWith('id', 'set-1');
+    expect(eq2).toHaveBeenCalledWith('usuario_id', 'u1');
   });
 
-  it('debe simular borrar vitrina pidiendo confirmación y redirigir', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    render(<EditarMesaTrabajo params={Promise.resolve({ id: 'set-mock-1' })} />);
-    
-    const deleteButton = screen.getByRole('button', { name: /borrar vitrina/i });
-    fireEvent.click(deleteButton);
-    
-    expect(window.confirm).toHaveBeenCalled();
-    expect(screen.getByText('Borrando...')).toBeInTheDocument();
-    
-    vi.advanceTimersByTime(1000);
-    
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
-    });
-    
-    vi.useRealTimers();
+  it('llama notFound() si el set no existe o no pertenece al usuario', async () => {
+    mockSupabase({ user: { id: 'u1' }, set: null });
+
+    await expect(EditarMesaTrabajo({ params: mockParams })).rejects.toThrow('notFound');
+    expect(notFound).toHaveBeenCalled();
   });
 
-  it('no debe borrar si el usuario cancela la confirmación', async () => {
-    window.confirm = vi.fn().mockReturnValue(false);
-    render(<EditarMesaTrabajo params={Promise.resolve({ id: 'set-mock-1' })} />);
-    
-    const deleteButton = screen.getByRole('button', { name: /borrar vitrina/i });
-    fireEvent.click(deleteButton);
-    
-    expect(window.confirm).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /borrar vitrina/i })).not.toHaveTextContent('Borrando...');
-    expect(mockPush).not.toHaveBeenCalled();
+  it('renderiza EditarSetClient con los datos reales del set', async () => {
+    mockSupabase({ user: { id: 'u1' }, set: { id: 'set-1', nombre: 'Halcón Milenario', vitrina_id: 'v1' } });
+
+    const jsx = await EditarMesaTrabajo({ params: mockParams });
+    render(jsx);
+
+    expect(screen.getByTestId('editar-set-client')).toHaveTextContent('Halcón Milenario');
   });
 });
