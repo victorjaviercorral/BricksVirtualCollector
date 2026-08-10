@@ -5,9 +5,9 @@ subtipo: arquitectura-y-calidad
 etapa: mvp
 exposicion: X2
 estado: emitida
-version: 1.1
+version: 1.2
 fecha: 2026-08-10
-actualizado: 2026-08-10 — §3.10 añadida con la decisión ADR-009 y su efecto sobre las severidades
+actualizado: 2026-08-10 — Iteración 3: mock data, migraciones (sin aplicar) y autorización de servidor cerrados; ver nota en §3.10
 alcance: repositorio completo (working tree)
 commit_base: 16b8908
 tags: [spec-vjc, auditoria, pre-lanzamiento]
@@ -52,6 +52,19 @@ esqueleto; lo que falla es el acabado y la coherencia entre lo documentado y lo 
 > forma sustancial. **El veredicto NO-GO se mantiene**: la decisión neutraliza cuatro hallazgos de
 > seguridad en runtime, pero no corrige el build roto, la suite en rojo, los datos ficticios en
 > páginas públicas ni los textos legales incompletos. Ver §3.10.
+>
+> **Actualización (v1.2, Iteración 3):** de los 8 puntos de este resumen, quedan resueltos el 1
+> (build), 2 (suite verde), 4 (mock data de las 3 páginas nombradas), 5 (textos legales) y 6
+> (RLS de `usuarios_perfil` + autorización de servidor). El punto 7 (migraciones) tiene **código
+> escrito y ya aplicado** por el titular contra Supabase real (10/08/2026) — pendiente solo la
+> verificación positiva (confirmar en `information_schema`/`storage.buckets` que quedó con la
+> forma exacta esperada, y probar en la app real que crear un set y editar el alias funcionan de
+> extremo a extremo). La propia escritura de esas migraciones destapó un hallazgo más grave de lo
+> esperado: dos funcionalidades ya en producción (crear un set, editar el alias del perfil)
+> probablemente fallaban por columnas que nunca se habían migrado hasta esta ronda. El punto 3
+> (lista blanca de cobertura) sigue siendo cierto en esencia, aunque la lista ha crecido.
+> **Veredicto: sigue NO-GO** hasta completar la verificación positiva pendiente. Detalle completo
+> en `docs/05-plan/seguimiento-iteracion-3.md`.
 
 ---
 
@@ -311,6 +324,28 @@ El cuadrante "HACER YA" de §5 se ha desarrollado en tareas ejecutables con depe
 de verificación en `docs/05-plan/plan-remediacion-quickwins.md` (16 tareas, estado *propuesto*).
 Esa iteración **no habilita el lanzamiento**: deja fuera la suite roja, la mock data pública, las
 migraciones y la autorización en servidor.
+
+### Actualización (10/08/2026 — Iteración 3): mock data, migraciones y autorización cerrados
+
+Las tres piezas que la nota anterior dejaba explícitamente fuera ya se han acometido — ver
+`docs/05-plan/seguimiento-iteracion-3.md` para el detalle completo:
+
+- **R2/R3 (datos mock)**: `/perfil/[id]`, `/set/[id]` y `/mesa-de-trabajo/[id]` reescritas contra
+  datos reales. `src/lib/data.ts` eliminado.
+- **A1 (migraciones incompletas)**: 3 migraciones nuevas escritas (4 tablas, 3 buckets de
+  Storage, 3 columnas adicionales) y **aplicadas por el titular contra Supabase real** el
+  10/08/2026, las 3 con éxito. Pendiente: verificación positiva (confirmar forma exacta y probar
+  la app real end-to-end), no solo que el `CREATE`/`ALTER` no diera error.
+- **S2/S3 (autorización de servidor)**: cerrados en código (`admin/moderacion/actions.ts`,
+  `api/bounties/claim/route.ts`).
+- **S5 (EXIF)**: sigue diferido, sin cambios sobre `ADR-010`.
+
+**Hallazgo grave nuevo, no detectado en la auditoría original:** al escribir las migraciones se
+descubrió que `sets.num_set`, `sets.notas` y `usuarios_perfil.alias` — todas referenciadas por
+código ya en producción, no por trabajo nuevo — **no existen en ninguna migración**. Si el
+proyecto real de Supabase solo tiene aplicada la migración inicial, crear un set nuevo o editar
+el alias del perfil falla. El veredicto NO-GO se mantiene con más fuerza, no menos: esta ronda no
+solo no lo resuelve, añade una razón nueva y más concreta.
 
 ---
 
