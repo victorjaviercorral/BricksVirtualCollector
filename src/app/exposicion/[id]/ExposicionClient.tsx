@@ -66,17 +66,21 @@ export default function ExposicionClient({ exposicion, ranking, userSets, userId
   };
 
   const handleVote = async (setId: string) => {
-    // Insert vote with exposicion_id
+    // El hash debe ser determinista (mismo usuario + mismo set + misma exposición -> mismo
+    // hash) para que la restricción unique(set_id, hash_visitante) de bricks_recibidos haga su
+    // trabajo. La versión anterior incluía Date.now(), que genera un hash distinto en cada
+    // clic: la restricción de unicidad nunca se disparaba y un usuario podía votar sin límite
+    // por el mismo set (bug detectado al completar el esquema de exposiciones en la iteración 3).
     const { error } = await supabase
       .from("bricks_recibidos")
       .insert({
         set_id: setId,
         exposicion_id: exposicion.id,
-        hash_visitante: `user-${userId}-${Date.now()}` // simple hash for demo
+        hash_visitante: `exposicion-${exposicion.id}-user-${userId}`
       });
 
     if (error) {
-      toast.error("Error al votar");
+      toast.error(error.code === '23505' ? 'Ya has votado por este set en esta exposición' : 'Error al votar');
     } else {
       toast.success("¡Voto registrado!");
       router.refresh();
