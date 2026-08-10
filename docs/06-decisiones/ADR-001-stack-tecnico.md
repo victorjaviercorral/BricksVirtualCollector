@@ -1,6 +1,28 @@
+---
+proyecto: lego-virtual-museum
+tipo: adr
+estado: superada
+version: 1
+fecha: 2026-07-27
+superada_por: ADR-001-frontend-hosting.md
+superada_el: 2026-08-10
+tags: [spec-vjc, decision, superada]
+---
+
 # ADR-001 — Stack tecnico: Next.js + Supabase + Netlify
 
-**Fecha:** 2026-07-27 · **Estado:** aceptada
+> ⚠️ **SUPERADA.** Este documento y `ADR-001-frontend-hosting.md` comparten el mismo número de
+> ADR (001) por un fallo de numeración detectado el 10/08/2026 (hallazgo D7 de
+> `docs/auditoria-arquitectura.md`, tarea F2.13). Ambos están fechados el mismo día
+> (2026-07-27): este fue el borrador inicial de stack completo (incluida la elección de
+> **Netlify** como hosting); `ADR-001-frontend-hosting.md` es la decisión posterior y más
+> específica que sustituyó Netlify por **Vercel**, que es el hosting real usado en el resto del
+> proyecto (`next.config.ts`, README, `legal/politica-privacidad.md`). Se conserva este documento
+> sin reescribir -- las decisiones de spec-vjc no se editan retroactivamente, se superan -- pero
+> su contenido sobre **hosting** ya no aplica. La elección de Next.js + Supabase sí se mantiene y
+> es la que describe con precisión el resto de este documento.
+
+**Fecha:** 2026-07-27 · **Estado:** superada (ver aviso arriba)
 
 ## Contexto
 

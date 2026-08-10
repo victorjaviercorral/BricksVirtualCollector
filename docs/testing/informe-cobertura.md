@@ -1,34 +1,33 @@
 # Informe de Cobertura y Testing - BricksVirtualCollector
 
-> ## ⚠️ Estado real a 10 de agosto de 2026
+> ## ✅ Estado real a 10 de agosto de 2026 (tras Fase 2, Ronda 1)
 >
-> **La suite está en rojo: 8 tests fallan de 123.** Con la suite en rojo Vitest no emite informe
-> de cobertura, por lo que **el cumplimiento del umbral del 85% no es verificable** en este
-> momento. Verificado ejecutando `npx vitest run --coverage`: no se genera
-> `coverage/coverage-summary.json`.
+> **La suite está en verde: 169/169 tests, 36/36 ficheros.** Los 8 fallos que había al empezar la
+> Fase 2 (`dashboard/page.test.tsx`, `ParticipacionesClient.test.tsx`) están corregidos: se
+> reescribieron contra la implementación real (`HubClient`, el rediseño de participaciones), no
+> se ocultaron ni se marcaron `skip`.
 >
-> **Las cifras de las secciones "Fase 1" a "Resumen Global" de este documento son históricas y no
-> reflejan el estado actual.** Se conservan como registro de lo que se hizo en cada fase, no como
-> afirmación de estado.
+> **Cobertura verificada con `npx vitest run --coverage`, umbral del 85% cumplido en las 4
+> métricas:**
 >
-> **Dos precisiones sobre la cifra del 94,45%** que figura más abajo:
+> | Métrica | % |
+> |---|---|
+> | Statements | 94,20% |
+> | Branches | 88,41% |
+> | Functions | 91,97% |
+> | Lines | 95,31% |
 >
-> 1. No es cobertura global del proyecto. El `coverage.include` de `vitest.config.ts` es una
->    **lista blanca**: el **52,4% del código de producción** (3.940 de 7.525 líneas) queda fuera
->    del cálculo y del umbral. Entre lo excluido: `src/app/page.tsx`, `src/proxy.ts`,
->    `src/lib/rate-limit.ts`, `src/lib/logger.ts`, `src/components/Navbar.tsx`,
->    `src/app/api/bricks`, `src/app/api/health`, `src/app/api/auth/delete-account`,
->    `src/app/auth/confirm` y todo `src/app/admin/system/**`.
-> 2. Procede de una ejecución anterior a los cambios de las páginas de dashboard y
->    participaciones.
+> **Sigue siendo una lista blanca, no `src/**` completo** (criterio literal de F2.4 en
+> `docs/auditoria-arquitectura.md`). Se amplió con 6 entradas nuevas en esta ronda:
+> `src/lib/queries/**`, `src/proxy.ts`, `src/lib/rate-limit.ts`, `src/app/auth/confirm/**`,
+> `src/app/api/bricks/**`, `src/app/api/auth/delete-account/**` — exactamente los 5 ficheros de
+> superficie de seguridad de F2.5, más la nueva capa de acceso a datos de F2.9. Siguen **fuera**
+> del gate: `src/app/page.tsx`, `src/components/Navbar.tsx`, `src/components/Footer.tsx`,
+> `src/app/exposicion/[id]/ExposicionClient.tsx`, `src/app/v/[id]/page.tsx`,
+> `src/app/api/health`, y todo `src/app/admin/system/**`. Ampliar a `src/**` completo queda como
+> trabajo de una ronda posterior.
 >
-> **Causa de los fallos:** el código de producción evolucionó (`dashboard/page.tsx` pasó de
-> `DashboardClient` a `HubClient` con nuevas consultas; `ParticipacionesClient` se rediseñó) y los
-> tests no se actualizaron. Los fallos **no se ocultan ni se marcan como `skip`**, conforme a
-> `AGENTS.md` §1. Su corrección está planificada como iteración 2 en
-> `docs/05-plan/plan-remediacion-quickwins.md` §4.
->
-> Diagnóstico completo en `docs/auditoria-arquitectura.md` §3.4.
+> Detalle completo de la ejecución en `docs/05-plan/seguimiento-iteracion-2.md`.
 
 ---
 
@@ -67,6 +66,17 @@ lo que nadie había visto nunca su salida completa. Corregida la configuración,
 **No se ha desactivado ni relajado ninguna regla para reducir esta cifra.** El desglose corrobora
 tres hallazgos de la auditoría con la herramienta oficial del framework: C2 (uso de `any`), P1
 (ausencia de `next/image`) y X4 (imagen sin `alt`). Su corrección se planifica en la iteración 2.
+
+### Actualización tras Fase 2, Ronda 1 (10/08/2026)
+
+**186 errores, 89 avisos.** El total sube (152→186), pero la lectura correcta es otra: son
+**110 errores en ficheros de test** (los ~30 tests nuevos escritos en esta ronda usan `as any`
+para tipar mocks de Supabase, el mismo patrón ya establecido en la suite existente) y **76 en
+código de producción — una bajada frente a los 78 anteriores**, pese a haber añadido ficheros de
+producción nuevos (`src/lib/queries/vitrinas.ts`, la reescritura de `src/lib/rate-limit.ts`),
+ambos sin un solo `any`. `no-unused-vars` bajó de 54 a 51 avisos (retirado `DashboardClient.tsx`,
+huérfano). Sigue sin desactivarse ninguna regla. El grueso pendiente (167 `any`, 28 `no-img-element`)
+queda para la iteración 3.
 
 ---
 

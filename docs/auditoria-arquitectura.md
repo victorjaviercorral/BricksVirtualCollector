@@ -400,6 +400,13 @@ como riesgo aceptado con justificación.
 
 ### Fase 2 — Calidad a medio plazo
 
+> **Actualización (10/08/2026 — Ronda 1 ejecutada):** F2.1, F2.4, F2.5, F2.7, F2.9, F2.10 y F2.13
+> completadas; F2.3 parcial (config real de `system_config`, Upstash pendiente de cuenta externa).
+> F2.2, F2.6, F2.8 (completo) y F2.12 diferidas explícitamente — motivo y plan en
+> `docs/06-decisiones/ADR-010-reconciliacion-exif-rate-limiting.md` y
+> `docs/05-plan/seguimiento-iteracion-2.md`. La tabla de abajo es el plan original; el estado real
+> de cada fila está en el documento de seguimiento, no aquí.
+
 | ID | Tarea | Qué hacer | Esf. | Criterio de aceptación verificable |
 |---|---|---|---|---|
 | F2.1 | Reconciliar ADRs con la realidad | ADR de reemplazo para EXIF (S5) y rate limiting (S8): o se implementa lo decidido, o se emite ADR nuevo que documente el cambio y sus consecuencias | M | Ningún ADR en estado `aceptada` contradice el código; `sync-check` no reporta divergencias |

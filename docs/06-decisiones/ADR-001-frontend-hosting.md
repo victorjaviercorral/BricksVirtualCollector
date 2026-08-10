@@ -9,6 +9,10 @@ tags: [spec-vjc, decision]
 
 # ADR-001 — Framework de frontend y hosting
 
+> **Nota (10/08/2026):** este documento comparte número con `ADR-001-stack-tecnico.md`, marcado
+> ahora como superado por este. Esta es la decisión vigente: Vercel como hosting, no Netlify. Ver
+> el aviso al inicio de ese documento para el detalle de la corrección (hallazgo D7).
+
 **Fecha:** 2026-07-27 · **Estado:** aceptada
 
 ## Contexto
