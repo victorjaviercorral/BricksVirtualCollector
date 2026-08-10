@@ -11,20 +11,11 @@ export default async function ParticipacionesPage() {
   }
 
   // 1. Fetch Exposiciones participations
-  // Join exposicion_sets with exposiciones_temporales and sets
-  const { data: misExposiciones } = await supabase
-    .from("exposicion_sets")
-    .select(`
-      id,
-      estado,
-      creado_en,
-      exposiciones_temporales ( id, titulo, estado, imagen_url ),
-      sets ( id, nombre, fotos ( url ) )
-    `)
-    .eq("sets.usuario_id", user.id);
-    
-  // Filter out the null sets (in case the user doesn't own them, which shouldn't happen but postgrest inner join filtering can be tricky)
-  // Actually, we can fetch all sets for the user, then get their participations.
+  // Nota: filtrar exposicion_sets directamente por sets.usuario_id vía .eq() sobre una relación
+  // anidada es propenso a fallos de PostgREST según la configuración del join. Se resuelve
+  // obteniendo primero los IDs de sets del usuario y filtrando por ellos (ver validExposiciones
+  // más abajo). Antes había aquí una primera consulta idéntica salvo el filtro, cuyo resultado
+  // nunca se usaba -- una llamada de red completa desechada en cada carga de la página.
   const { data: userSets } = await supabase.from("sets").select("id").eq("usuario_id", user.id);
   const userSetIds = userSets?.map(s => s.id) || [];
   
