@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefactos generados por `vitest run --coverage`. Se crea y destruye entre
+    // ejecuciones, y su ausencia hacía fallar a ESLint con ENOENT.
+    "coverage/**",
   ]),
 ]);
 
