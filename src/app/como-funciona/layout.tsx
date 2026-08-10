@@ -2,8 +2,8 @@ import { getDocSections } from '@/lib/docs';
 import Sidebar from '@/components/docs/Sidebar';
 
 export const metadata = {
-  title: 'Cómo funciona | Lego Virtual Museum',
-  description: 'Documentación de usuario y funcionamiento de Lego Virtual Museum',
+  title: 'Cómo funciona | BricksVirtualCollector',
+  description: 'Documentación de usuario y funcionamiento de BricksVirtualCollector',
 };
 
 export default function ComoFuncionaLayout({

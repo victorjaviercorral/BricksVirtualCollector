@@ -37,16 +37,16 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
     <header className="fixed top-0 z-50 w-full border-b border-black/5 dark:border-white/5 glass bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group shrink-0">
+        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3 group shrink-0">
           <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm group-active:scale-95 transition-transform">
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col">
             <span className="font-display font-bold text-sm sm:text-base leading-tight tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-red via-brand-blue to-brand-yellow">
-              Lego Virtual
+              BricksVirtualCollector
             </span>
             <span className="text-[10px] sm:text-xs font-semibold text-black/50 dark:text-white/50 leading-tight uppercase tracking-widest">
-              Collector Community
+              Para coleccionistas de LEGO&reg;
             </span>
           </div>
         </Link>
@@ -54,25 +54,24 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
         {/* Desktop Nav */}
         <nav className="hidden sm:flex flex-1 items-center justify-end gap-6 text-sm font-medium">
           <Link 
-            href="/" 
-            className={`transition-colors ${pathname === '/' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+            href={user ? "/dashboard" : "/"} 
+            className={`transition-colors ${(user && pathname === '/dashboard') || (!user && pathname === '/') ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
           >
-            Explorar
+            {user ? "Inicio" : "Explorar"}
           </Link>
-          <Link 
-            href="/como-funciona" 
-            className={`transition-colors ${pathname.startsWith('/como-funciona') ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
-          >
-            Cómo funciona
-          </Link>
-
           {user && (
             <>
               <Link 
-                href="/dashboard" 
-                className={`transition-colors ${pathname === '/dashboard' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+                href="/dashboard/vitrinas" 
+                className={`transition-colors ${pathname === '/dashboard/vitrinas' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
               >
                 Mis Vitrinas
+              </Link>
+              <Link 
+                href="/dashboard/insignias" 
+                className={`transition-colors ${pathname === '/dashboard/insignias' ? 'text-brand-red font-bold' : 'hover:text-brand-red'}`}
+              >
+                Mis Insignias
               </Link>
               <Link 
                 href="/dashboard/participaciones" 
@@ -82,6 +81,13 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
               </Link>
             </>
           )}
+
+          <Link 
+            href="/como-funciona" 
+            className={`transition-colors ${pathname.startsWith('/como-funciona') ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+          >
+            Cómo funciona
+          </Link>
           
           <div className="w-px h-6 bg-black/10 dark:bg-white/10 mx-2" />
 
@@ -157,28 +163,27 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
         <div className="sm:hidden absolute top-16 left-0 w-full bg-background border-b border-black/5 dark:border-white/5 shadow-lg max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="flex flex-col p-4 gap-4 text-base font-medium">
             <Link
-              href="/"
+              href={user ? "/dashboard" : "/"}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`p-2 rounded-lg ${pathname === '/' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+              className={`p-2 rounded-lg ${(user && pathname === '/dashboard') || (!user && pathname === '/') ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
             >
-              Explorar
+              {user ? "Inicio" : "Explorar"}
             </Link>
-            <Link
-              href="/como-funciona"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`p-2 rounded-lg ${pathname.startsWith('/como-funciona') ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-            >
-              Cómo funciona
-            </Link>
-
             {user && (
               <>
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/vitrinas"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`p-2 rounded-lg ${pathname === '/dashboard' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                  className={`p-2 rounded-lg ${pathname === '/dashboard/vitrinas' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
                   Mis Vitrinas
+                </Link>
+                <Link
+                  href="/dashboard/insignias"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`p-2 rounded-lg ${pathname === '/dashboard/insignias' ? 'bg-black/5 dark:bg-white/5 text-brand-red font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                >
+                  Mis Insignias
                 </Link>
                 <Link
                   href="/dashboard/participaciones"
@@ -189,6 +194,14 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 </Link>
               </>
             )}
+
+            <Link
+              href="/como-funciona"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`p-2 rounded-lg ${pathname.startsWith('/como-funciona') ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+            >
+              Cómo funciona
+            </Link>
 
             <div className="h-px w-full bg-black/10 dark:bg-white/10 my-2" />
 

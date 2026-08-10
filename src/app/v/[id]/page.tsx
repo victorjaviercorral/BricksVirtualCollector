@@ -27,10 +27,10 @@ export async function generateMetadata(
   const ownerName = (vitrina.usuarios_perfil as any)?.alias || (vitrina.usuarios_perfil as any)?.username || 'Un coleccionista';
 
   return {
-    title: `${vitrina.nombre} | Lego Virtual Museum`,
+    title: `${vitrina.nombre} | BricksVirtualCollector`,
     description: `Explora la vitrina de ${ownerName}: ${vitrina.descripcion || 'Una colección increíble de sets de Lego.'}`,
     openGraph: {
-      title: `${vitrina.nombre} - Lego Virtual Museum`,
+      title: `${vitrina.nombre} - BricksVirtualCollector`,
       description: `Explora la vitrina de ${ownerName}: ${vitrina.descripcion || 'Una colección increíble de sets de Lego.'}`,
       images: ['https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?q=80&w=1200&auto=format&fit=crop'],
     },

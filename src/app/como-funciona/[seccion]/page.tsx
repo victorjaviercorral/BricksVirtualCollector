@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ seccion: 
   if (!section) return { title: 'No encontrado' };
 
   return {
-    title: `${section.titulo} | Cómo funciona | Lego Virtual Museum`,
+    title: `${section.titulo} | Cómo funciona | BricksVirtualCollector`,
     description: section.resumen,
   };
 }

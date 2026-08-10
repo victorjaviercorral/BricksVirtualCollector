@@ -25,8 +25,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lego Virtual Museum",
-  description: "Exhibición anónima y segura de colecciones LEGO.",
+  title: "BricksVirtualCollector",
+  description: "Museo virtual para coleccionistas de LEGO®. Exhibición anónima y segura de colecciones. Proyecto independiente, no afiliado a The LEGO Group.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
