@@ -17,7 +17,7 @@ En cumplimiento de la Ley de Servicios Digitales (DSA) y la normativa de Propied
 
 Si eres titular de derechos de autor y consideras que algún usuario ha publicado en una vitrina pública de la Plataforma contenido que infringe tus derechos (por ejemplo, copia no autorizada de instrucciones premium de un MOC de tu autoría), puedes solicitar su retirada escribiendo a:
 
-**Canal:** una incidencia en el [repositorio del proyecto en GitHub](https://github.com/victorjaviercorral/LegoVirtualMuseum/issues) o un mensaje al perfil profesional de LinkedIn del titular.
+**Canal:** una incidencia en el [repositorio del proyecto en GitHub](https://github.com/victorjaviercorral/BricksVirtualCollector/issues) o un mensaje al perfil profesional de LinkedIn del titular.
 **Asunto:** Infracción de Propiedad Intelectual
 
 > **Nota:** al tratarse de un prototipo con el registro de usuarios cerrado, todo el contenido

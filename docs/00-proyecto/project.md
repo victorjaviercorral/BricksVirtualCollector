@@ -11,7 +11,7 @@ tags: [spec-vjc]
 
 # Proyecto — Lego Virtual Museum
 
-**Repo:** https://github.com/victorjaviercorral/LegoVirtualMuseum (rama `main`, sincronizada localmente) · **Estado:** activo
+**Repo:** https://github.com/victorjaviercorral/BricksVirtualCollector (rama `main`, sincronizada localmente) · **Estado:** activo
 **Framework:** Spec VJC Framework v1.2.0 (actualizado desde v1.1.0 el 2026-07-30 — ver Registro de decisiones de proceso)
 **Última actualización:** 2026-07-30
 

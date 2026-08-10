@@ -13,7 +13,7 @@
 - **Titular / Responsable:** Víctor Javier Corral
 - **Naturaleza:** persona física, sin actividad económica asociada a este sitio web.
 - **Canal de contacto:** a través del repositorio del proyecto en GitHub
-  ([abrir una incidencia](https://github.com/victorjaviercorral/LegoVirtualMuseum/issues)) o del
+  ([abrir una incidencia](https://github.com/victorjaviercorral/BricksVirtualCollector/issues)) o del
   perfil profesional de LinkedIn del titular.
 
 **Sobre la ausencia de otros datos identificativos.** El artículo 10 de la Ley 34/2002 (LSSI-CE)

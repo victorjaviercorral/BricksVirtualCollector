@@ -64,8 +64,8 @@ legal/                Textos legales servidos en /legal/[slug]
 **Requisitos:** Node.js 20+ y un proyecto de [Supabase](https://supabase.com).
 
 ```bash
-git clone https://github.com/victorjaviercorral/LegoVirtualMuseum.git
-cd LegoVirtualMuseum
+git clone https://github.com/victorjaviercorral/BricksVirtualCollector.git
+cd BricksVirtualCollector
 npm ci
 cp .env.example .env.local   # rellena los valores de tu proyecto Supabase
 npx supabase db push         # aplica las migraciones
@@ -123,4 +123,4 @@ El código se distribuye bajo licencia [Apache 2.0](LICENSE).
 
 Desarrollado por **Víctor Javier Corral** desde Málaga.
 Para incidencias sobre el proyecto, abre una
-[issue en GitHub](https://github.com/victorjaviercorral/LegoVirtualMuseum/issues).
+[issue en GitHub](https://github.com/victorjaviercorral/BricksVirtualCollector/issues).
