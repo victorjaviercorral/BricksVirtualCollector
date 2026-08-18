@@ -10,27 +10,30 @@ const mockSetEq2 = vi.fn(() => ({ single: mockSetSingle }));
 const mockSetEq1 = vi.fn(() => ({ eq: mockSetEq2 }));
 const mockSetSelect = vi.fn(() => ({ eq: mockSetEq1 }));
 
-// bounties: .select().eq().single() ; .update().eq().eq().select()
+// bounties: .select().eq().single()
 const mockBountySingle = vi.fn();
 const mockBountyEqSelect = vi.fn(() => ({ single: mockBountySingle }));
 const mockBountySelect = vi.fn(() => ({ eq: mockBountyEqSelect }));
 
-const mockUpdateSelect = vi.fn(); // resuelve { data, error }
-const mockUpdateEq2 = vi.fn(() => ({ select: mockUpdateSelect }));
-const mockUpdateEq1 = vi.fn(() => ({ eq: mockUpdateEq2 }));
-const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq1 }));
+// bounties_reclamados: .insert().select().single()
+const mockClaimSingle = vi.fn();
+const mockClaimInsertSelect = vi.fn(() => ({ single: mockClaimSingle }));
+const mockClaimInsert = vi.fn(() => ({ select: mockClaimInsertSelect }));
 
-const mockInsert = vi.fn();
+const mockBricksInsert = vi.fn();
 
 const mockFrom = vi.fn((table: string) => {
   if (table === 'sets') {
     return { select: mockSetSelect };
   }
   if (table === 'bounties') {
-    return { select: mockBountySelect, update: mockUpdate };
+    return { select: mockBountySelect };
+  }
+  if (table === 'bounties_reclamados') {
+    return { insert: mockClaimInsert };
   }
   if (table === 'bricks_recibidos') {
-    return { insert: mockInsert };
+    return { insert: mockBricksInsert };
   }
   return {};
 });
@@ -42,7 +45,7 @@ vi.mock('@/lib/supabase/server', () => ({
   }))
 }));
 
-describe('POST /api/bounties/claim', () => {
+describe('POST /api/bounties/claim (modelo multi-reclamo, D1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Por defecto: el set SÍ pertenece al usuario (la mayoría de tests no prueban ownership).
@@ -89,16 +92,16 @@ describe('POST /api/bounties/claim', () => {
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.error).toBe('El set no existe o no te pertenece');
-    // No debe llegar a comprobar ni actualizar el bounty.
+    // No debe llegar a comprobar ni reclamar el bounty.
     expect(mockBountySelect).not.toHaveBeenCalled();
   });
 
   it('la comprobación de propiedad filtra por usuario_id del solicitante', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 5 }, error: null });
-    mockUpdateSelect.mockResolvedValue({ data: [{ id: 'b1' }], error: null });
-    mockInsert.mockResolvedValue({ error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
 
     await POST(req);
 
@@ -118,77 +121,101 @@ describe('POST /api/bounties/claim', () => {
     expect(data.error).toBe('Bounty no encontrado');
   });
 
-  it('debería retornar 400 si el bounty ya no está pendiente', async () => {
+  it('debería retornar 400 si el bounty ya no está activo (cerrado por un administrador)', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'reclamado' }, error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'archivado' }, error: null });
 
     const res = await POST(req);
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.error).toBe('El bounty ya fue reclamado');
+    expect(data.error).toBe('Este bounty ya no está activo');
+    expect(mockClaimInsert).not.toHaveBeenCalled();
   });
 
-  it('debería retornar 500 si falla la actualización del bounty', async () => {
+  // --- Regresión del hallazgo S3: atomicidad, ahora vía constraint unique(bounty_id, usuario_id) ---
+
+  it('debería retornar 400 si el usuario ya había reclamado este bounty (23505, unique violation)', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 50 }, error: null });
-    mockUpdateSelect.mockResolvedValue({ data: null, error: new Error('Update failed') });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 50 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate key' } });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toBe('Ya has reclamado este bounty');
+    // No se conceden bricks si el reclamo no se registró.
+    expect(mockBricksInsert).not.toHaveBeenCalled();
+  });
+
+  it('debería retornar 500 si falla el registro del reclamo por un motivo distinto a duplicado', async () => {
+    const req = createRequest({ bountyId: 'b1', setId: 's1' });
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 50 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: null, error: { code: '23000', message: 'algo distinto' } });
 
     const res = await POST(req);
     expect(res.status).toBe(500);
     const data = await res.json();
-    expect(data.error).toBe('Error al actualizar el bounty');
+    expect(data.error).toBe('Error al registrar el reclamo');
   });
 
-  // --- Regresión del hallazgo S3: atomicidad (condición de carrera) ---
-
-  it('debería retornar 400 si el UPDATE condicional no afecta a ninguna fila (otra petición ganó la carrera)', async () => {
+  it('inserta el reclamo con bounty_id, usuario_id, set_id y la recompensa acotada', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 50 }, error: null });
-    // Update condicional (.eq('estado','pendiente')) no afecta ninguna fila: ya lo reclamó otro.
-    mockUpdateSelect.mockResolvedValue({ data: [], error: null });
-
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-    const data = await res.json();
-    expect(data.error).toBe('El bounty ya fue reclamado');
-    expect(mockInsert).not.toHaveBeenCalled();
-  });
-
-  it('el UPDATE condiciona por id Y por estado=pendiente', async () => {
-    const req = createRequest({ bountyId: 'b1', setId: 's1' });
-    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 5 }, error: null });
-    mockUpdateSelect.mockResolvedValue({ data: [{ id: 'b1' }], error: null });
-    mockInsert.mockResolvedValue({ error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'Halcón Milenario', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
 
     await POST(req);
 
-    expect(mockUpdateEq1).toHaveBeenCalledWith('id', 'b1');
-    expect(mockUpdateEq2).toHaveBeenCalledWith('estado', 'pendiente');
+    expect(mockClaimInsert).toHaveBeenCalledWith({
+      bounty_id: 'b1',
+      usuario_id: 'u1',
+      set_id: 's1',
+      nombre_set: 'Halcón Milenario',
+      recompensa: 5,
+      estado: 'reclamado',
+    });
   });
 
   it('debería procesar el claim correctamente e insertar bricks', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 5 }, error: null });
-    mockUpdateSelect.mockResolvedValue({ data: [{ id: 'b1' }], error: null });
-    mockInsert.mockResolvedValue({ error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
 
     const res = await POST(req);
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.success).toBe(true);
     expect(data.reward).toBe(5);
+    expect(data.reclamoId).toBe('r1');
 
-    expect(mockUpdate).toHaveBeenCalledWith({ estado: 'reclamado', reclamado_por: 'u1' });
-    expect(mockInsert).toHaveBeenCalled();
-    const insertArgs = mockInsert.mock.calls[0][0];
+    expect(mockBricksInsert).toHaveBeenCalled();
+    const insertArgs = mockBricksInsert.mock.calls[0][0];
     expect(insertArgs.length).toBe(5); // 5 bricks
     expect(insertArgs[0].set_id).toBe('s1');
     expect(insertArgs[0].hash_visitante).toContain('bounty-b1-0-');
+  });
+
+  it('un segundo usuario puede reclamar el mismo bounty que ya reclamó otro (múltiples ganadores)', async () => {
+    // No hay ningún estado compartido entre reclamos de usuarios distintos: el bounty sigue
+    // 'pendiente' tras el primer reclamo (ya no se bloquea), así que un segundo usuario puede
+    // reclamarlo igual -- la única restricción es no poder reclamarlo dos veces LA MISMA persona
+    // (probado arriba vía 23505).
+    const req = createRequest({ bountyId: 'b1', setId: 's2' });
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u2' } } });
+    mockSetSingle.mockResolvedValue({ data: { id: 's2' }, error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r2' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(mockClaimInsert).toHaveBeenCalledWith(expect.objectContaining({ usuario_id: 'u2', bounty_id: 'b1' }));
   });
 
   // --- Regresión: límite defensivo sobre la recompensa ---
@@ -196,16 +223,30 @@ describe('POST /api/bounties/claim', () => {
   it('acota la recompensa a MAX_REWARD_BRICKS (1000) aunque el bounty pida más', async () => {
     const req = createRequest({ bountyId: 'b1', setId: 's1' });
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
-    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', recompensa: 999999 }, error: null });
-    mockUpdateSelect.mockResolvedValue({ data: [{ id: 'b1' }], error: null });
-    mockInsert.mockResolvedValue({ error: null });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 999999 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
 
     const res = await POST(req);
     const data = await res.json();
 
     expect(data.reward).toBe(1000);
-    const insertArgs = mockInsert.mock.calls[0][0];
+    const insertArgs = mockBricksInsert.mock.calls[0][0];
     expect(insertArgs.length).toBe(1000);
+    expect(mockClaimInsert).toHaveBeenCalledWith(expect.objectContaining({ recompensa: 1000 }));
+  });
+
+  it('devuelve success igualmente si falla la inserción de bricks (el reclamo ya quedó registrado)', async () => {
+    const req = createRequest({ bountyId: 'b1', setId: 's1' });
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+    mockBountySingle.mockResolvedValue({ data: { id: 'b1', estado: 'pendiente', nombre_set: 'X', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: new Error('fallo de bricks') });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
   });
 
   it('debería retornar 500 si hay un error general no controlado', async () => {

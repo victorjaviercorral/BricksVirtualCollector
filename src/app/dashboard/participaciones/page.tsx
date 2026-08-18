@@ -31,10 +31,13 @@ export default async function ParticipacionesPage() {
     .in("set_id", userSetIds);
 
   // 2. Fetch Bounties claimed by user
+  // Modelo multi-reclamo (D1, Iteración 4): un bounty puede reclamarlo cualquier número de
+  // personas, cada reclamo es su propia fila. Antes esto consultaba `bounties` filtrando por
+  // `reclamado_por` -- ese modelo de un solo ganador se sustituyó en api/bounties/claim/route.ts.
   const { data: misBounties } = await supabase
-    .from("bounties")
+    .from("bounties_reclamados")
     .select("*")
-    .eq("reclamado_por", user.id)
+    .eq("usuario_id", user.id)
     .order("creado_en", { ascending: false });
 
   // 3. Fetch Insignias/Badges

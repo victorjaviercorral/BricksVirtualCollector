@@ -1,43 +1,49 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import ParticipacionesDetailClient from './ParticipacionesDetailClient';
 
 describe('ParticipacionesDetailClient', () => {
   const participacion = {
-    id: 'p1',
-    titulo: 'Modular Master',
-    descripcion: 'Sube fotos de 3 sets modulares diferentes',
+    id: 'r1',
+    nombreSet: 'Halcón Milenario UCS',
+    tematica: 'Star Wars',
     recompensa: 500,
-    progreso: 66,
-    requisitos: [
-      { id: 1, texto: 'Sets oficiales de Lego' },
-      { id: 2, texto: 'Fotos claras y bien iluminadas' },
-    ],
-    tareas: [
-      { id: 1, texto: 'Set #10297', estado: 'aprobado' },
-      { id: 2, texto: 'Set #10260', estado: 'pendiente' },
-    ],
+    estado: 'reclamado',
+    fechaReclamo: '2026-08-18T10:00:00.000Z',
+    set: { id: 's1', nombre: 'Mi Halcón Milenario' },
   };
 
-  it('renderiza título, recompensa, descripción y progreso', () => {
+  it('renderiza el nombre del set, la temática y la recompensa', () => {
     render(<ParticipacionesDetailClient participacion={participacion} />);
 
-    expect(screen.getByText('Modular Master')).toBeInTheDocument();
+    expect(screen.getByText('Halcón Milenario UCS')).toBeInTheDocument();
+    expect(screen.getByText('Star Wars')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
-    expect(screen.getByText('Sube fotos de 3 sets modulares diferentes')).toBeInTheDocument();
-    expect(screen.getByText('66%')).toBeInTheDocument();
   });
 
-  it('renderiza cada requisito y cada tarea con su estado', () => {
+  it('enlaza al set real con el que se reclamó el bounty', () => {
     render(<ParticipacionesDetailClient participacion={participacion} />);
 
-    expect(screen.getByText('Sets oficiales de Lego')).toBeInTheDocument();
-    expect(screen.getByText('Fotos claras y bien iluminadas')).toBeInTheDocument();
+    const setLink = screen.getByText('Mi Halcón Milenario').closest('a');
+    expect(setLink).toHaveAttribute('href', '/set/s1');
+  });
 
-    expect(screen.getByText('Set #10297')).toBeInTheDocument();
-    expect(screen.getByText('(aprobado)')).toBeInTheDocument();
-    expect(screen.getByText('Set #10260')).toBeInTheDocument();
-    expect(screen.getByText('(pendiente)')).toBeInTheDocument();
+  it('muestra la fecha de reclamo formateada', () => {
+    render(<ParticipacionesDetailClient participacion={participacion} />);
+
+    expect(screen.getAllByText(/18 de agosto de 2026/i).length).toBeGreaterThan(0);
+  });
+
+  it('no muestra el enlace al set si el reclamo no tiene uno asociado (reclamos anteriores a la migración)', () => {
+    render(<ParticipacionesDetailClient participacion={{ ...participacion, set: null }} />);
+
+    expect(screen.queryByText('Mi Halcón Milenario')).not.toBeInTheDocument();
+  });
+
+  it('no muestra la etiqueta de temática si no hay bounty asociado', () => {
+    render(<ParticipacionesDetailClient participacion={{ ...participacion, tematica: null }} />);
+
+    expect(screen.queryByText('Star Wars')).not.toBeInTheDocument();
   });
 
   it('enlaza "Volver a Participaciones" a la ruta de listado', () => {
@@ -45,15 +51,5 @@ describe('ParticipacionesDetailClient', () => {
 
     const backLink = screen.getByText('Volver a Participaciones').closest('a');
     expect(backLink).toHaveAttribute('href', '/dashboard/participaciones');
-  });
-
-  it('alterna el texto del botón de acción al pulsarlo (estado de subida)', () => {
-    render(<ParticipacionesDetailClient participacion={participacion} />);
-
-    const button = screen.getByText('Subir Nueva Participación');
-    fireEvent.click(button);
-
-    expect(screen.getByText('Subiendo...')).toBeInTheDocument();
-    expect(screen.queryByText('Subir Nueva Participación')).not.toBeInTheDocument();
   });
 });

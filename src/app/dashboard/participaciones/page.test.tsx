@@ -65,14 +65,15 @@ describe('ParticipacionesPage (SSR)', () => {
       if (table === 'sets') {
         builder.eq = vi.fn().mockResolvedValue({ data: [{ id: 'set1' }] });
       }
-      if (table === 'exposicion_sets' || table === 'bounties' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
+      if (table === 'exposicion_sets' || table === 'bounties' || table === 'bounties_reclamados' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
         // all end with a resolver like in, eq, limit
         builder.in = vi.fn().mockResolvedValue({ data: [{ id: '1' }] });
         builder.eq = vi.fn().mockReturnThis();
         builder.limit = vi.fn().mockResolvedValue({ data: [{ id: '2' }] });
       }
-      // For bounties
-      if (table === 'bounties') {
+      // bounties_reclamados: cadena .select().eq('usuario_id', ...).order(...) (modelo
+      // multi-reclamo, D1 -- ver src/app/dashboard/participaciones/page.tsx)
+      if (table === 'bounties_reclamados') {
         builder.order = vi.fn().mockResolvedValue({ data: [] });
       }
       // For exposiciones_temporales
@@ -100,13 +101,13 @@ describe('ParticipacionesPage (SSR)', () => {
       if (table === 'sets') {
         builder.eq = vi.fn().mockResolvedValue({ data: null }); // triggers || []
       }
-      if (table === 'exposicion_sets' || table === 'bounties' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
+      if (table === 'exposicion_sets' || table === 'bounties' || table === 'bounties_reclamados' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
         builder.in = vi.fn().mockResolvedValue({ data: null });
         builder.eq = vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: null }), limit: vi.fn().mockResolvedValue({ data: null }) });
         builder.limit = vi.fn().mockResolvedValue({ data: null });
       }
-      if (table === 'bounties') {
-        builder.eq = vi.fn().mockReturnValue({ 
+      if (table === 'bounties' || table === 'bounties_reclamados') {
+        builder.eq = vi.fn().mockReturnValue({
           order: vi.fn().mockResolvedValue({ data: null }),
           limit: vi.fn().mockResolvedValue({ data: null })
         });
