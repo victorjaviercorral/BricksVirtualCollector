@@ -4,6 +4,7 @@ import { ShieldCheck, XCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { approveAction, rejectAction } from "./actions";
+import { isModeratorRole } from "@/lib/roles";
 
 export default async function ModeracionPage() {
   const supabase = await createClient();
@@ -18,7 +19,7 @@ export default async function ModeracionPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin" && profile?.role !== "admin_exposiciones") {
+  if (!isModeratorRole(profile?.role)) {
     redirect("/");
   }
 

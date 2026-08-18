@@ -2,17 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-
-/**
- * Roles con permiso de moderación. Coincide deliberadamente con la comprobación ya existente en
- * src/app/admin/moderacion/page.tsx ("admin" | "admin_exposiciones"), no con la lista más amplia
- * de src/app/admin/layout.tsx (que además incluye "sysadmin" para mostrar el enlace en el
- * sidebar). Esa diferencia ya existía antes de este cambio -- un sysadmin ve el enlace a
- * Moderación pero page.tsx lo redirige fuera al entrar -- y no se corrige aquí para no alterar
- * comportamiento de producto sin que sea el objetivo de este cambio; queda anotado como hallazgo
- * menor en docs/05-plan/seguimiento-iteracion-3.md.
- */
-const MODERATOR_ROLES = ["admin", "admin_exposiciones"];
+import { isModeratorRole } from "@/lib/roles";
 
 /**
  * Verifica que el usuario autenticado tiene un rol de moderador antes de permitir la acción.
@@ -33,7 +23,7 @@ async function isModerator(supabase: Awaited<ReturnType<typeof createClient>>): 
     .eq("id", user.id)
     .single();
 
-  return !!profile?.role && MODERATOR_ROLES.includes(profile.role);
+  return isModeratorRole(profile?.role);
 }
 
 export async function approveAction(formData: FormData) {

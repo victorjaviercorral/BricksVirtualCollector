@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Map, Target, ShieldAlert, LogOut } from "lucide-react";
+import { isModeratorRole } from "@/lib/roles";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -49,7 +50,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const links = [
     { href: "/admin/exposiciones", label: "Exposiciones", icon: <Map size={20} />, show: true },
     { href: "/admin/bounties", label: "Bounties", icon: <Target size={20} />, show: true },
-    { href: "/admin/moderacion", label: "Moderación", icon: <ShieldAlert size={20} />, show: true },
+    // Hallazgo N7 (Iteración 3), cerrado 18/08/2026 (decisión D2): antes se mostraba también a
+    // "sysadmin", que la propia página y las Server Actions de moderación siempre rechazaron --
+    // un sysadmin veía el enlace y era expulsado al pulsarlo. Única fuente de verdad en
+    // src/lib/roles.ts, compartida con page.tsx y actions.ts.
+    { href: "/admin/moderacion", label: "Moderación", icon: <ShieldAlert size={20} />, show: isModeratorRole(userRole) },
     { href: "/admin/system/health", label: "System", icon: <ShieldAlert size={20} />, show: userRole.includes('sysadmin') },
   ].filter(link => link.show);
 
