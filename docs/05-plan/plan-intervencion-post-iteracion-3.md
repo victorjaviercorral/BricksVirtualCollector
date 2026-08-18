@@ -286,3 +286,31 @@ S2..S5, E7 ──> apertura de registro (no antes, pero tampoco después)
 | P2 | **D1 y D3 son decisiones de producto, no técnicas.** Si se posponen, H1 y H3 quedan bloqueadas y la Iteración 5 no cierra. | Tomarlas al inicio de la Iteración 5, no durante |
 | P3 | **T2 requiere un Supabase de pruebas separado.** Ejecutar E2E de escritura contra producción no es aceptable. | Decidir el entorno de pruebas antes de empezar la Iteración 6; `supabase db reset` ya es viable desde que A1 está cerrado |
 | P4 | **La promesa de EXIF es hoy una afirmación no respaldada** en la UI y en el README, y la demo es de solo lectura, así que no se ejercita — pero el texto sigue publicado. | Si S2 no entra antes del lanzamiento, ajustar el copy en la Iteración 5 en vez de mantener la promesa |
+
+---
+
+## 6. Actualización 19/08/2026 — D1, D2 y D3 implementados
+
+En `main` (tags `v0.5.0-verificacion`, `v0.6.0-d1-d2-d3`):
+
+- **D1 (modelo de bounty multi-reclamo):** decidido por el titular — cualquier número de personas
+  puede reclamar un bounty, recompensa completa a cada una. `api/bounties/claim/route.ts`
+  reescrito (INSERT en `bounties_reclamados` + `unique(bounty_id, usuario_id)` en vez de UPDATE
+  atómico sobre `bounties`). H1 cerrado: `/dashboard/participaciones/[id]` sin fallback mock.
+- **D2 (N7, quién modera):** solo `admin`/`admin_exposiciones`; `sysadmin` ya no ve el enlace a
+  Moderación. Fuente única en `src/lib/roles.ts`.
+- **D3 (insignias):** solo el Pasaporte de Exposiciones tiene datos reales (ranking calculado al
+  archivar una exposición, `src/lib/insignias.ts`); Vitrina de Insignias y Mosaico Comunitario
+  pasan a un estado "Próximamente" honesto — ninguna de las dos tenía esquema ni criterios
+  definidos, son productos nuevos por diseñar, no decisión de esta iteración.
+- Dos bugs nuevos encontrados en pruebas manuales (B1/B2) corregidos: enlace "Editar" de un set
+  apuntaba a la ruta de crear; botón "Eliminar" era un `<button>` sin `onClick`.
+- 205 → 239 tests, cobertura sin bajar de las 4 métricas, ESLint baseline bajado de 201 a 187
+  (código nuevo escrito sin `any` en los mocks de Supabase).
+
+**⚠️ Pendiente crítico, bloquea que lo anterior funcione en producción:** 2 migraciones nuevas
+escritas en esta ronda (`20260818120000_bounties_multi_reclamo.sql`,
+`20260818130000_sets_insignias_admin_write.sql`) **no están aplicadas contra Supabase real**. El
+código ya desplegado asume que existen. Hasta que se apliquen, reclamar un bounty y archivar una
+exposición con participantes fallarán en producción — mismo patrón de riesgo que N1/N2 de la
+Iteración 3.
