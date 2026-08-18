@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowLeft, Grid, Eye, Trash2, Edit3, Image as ImageIcon } from "lucide-react";
+import { Plus, ArrowLeft, Grid, Eye, Edit3, Image as ImageIcon } from "lucide-react";
 import EditVitrinaModal from "@/components/EditVitrinaModal";
 import MoveSetModal from "@/components/MoveSetModal";
 
@@ -103,13 +103,22 @@ export default async function GestionVitrina(props: { params: Promise<{ id: stri
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                    <Link href={`/mesa-de-trabajo?set_id=${set.id}`} className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform" title="Editar">
+                    {/* Hallazgo de la Iteración 4 (prueba manual P3): este enlace apuntaba a
+                        `/mesa-de-trabajo?set_id=...` -- la ruta de CREAR un set, que ni siquiera
+                        lee `set_id` (MesaTrabajoClient.tsx solo consume vitrina_id/bounty_id).
+                        Por eso el botón "Editar" mostraba el formulario de "Añadir Set": era la
+                        pantalla equivocada. La ruta correcta ya existe, probada y funcionando
+                        (EditarSetClient.tsx, con "Guardar Cambios" y "Borrar Set" reales). */}
+                    <Link href={`/mesa-de-trabajo/${set.id}`} className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform" title="Editar">
                       <Edit3 size={20} />
                     </Link>
                     <MoveSetModal set={set} vitrinas={todasVitrinas || []} />
-                    <button className="w-12 h-12 rounded-full bg-brand-red text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md" title="Eliminar">
-                      <Trash2 size={20} />
-                    </button>
+                    {/* El botón "Eliminar" que estaba aquí era un <button> sin onClick dentro de
+                        un Server Component: estructuralmente no podía hacer nada al pulsarlo
+                        (hallazgo de la prueba manual P3, "no acciona nada"). Se retira en vez de
+                        reimplementarlo -- borrar un set ya funciona, probado, en la ruta de
+                        arriba (EditarSetClient.tsx → "Borrar Set"). Añadir un segundo punto de
+                        borrado aquí duplicaría esa lógica (regla Zero-Duplication, AGENTS.md §2). */}
                   </div>
                 </div>
                 <div className="p-5">
