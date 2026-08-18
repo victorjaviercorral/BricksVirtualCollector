@@ -1,4 +1,4 @@
-name: Testing and Coverage Gate
+name: Quality Gate
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  quality-gate:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,9 +22,34 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Run Vitest with Coverage
-      # The npm script test:coverage uses vitest --coverage, which checks the 
-      # coverage thresholds configured in vitest.config.ts (85%).
-      # If coverage falls below this, the command will exit with a non-zero code,
-      # failing the build and preventing the merge.
+    # Tarea C1 del plan de intervención (F1.16 de la auditoría original).
+    # Hasta ahora el único gate era la cobertura, así que el error de tipos que
+    # rompió `next build` en la auditoría habría entrado en main sin que nada lo
+    # detectara. Los pasos siguientes cierran esa brecha.
+
+    - name: TypeScript (tsc --noEmit)
+      run: npx tsc --noEmit
+
+    - name: Vitest + umbral de cobertura
+      # El script test:coverage usa vitest --coverage, que comprueba los umbrales
+      # configurados en vitest.config.ts (85% en las 4 métricas). Si la cobertura
+      # baja de ahí, el comando sale con código distinto de cero y bloquea el merge.
       run: npm run test:coverage
+
+    - name: ESLint (baseline congelado)
+      # Tarea C2. ESLint arrastra 201 errores preexistentes; ninguna regla se ha
+      # relajado ni desactivado para ocultarlos. El gate no exige bajarlos, exige
+      # que no suban: la deuda queda congelada y cualquier PR que añada un error
+      # nuevo falla aquí. Al reducirla, bajar ESLINT_BASELINE en el mismo PR.
+      run: npm run lint:ci
+
+    - name: Build de producción
+      # Verifica que existe artefacto desplegable. `next build` detecta errores
+      # que tsc no ve por sí solo (tipado de rutas, fronteras Server/Client).
+      # Comprobado el 18/08/2026: el build termina en verde sin estas variables
+      # (las 41 rutas son dinámicas, ninguna consulta Supabase en tiempo de build),
+      # así que si los secrets no están definidos el gate sigue siendo válido.
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      run: npx next build
