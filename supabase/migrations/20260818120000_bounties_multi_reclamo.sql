@@ -32,7 +32,11 @@ begin
     alter table public.bounties_reclamados
         add constraint bounties_reclamados_bounty_usuario_unique unique (bounty_id, usuario_id);
 exception
-    when duplicate_object then null; -- ya existía (reaplicar esta migración es seguro)
+    -- Un UNIQUE con nombre crea un índice internamente: si ya existe, Postgres lanza
+    -- duplicate_table (42P07) para ese índice, no duplicate_object (42710) para el constraint
+    -- en sí. Detectado en la aplicación real de esta migración (19/08/2026) -- se capturan
+    -- ambos para que "reaplicar esta migración es segura" sea cierto de verdad.
+    when duplicate_object or duplicate_table then null;
 end $$;
 
 -- ---------------------------------------------------------------------------------------------

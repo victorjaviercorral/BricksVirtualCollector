@@ -484,3 +484,23 @@ haz clic ahí en vez de escribir un id a mano.
 | V4b | Región del proyecto | Frankfurt (UE) | | |
 | B1/B2 | Fix de Editar/Eliminar en vitrina | funcionan de extremo a extremo | pendiente de tu confirmación visual | |
 | P4-bis | Voto doble en una **exposición** real | segundo voto rechazado | pendiente | |
+
+---
+
+## Verificación de las migraciones D1/D3 (19/08/2026)
+
+Ambas migraciones aplicadas por el titular contra Supabase real.
+
+- **`20260818120000`**: el `ERROR 42P07 relation already exists` en el segundo bloque era ruido,
+  no un fallo de estado — Postgres lanza `duplicate_table` (42P07), no `duplicate_object` (42710),
+  cuando un `UNIQUE` con nombre ya existe (crea un índice internamente). El manejador de
+  excepción del fichero solo capturaba 42710; corregido para capturar ambos. Constraint y
+  columna confirmados en su sitio.
+- **`20260818130000`**: aplicada sin error. Se detectó que `sets_insignias` ya tenía 2 políticas
+  no rastreadas en ninguna migración (`"Only admins can manage insignias"` ALL, `"Public can view
+  insignias"` SELECT) — creadas a mano antes de que existiera migración para esta tabla, mismo
+  patrón que el hallazgo N6 (buckets sin migrar). Verificadas sus definiciones (`qual`/`with_check`):
+  la de escritura restringe correctamente a `role = 'admin'` vía `auth.uid()`, sin permisividad de
+  más. **No es un hallazgo de seguridad**, solo redundancia inofensiva (RLS se combina con OR) —
+  limpieza opcional, no urgente: se podrían retirar las 2 políticas viejas dejando solo las 4
+  rastreadas en el repo, pero el efecto neto ya es el correcto tal como está.
