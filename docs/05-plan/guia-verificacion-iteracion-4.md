@@ -396,9 +396,9 @@ Repite V3 y la región (V4b) cuando tengas un minuto — no las has enviado toda
 
 | ID | Comprobación | Resultado esperado | Resultado real | ✅/❌ |
 |---|---|---|---|---|
-| V2 | service_role key | existe, sin `NEXT_PUBLIC_` | **N/A todavía** — despliegue en curso (Vercel) | — |
-| V3 | Redirect URLs | lista explícita, sin comodines | pendiente | |
-| V4b | Región del proyecto | Frankfurt (UE) | pendiente | |
+| V2 | service_role key | existe, sin `NEXT_PUBLIC_` | pendiente — desplegado en Vercel, falta probar borrado de cuenta en real | — |
+| V3 | Redirect URLs + Site URL | dominio estable, sin comodines | ✅ `https://bricks-virtual-collector.vercel.app` en ambos (Site URL y Redirect URLs); la URL con hash del primer despliegue se dejó también en la lista, quedará obsoleta sola en el próximo deploy | ✅ |
+| V4b | Región del proyecto | Frankfurt (UE) | ✅ confirmado por el titular (`eu-central-1`) | ✅ |
 | P1 | Crear set con num_set y notas | se guarda | ✅ confirmado por el titular | ✅ |
 | P2 | Editar alias | persiste al recargar | ✅ toast "Perfil actualizado correctamente", confirmado por el titular | ✅ |
 | P3 | Editar/borrar set | efecto real en BD | ❌ **2 bugs reales encontrados y corregidos** — ver B1/B2 abajo | ❌→✅ |
@@ -476,14 +476,26 @@ haz clic ahí en vez de escribir un id a mano.
 
 ---
 
+### Nota V3 — la URL de despliegue de Vercel no es estable, hay que usar el alias de producción
+
+`forgot-password/page.tsx:20` construye el `redirectTo` con `window.location.origin` — el origen
+real desde el que navega el visitante. La primera URL que se registró
+(`https://bricks-virtual-collector-oss61g03g-victorjaviercorrals-projects.vercel.app`) llevaba el
+hash del despliegue concreto: cada push a `main` genera un hash nuevo, así que esa URL habría
+quedado obsoleta en el siguiente deploy y roto "Restablecer contraseña". Vercel da, además, un
+alias estable de producción (Settings → Domains) que siempre apunta al último deploy vigente sin
+hash — `https://bricks-virtual-collector.vercel.app` — que es el que hay que tener registrado
+tanto en Site URL como en Redirect URLs para que sobreviva a futuros despliegues.
+
 ## Plantilla de resultados — pendiente
 
 | ID | Comprobación | Resultado esperado | Resultado real | ✅/❌ |
 |---|---|---|---|---|
-| V3 | Redirect URLs | lista explícita, sin comodines | | |
-| V4b | Región del proyecto | Frankfurt (UE) | | |
+| V2 | service_role key en Vercel | borrado de cuenta real → 200 | pendiente | |
 | B1/B2 | Fix de Editar/Eliminar en vitrina | funcionan de extremo a extremo | pendiente de tu confirmación visual | |
 | P4-bis | Voto doble en una **exposición** real | segundo voto rechazado | pendiente | |
+| — | Reclamar un bounty (modelo D1) | dos cuentas distintas pueden reclamar el mismo bounty | pendiente | |
+| — | Archivar una exposición (D3) | se genera un sello real en el Pasaporte | pendiente | |
 
 ---
 
