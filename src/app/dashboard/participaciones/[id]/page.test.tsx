@@ -13,8 +13,14 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn().mockImplementation(() => { throw new Error('notFound') }),
 }));
 
+interface MockParticipacion {
+  nombreSet: string;
+  recompensa: number;
+  tematica: string | null;
+}
+
 vi.mock('./ParticipacionesDetailClient', () => ({
-  default: ({ participacion }: any) => (
+  default: ({ participacion }: { participacion: MockParticipacion }) => (
     <div data-testid="detail-client">
       <span data-testid="nombreSet">{participacion.nombreSet}</span>
       <span data-testid="recompensa">{participacion.recompensa}</span>
@@ -22,6 +28,8 @@ vi.mock('./ParticipacionesDetailClient', () => ({
     </div>
   ),
 }));
+
+type MockSupabase = Awaited<ReturnType<typeof createClient>>;
 
 /**
  * Hallazgo R3 cerrado (Iteración 4): antes, cuando no se encontraba el reclamo, esta página
@@ -37,7 +45,7 @@ describe('ParticipacionDetailPage (SSR)', () => {
 
   const mockParams = Promise.resolve({ id: 'r1' });
 
-  const buildSupabase = (singleResult: any) => {
+  const buildSupabase = (singleResult: { data: unknown }) => {
     const single = vi.fn().mockResolvedValue(singleResult);
     const eq2 = vi.fn().mockReturnValue({ single });
     const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
@@ -52,14 +60,14 @@ describe('ParticipacionDetailPage (SSR)', () => {
   };
 
   it('redirecciona a login si no hay usuario', async () => {
-    (createClient as any).mockResolvedValue({
+    vi.mocked(createClient).mockResolvedValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-    });
+    } as unknown as MockSupabase);
 
     try {
       await ParticipacionDetailPage({ params: mockParams });
-    } catch (e: any) {
-      expect(e.message).toBe('redirect');
+    } catch (e) {
+      expect((e as Error).message).toBe('redirect');
     }
 
     expect(redirect).toHaveBeenCalledWith('/login');
@@ -77,7 +85,7 @@ describe('ParticipacionDetailPage (SSR)', () => {
         sets: { id: 's1', nombre: 'Mi Halcón' },
       },
     });
-    (createClient as any).mockResolvedValue(supabase);
+    vi.mocked(createClient).mockResolvedValue(supabase as unknown as MockSupabase);
 
     const jsx = await ParticipacionDetailPage({ params: mockParams });
     render(jsx);
@@ -104,7 +112,7 @@ describe('ParticipacionDetailPage (SSR)', () => {
         sets: [{ id: 's2', nombre: 'Mi Set X' }],
       },
     });
-    (createClient as any).mockResolvedValue(supabase);
+    vi.mocked(createClient).mockResolvedValue(supabase as unknown as MockSupabase);
 
     const jsx = await ParticipacionDetailPage({ params: mockParams });
     render(jsx);
@@ -114,12 +122,12 @@ describe('ParticipacionDetailPage (SSR)', () => {
 
   it('devuelve 404 real cuando el reclamo no existe o no pertenece al usuario', async () => {
     const supabase = buildSupabase({ data: null });
-    (createClient as any).mockResolvedValue(supabase);
+    vi.mocked(createClient).mockResolvedValue(supabase as unknown as MockSupabase);
 
     try {
       await ParticipacionDetailPage({ params: mockParams });
-    } catch (e: any) {
-      expect(e.message).toBe('notFound');
+    } catch (e) {
+      expect((e as Error).message).toBe('notFound');
     }
 
     expect(notFound).toHaveBeenCalled();

@@ -33,9 +33,22 @@ describe('Admin Exposiciones', () => {
   const mockUpload = vi.fn();
   const mockGetPublicUrl = vi.fn();
 
+  // Reparto de insignias al archivar (hallazgo D3): exposicion_sets -> bricks_recibidos ->
+  // sets_insignias.upsert(), cada tabla con su propia cadena de mocks, distinguidas por nombre
+  // de tabla en mockFrom.mockImplementation.
+  const mockExpoSetsEq2 = vi.fn();
+  const mockExpoSetsEq1 = vi.fn(() => ({ eq: mockExpoSetsEq2 }));
+  const mockExpoSetsSelect = vi.fn(() => ({ eq: mockExpoSetsEq1 }));
+
+  const mockBricksIn = vi.fn();
+  const mockBricksEq = vi.fn(() => ({ in: mockBricksIn }));
+  const mockBricksSelect = vi.fn(() => ({ eq: mockBricksEq }));
+
+  const mockInsigniasUpsert = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     vi.mocked(createClient).mockReturnValue({
       from: mockFrom,
       storage: {
@@ -46,17 +59,29 @@ describe('Admin Exposiciones', () => {
       }
     } as any);
 
-    mockFrom.mockReturnValue({ 
-      select: mockSelect, 
-      insert: mockInsert, 
-      update: mockUpdate,
-      delete: vi.fn()
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'exposicion_sets') return { select: mockExpoSetsSelect };
+      if (table === 'bricks_recibidos') return { select: mockBricksSelect };
+      if (table === 'sets_insignias') return { upsert: mockInsigniasUpsert };
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        update: mockUpdate,
+        delete: vi.fn(),
+      };
     });
     mockSelect.mockReturnValue({ order: mockOrder });
     mockUpdate.mockReturnValue({ eq: mockEq, neq: mockNeq });
-    
+
     mockEq.mockResolvedValue({ error: null });
     mockNeq.mockResolvedValue({ error: null });
+
+    // Por defecto: exposición sin participantes aprobados -- el flujo de archivar salta
+    // directamente al UPDATE de estado, igual que antes de esta ronda (comportamiento por
+    // defecto de los tests existentes que no prueban el reparto de insignias).
+    mockExpoSetsEq2.mockResolvedValue({ data: [], error: null });
+    mockBricksIn.mockResolvedValue({ data: [], error: null });
+    mockInsigniasUpsert.mockResolvedValue({ error: null });
   });
 
   it('debe cargar la lista de exposiciones', async () => {
@@ -201,8 +226,8 @@ describe('Admin Exposiciones', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('debe archivar exposición', async () => {
-    mockOrder.mockResolvedValue({ 
+  it('debe archivar exposición sin participantes aprobados (no reparte insignias)', async () => {
+    mockOrder.mockResolvedValue({
       data: [{
         id: 'expo-1',
         titulo: 'Exposición Activa',
@@ -215,8 +240,103 @@ describe('Admin Exposiciones', () => {
     fireEvent.click(screen.getByRole('button', { name: /finalizar y entregar insignias/i }));
 
     await waitFor(() => {
+      expect(mockExpoSetsSelect).toHaveBeenCalledWith('set_id');
+      expect(mockExpoSetsEq1).toHaveBeenCalledWith('exposicion_id', 'expo-1');
+      expect(mockExpoSetsEq2).toHaveBeenCalledWith('estado', 'aprobado');
+      // Sin participantes: no se llega a calcular bricks ni a repartir insignias.
+      expect(mockBricksSelect).not.toHaveBeenCalled();
+      expect(mockInsigniasUpsert).not.toHaveBeenCalled();
       expect(mockUpdate).toHaveBeenCalledWith({ estado: 'archivada' });
       expect(mockEq).toHaveBeenCalledWith('id', 'expo-1');
+      expect(toast.success).toHaveBeenCalledWith('Exposición archivada. No hubo participantes aprobados.');
+    });
+  });
+
+  // --- Hallazgo D3: reparto real de insignias al archivar ---
+
+  it('reparte insignias según el ranking de bricks al archivar con participantes', async () => {
+    mockOrder.mockResolvedValue({
+      data: [{ id: 'expo-1', titulo: 'Exposición Activa', estado: 'activa' }]
+    });
+    mockExpoSetsEq2.mockResolvedValue({ data: [{ set_id: 's1' }, { set_id: 's2' }], error: null });
+    // s1 recibe 2 bricks dentro de esta exposición, s2 recibe 1 -> s1 debe quedar 1º.
+    mockBricksIn.mockResolvedValue({ data: [{ set_id: 's1' }, { set_id: 's1' }, { set_id: 's2' }], error: null });
+
+    render(<AdminExposiciones />);
+    await waitFor(() => expect(screen.getByText('Exposición Activa')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /finalizar y entregar insignias/i }));
+
+    await waitFor(() => {
+      expect(mockBricksSelect).toHaveBeenCalledWith('set_id');
+      expect(mockBricksEq).toHaveBeenCalledWith('exposicion_id', 'expo-1');
+      expect(mockBricksIn).toHaveBeenCalledWith('set_id', ['s1', 's2']);
+
+      expect(mockInsigniasUpsert).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({ set_id: 's1', exposicion_id: 'expo-1', rango: 1, titulo_insignia: '🥇 1er Puesto' }),
+          expect.objectContaining({ set_id: 's2', exposicion_id: 'expo-1', rango: 2, titulo_insignia: '🥈 2º Puesto' }),
+        ],
+        { onConflict: 'set_id,exposicion_id' }
+      );
+
+      expect(mockUpdate).toHaveBeenCalledWith({ estado: 'archivada' });
+      expect(toast.success).toHaveBeenCalledWith('Exposición archivada. Insignias entregadas a 2 participante(s).');
+    });
+  });
+
+  it('no archiva si falla el cálculo de participaciones aprobadas', async () => {
+    mockOrder.mockResolvedValue({
+      data: [{ id: 'expo-1', titulo: 'Exposición Activa', estado: 'activa' }]
+    });
+    mockExpoSetsEq2.mockResolvedValue({ data: null, error: new Error('fallo') });
+
+    render(<AdminExposiciones />);
+    await waitFor(() => expect(screen.getByText('Exposición Activa')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /finalizar y entregar insignias/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al calcular el ranking de la exposición');
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  it('no archiva si falla el recuento de bricks', async () => {
+    mockOrder.mockResolvedValue({
+      data: [{ id: 'expo-1', titulo: 'Exposición Activa', estado: 'activa' }]
+    });
+    mockExpoSetsEq2.mockResolvedValue({ data: [{ set_id: 's1' }], error: null });
+    mockBricksIn.mockResolvedValue({ data: null, error: new Error('fallo') });
+
+    render(<AdminExposiciones />);
+    await waitFor(() => expect(screen.getByText('Exposición Activa')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /finalizar y entregar insignias/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al calcular el ranking de la exposición');
+      expect(mockInsigniasUpsert).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  it('no archiva si falla el reparto de insignias (para poder reintentar sin dejarlo a medias)', async () => {
+    mockOrder.mockResolvedValue({
+      data: [{ id: 'expo-1', titulo: 'Exposición Activa', estado: 'activa' }]
+    });
+    mockExpoSetsEq2.mockResolvedValue({ data: [{ set_id: 's1' }], error: null });
+    mockBricksIn.mockResolvedValue({ data: [{ set_id: 's1' }], error: null });
+    mockInsigniasUpsert.mockResolvedValue({ error: new Error('fallo de RLS') });
+
+    render(<AdminExposiciones />);
+    await waitFor(() => expect(screen.getByText('Exposición Activa')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /finalizar y entregar insignias/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al repartir las insignias');
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 

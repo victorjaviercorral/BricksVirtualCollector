@@ -27,6 +27,8 @@ export default defineConfig({
       'src/app/api/auth/delete-account/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/insignias.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/components/badges/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -70,7 +72,11 @@ export default defineConfig({
         // Iteración 3 (Bloque A): retirada de mock data
         'src/app/set/**',
         // Iteración 4 (D2/N7): fuente única de verdad para el rol de moderador
-        'src/lib/roles.ts'
+        'src/lib/roles.ts',
+        // Iteración 4 (D3): reparto real de insignias al cerrar una exposición
+        'src/lib/insignias.ts',
+        'src/components/badges/**',
+        'src/app/dashboard/insignias/**'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [

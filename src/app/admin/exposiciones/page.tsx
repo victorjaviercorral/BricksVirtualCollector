@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import { Map, Plus, Trash2, Calendar, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { calcularRankingInsignias } from "@/lib/insignias";
 
 export default function AdminExposiciones() {
   const [exposiciones, setExposiciones] = useState<any[]>([]);
@@ -103,13 +104,82 @@ export default function AdminExposiciones() {
   };
 
   const handleArchive = async (id: string) => {
-    // TODO: Aquí deberemos calcular y repartir las insignias
+    // Hallazgo D3 (Iteración 4): reparto real de insignias, cierra el TODO que había aquí.
+    // 1. Sets con participación aprobada en esta exposición.
+    const { data: participaciones, error: participacionesError } = await supabase
+      .from("exposicion_sets")
+      .select("set_id")
+      .eq("exposicion_id", id)
+      .eq("estado", "aprobado");
+
+    if (participacionesError) {
+      toast.error("Error al calcular el ranking de la exposición");
+      console.error(participacionesError);
+      return;
+    }
+
+    const setIds = (participaciones || []).map((p) => p.set_id);
+
+    if (setIds.length > 0) {
+      // 2. Bricks recibidos por cada set DENTRO de esta exposición (bricks_recibidos.exposicion_id,
+      // hallazgo N4 de la Iteración 3) -- no el total histórico del set.
+      const { data: bricks, error: bricksError } = await supabase
+        .from("bricks_recibidos")
+        .select("set_id")
+        .eq("exposicion_id", id)
+        .in("set_id", setIds);
+
+      if (bricksError) {
+        toast.error("Error al calcular el ranking de la exposición");
+        console.error(bricksError);
+        return;
+      }
+
+      const bricksPorSet: Record<string, number> = {};
+      (bricks || []).forEach((b) => {
+        bricksPorSet[b.set_id] = (bricksPorSet[b.set_id] || 0) + 1;
+      });
+
+      const ranking = calcularRankingInsignias(setIds, bricksPorSet);
+
+      // Upsert, no insert: "Reactivar" (handleActivate) permite volver a archivar la misma
+      // exposición, y el ranking debe recalcularse sobre las mismas filas
+      // (unique(set_id, exposicion_id), migración 20260818130000), no acumular duplicados.
+      const { error: insigniasError } = await supabase
+        .from("sets_insignias")
+        .upsert(
+          ranking.map((r) => ({
+            set_id: r.set_id,
+            exposicion_id: id,
+            rango: r.rango,
+            titulo_insignia: r.titulo_insignia,
+            fecha_otorgada: new Date().toISOString(),
+          })),
+          { onConflict: "set_id,exposicion_id" }
+        );
+
+      if (insigniasError) {
+        toast.error("Error al repartir las insignias");
+        console.error(insigniasError);
+        return; // No archivamos si el reparto falló, para poder reintentar sin dejar el evento
+                // archivado sin insignias.
+      }
+    }
+
+    // 3. Archivar, ahora que el reparto (si había participantes) ya se registró.
     const { error } = await supabase
       .from("exposiciones_temporales")
       .update({ estado: 'archivada' })
       .eq("id", id);
-      
-    if (!error) fetchExposiciones();
+
+    if (!error) {
+      toast.success(
+        setIds.length > 0
+          ? `Exposición archivada. Insignias entregadas a ${setIds.length} participante(s).`
+          : "Exposición archivada. No hubo participantes aprobados."
+      );
+      fetchExposiciones();
+    }
   };
 
   const handleActivate = async (id: string) => {
