@@ -1,0 +1,34 @@
+-- La migración 20260901100000 intentó cerrar la subida directa del cliente al bucket
+-- fotos_sets, pero apuntaba al nombre de política que registraba la migración original
+-- (20260810150000, "El usuario sube fotos a su propia carpeta") -- ese nombre no coincidía con
+-- el real en la base de datos ya aplicada (mismo patrón de deriva que sets_insignias y
+-- exposicion_sets, detectado esta vez por el titular vía verificación positiva antes de dar la
+-- corrección por buena). `drop policy if exists` con el nombre equivocado no dio ningún error:
+-- simplemente no hizo nada. La política real -- "Usuarios autenticados pueden subir fotos" --
+-- seguía activa, así que la subida directa (sin limpieza EXIF) seguía siendo posible.
+--
+-- No se reescribe 20260901100000 (ya se aplicó contra producción): se corrige hacia delante, con
+-- esta migración nueva, mismo criterio que ya se siguió con el GRANT de `alias` en la
+-- Iteración 3 (N3).
+--
+-- Verificación previa a aplicar (SQL Editor) -- confirmar que este es, ahora sí, el nombre real:
+--   select policyname, cmd from pg_policies
+--   where schemaname = 'storage' and tablename = 'objects'
+--   and policyname ilike '%fotos%' order by cmd;
+
+drop policy if exists "Usuarios autenticados pueden subir fotos" on storage.objects;
+
+-- ---------------------------------------------------------------------------------------------
+-- Cómo verificar tras aplicar (SQL Editor):
+--
+--   select policyname, cmd from pg_policies
+--   where schemaname = 'storage' and tablename = 'objects'
+--   and policyname ilike '%fotos%';
+--   -- Esperado: "Cualquiera puede ver las fotos" (SELECT), "Fotos de sets de lectura pública"
+--   -- (SELECT) y "Usuarios pueden borrar sus propias fotos" (DELETE). Ninguna de INSERT.
+--
+-- Prueba funcional real (con sesión de un usuario normal, no admin):
+--   Intentar `supabase.storage.from('fotos_sets').upload(...)` directamente desde la consola del
+--   navegador (no desde la app) debe devolver un error de RLS (403), no un upload silencioso.
+--   Subir una foto de set DESDE LA APP debe seguir funcionando -- pasa por /api/sets/foto.
+-- ---------------------------------------------------------------------------------------------
