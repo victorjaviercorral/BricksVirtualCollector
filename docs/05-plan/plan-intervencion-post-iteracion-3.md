@@ -398,3 +398,40 @@ futura y separada, no como bug.
 Sin decisión en 1–3, no se puede planificar el coste real de la Iteración 5 con precisión: el
 tamaño de EXIF por sí solo (M–L) domina sobre el resto de ítems ya acotados (S1, E1, E2, E3 son
 S/XS cada uno).
+
+---
+
+## 8. Actualización 19/08/2026 (continuación) — S6 cerrado, H6 nuevo, EXIF a la espera de decisión
+
+- **S6 (`reportes`)**: retirado. Migración `20260819120000`. Al buscar referencias se encontró
+  y corrigió una afirmación legal falsa en `legal/terminos-condiciones.md` §3.2 (citaba
+  cumplimiento del Art. 16 DSA sobre un sistema de reportes que nunca existió).
+- **Avatar hardcodeado en `/dashboard/participaciones`** (hallazgo nuevo, no en ningún documento
+  anterior): mostraba siempre un dicebear de ejemplo. Corregido -- ahora usa `avatar_url` real.
+- **B1/B2 confirmados** por el titular en producción: Editar/Eliminar en vitrina funcionan.
+
+### H6 (nuevo) — Rediseño de "Mis Participaciones"
+
+**Origen:** el titular reporta que la sección no refleja la realidad -- mostraba "La venganza de
+los Sith" como si fuera la exposición activa (con badge "APROBADO"), cuando la exposición real
+activa es otra y aquella ya está archivada con insignias repartidas.
+
+**Diagnóstico de código (no solo percepción):**
+- `ParticipacionesClient.tsx` etiqueta la sección "Exposiciones Activas" de forma fija, pero
+  `page.tsx` trae *todas* las participaciones del usuario sin filtrar por `exposicion.estado` --
+  el nombre de la sección no corresponde a lo que realmente lista.
+- El badge que se ve (`expo.estado`) es el estado de moderación de la propia participación
+  (pendiente/aprobado/rechazado), no el estado de la exposición -- correcto en sí mismo, pero
+  visualmente se lee como si dijera "esta exposición está en curso".
+- La página **ya consulta `sets_insignias`** (`misInsignias`) pero el componente nunca lo
+  renderiza -- el dato de "ganaste 1er puesto en esta exposición" existe y no se muestra.
+
+**Propuesta de enfoque (pendiente de confirmación, no implementado):**
+1. Separar visualmente participaciones en exposiciones **activas** (donde aún se puede actuar --
+   retirar el set) de **archivadas** (donde lo relevante es el resultado).
+2. Para las archivadas, mostrar el resultado real desde `sets_insignias` (rango/título obtenido)
+   en vez de un badge de moderación que ya no aplica.
+3. Conectar con H5: la misma consulta a `sets_insignias` que alimentaría el histórico de
+   exposiciones alimenta también esta vista -- una sola fuente de verdad, no dos.
+
+Sin implementar todavía -- a la espera de que el titular confirme el enfoque.
