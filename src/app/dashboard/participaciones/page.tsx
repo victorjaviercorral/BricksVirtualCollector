@@ -34,6 +34,7 @@ export default async function ParticipacionesPage() {
       id,
       estado,
       creado_en,
+      exposicion_id,
       exposiciones_temporales ( id, titulo, estado, imagen_url ),
       sets ( id, nombre, fotos ( url ) )
     `)
@@ -49,6 +50,7 @@ export default async function ParticipacionesPage() {
     return {
       id: p.id,
       estado: p.estado,
+      exposicion_id: p.exposicion_id,
       exposiciones_temporales: expo ? { titulo: expo.titulo, estado: expo.estado, imagen_url: expo.imagen_url } : null,
       sets: set ? { id: set.id, nombre: set.nombre } : null,
     };
@@ -64,17 +66,12 @@ export default async function ParticipacionesPage() {
     .eq("usuario_id", user.id)
     .order("creado_en", { ascending: false });
 
-  // 3. Fetch Insignias/Badges
+  // 3. Fetch Insignias/Badges -- solo las claves para correlacionar con misExposiciones
+  // (hallazgo H6: antes traía título/nombre anidados que no hacían falta para el uso real,
+  // que es enlazar el resultado real de una exposición archivada con su tarjeta).
   const { data: misInsignias } = await supabase
     .from("sets_insignias")
-    .select(`
-      id,
-      rango,
-      titulo_insignia,
-      fecha_otorgada,
-      exposiciones_temporales ( titulo ),
-      sets ( nombre )
-    `)
+    .select("id, set_id, exposicion_id, rango, titulo_insignia, fecha_otorgada")
     .in("set_id", userSetIds);
 
   // 4. Fetch Active Exposiciones to recommend

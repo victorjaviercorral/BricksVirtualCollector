@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Trash2, ArrowRight, Ghost, CheckCircle2, Clock, Target } from "lucide-react";
+import { Trash2, Ghost, CheckCircle2, Clock, Target, Award } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 interface ExposicionParticipacion {
   id: string;
   estado: string;
+  exposicion_id: string;
   exposiciones_temporales?: { titulo?: string; estado?: string; imagen_url?: string | null } | null;
   sets?: { id?: string; nombre?: string } | null;
 }
@@ -19,6 +20,13 @@ interface BountyParticipacion {
   nombre_set: string;
   descripcion?: string | null;
   recompensa: number;
+}
+
+interface InsigniaOtorgada {
+  set_id: string;
+  exposicion_id: string;
+  rango: number | null;
+  titulo_insignia: string;
 }
 
 interface UserProfileSummary {
@@ -36,9 +44,9 @@ export default function ParticipacionesClient({
   userProfile: UserProfileSummary | null,
   misExposiciones: ExposicionParticipacion[],
   misBounties: BountyParticipacion[],
-  // Recibidas pero sin usar en el render todavía -- ver hallazgo H6
-  // (docs/05-plan/plan-intervencion-post-iteracion-3.md), pendiente de rediseño.
-  misInsignias: unknown[],
+  misInsignias: InsigniaOtorgada[],
+  // Recibidas pero sin usar en el render todavía (recomendaciones de exposiciones/bounties
+  // activos que el usuario aún no ha reclamado) -- fuera del alcance de H6.
   exposActivas: unknown[],
   bountiesActivos: unknown[]
 }) {
@@ -65,6 +73,20 @@ export default function ParticipacionesClient({
   };
 
   const hasParticipations = misExposiciones.length > 0 || misBounties.length > 0;
+
+  // Hallazgo H6 (docs/05-plan/plan-intervencion-post-iteracion-3.md): esta sección mostraba
+  // TODAS las participaciones bajo el título fijo "Exposiciones Activas" y un badge que en
+  // realidad es el estado de moderación de la participación (pendiente/aprobado/rechazado), no
+  // el estado de la exposición -- por eso una exposición ya archivada podía leerse como si
+  // siguiera en curso. Se separan explícitamente activas de finalizadas.
+  const exposicionesActivas = misExposiciones.filter((e) => e.exposiciones_temporales?.estado === 'activa');
+  const exposicionesFinalizadas = misExposiciones.filter((e) => e.exposiciones_temporales?.estado !== 'activa');
+
+  // El resultado real de una exposición finalizada es el que quedó registrado en sets_insignias
+  // al archivarla (D3), no el estado de moderación -- que puede ser "aprobado" y aun así no
+  // haber ganado ninguna posición.
+  const insigniaDe = (expo: ExposicionParticipacion) =>
+    misInsignias.find((i) => i.exposicion_id === expo.exposicion_id && i.set_id === expo.sets?.id);
 
   return (
     <div className="py-8 max-w-6xl mx-auto space-y-10">
@@ -130,11 +152,11 @@ export default function ParticipacionesClient({
       ) : (
         <div className="space-y-12">
           {/* Exposiciones Activas */}
-          {misExposiciones.length > 0 && (
+          {exposicionesActivas.length > 0 && (
             <section>
               <h2 className="font-display text-2xl font-black mb-6 text-foreground uppercase tracking-tight">Exposiciones Activas</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {misExposiciones.map(expo => (
+                {exposicionesActivas.map(expo => (
                   <article key={expo.id} className="bg-panel rounded-2xl neo-brutalism p-5 flex flex-col justify-between">
                     <div className="flex gap-4">
                       <div className="w-24 h-24 rounded-xl border-[3px] border-foreground shadow-[2px_2px_0px_0px_var(--foreground)] overflow-hidden shrink-0">
@@ -149,19 +171,59 @@ export default function ParticipacionesClient({
                         </div>
                       </div>
                     </div>
-                    {expo.exposiciones_temporales?.estado === 'activa' && (
-                      <div className="mt-4 pt-4 border-t-[3px] border-foreground/10 flex justify-end">
-                        <button 
-                          onClick={() => handleWithdraw(expo.id)}
-                          disabled={isWithdrawing === expo.id}
-                          className="text-xs font-black uppercase flex items-center gap-1 text-brand-red hover:underline disabled:opacity-50"
-                        >
-                          <Trash2 size={14} /> Retirar Set
-                        </button>
-                      </div>
-                    )}
+                    <div className="mt-4 pt-4 border-t-[3px] border-foreground/10 flex justify-end">
+                      <button
+                        onClick={() => handleWithdraw(expo.id)}
+                        disabled={isWithdrawing === expo.id}
+                        className="text-xs font-black uppercase flex items-center gap-1 text-brand-red hover:underline disabled:opacity-50"
+                      >
+                        <Trash2 size={14} /> Retirar Set
+                      </button>
+                    </div>
                   </article>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {/* Exposiciones Finalizadas -- resultado real desde sets_insignias (D3), no el
+              estado de moderación, y sin la acción de retirar (la exposición ya cerró). */}
+          {exposicionesFinalizadas.length > 0 && (
+            <section>
+              <h2 className="font-display text-2xl font-black mb-6 text-foreground uppercase tracking-tight">Exposiciones Finalizadas</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {exposicionesFinalizadas.map(expo => {
+                  const insignia = insigniaDe(expo);
+                  return (
+                    <article key={expo.id} className="bg-panel rounded-2xl neo-brutalism p-5 flex flex-col justify-between opacity-90">
+                      <div className="flex gap-4">
+                        <div className="w-24 h-24 rounded-xl border-[3px] border-foreground shadow-[2px_2px_0px_0px_var(--foreground)] overflow-hidden shrink-0 grayscale-[30%]">
+                          <img src={expo.exposiciones_temporales?.imagen_url || "/placeholder-expo.jpg"} alt="Expo" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-xl leading-tight mb-1">{expo.exposiciones_temporales?.titulo}</h3>
+                          <p className="text-sm font-bold text-foreground/70">Set: <Link href={`/set/${expo.sets?.id}`} className="text-brand-blue hover:underline">{expo.sets?.nombre}</Link></p>
+                          {insignia ? (
+                            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded border-2 border-foreground bg-brand-yellow/10 text-xs font-bold uppercase">
+                              <Award size={14} className="text-brand-yellow" />
+                              <span className="text-foreground">{insignia.titulo_insignia}</span>
+                            </div>
+                          ) : (
+                            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded border-2 border-foreground bg-black/5 dark:bg-white/5 text-xs font-bold uppercase text-foreground/60">
+                              <span>
+                                {expo.estado === 'rechazado'
+                                  ? 'No aprobado'
+                                  : expo.estado === 'pendiente'
+                                  ? 'Sin resolver antes del cierre'
+                                  : 'Finalizada, sin resultado registrado'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           )}

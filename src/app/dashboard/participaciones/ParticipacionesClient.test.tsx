@@ -45,13 +45,15 @@ describe('ParticipacionesClient', () => {
     {
       id: 'exp1',
       estado: 'aprobado',
+      exposicion_id: 'expo-verano',
       exposiciones_temporales: { titulo: 'Expo Verano', estado: 'activa', imagen_url: '/expo.jpg' },
       sets: { id: 'set1', nombre: 'Halcón Milenario' },
     },
     {
       id: 'exp2',
       estado: 'pendiente',
-      exposiciones_temporales: { titulo: 'Expo Invierno', estado: 'finalizada', imagen_url: null },
+      exposicion_id: 'expo-invierno',
+      exposiciones_temporales: { titulo: 'Expo Invierno', estado: 'archivada', imagen_url: null },
       sets: { id: 'set2', nombre: 'Castillo' },
     },
   ];
@@ -122,20 +124,45 @@ describe('ParticipacionesClient', () => {
     expect(screen.getByRole('link', { name: /Ver Bounties Disponibles/i })).toBeInTheDocument();
   });
 
-  it('renderiza las tarjetas de exposiciones con título, set y estado', () => {
+  // --- Hallazgo H6: la sección se separa en "Activas" / "Finalizadas" según el estado real de
+  // la exposición, no un título fijo que antes aplicaba a todo por igual ---
+
+  it('renderiza la exposición activa bajo "Exposiciones Activas", con su título, set y estado de moderación', () => {
     render(<ParticipacionesClient {...baseProps} misExposiciones={misExposicionesMock} />);
 
+    expect(screen.getByText('Exposiciones Activas')).toBeInTheDocument();
     expect(screen.getByText('Expo Verano')).toBeInTheDocument();
     expect(screen.getByText('Halcón Milenario')).toBeInTheDocument();
     expect(screen.getByText('aprobado')).toBeInTheDocument();
-    expect(screen.getByText('Expo Invierno')).toBeInTheDocument();
-    expect(screen.getByText('pendiente')).toBeInTheDocument();
   });
 
-  it('solo muestra "Retirar Set" cuando la exposición asociada está activa', () => {
+  it('renderiza la exposición archivada bajo "Exposiciones Finalizadas", nunca junto a las activas', () => {
     render(<ParticipacionesClient {...baseProps} misExposiciones={misExposicionesMock} />);
 
-    // exp1 -> exposición 'activa': botón visible. exp2 -> 'finalizada': no debe aparecer.
+    expect(screen.getByText('Exposiciones Finalizadas')).toBeInTheDocument();
+    expect(screen.getByText('Expo Invierno')).toBeInTheDocument();
+    expect(screen.getByText('Castillo')).toBeInTheDocument();
+    // El estado de moderación en crudo ("pendiente") ya no se muestra en una finalizada: se
+    // sustituye por un mensaje honesto sobre el cierre.
+    expect(screen.queryByText('pendiente')).not.toBeInTheDocument();
+    expect(screen.getByText('Sin resolver antes del cierre')).toBeInTheDocument();
+  });
+
+  it('muestra el resultado real (sets_insignias) en una exposición finalizada, no el estado de moderación', () => {
+    const misInsignias: Props['misInsignias'] = [
+      { set_id: 'set2', exposicion_id: 'expo-invierno', rango: 1, titulo_insignia: '🥇 1er Puesto' },
+    ];
+
+    render(<ParticipacionesClient {...baseProps} misExposiciones={misExposicionesMock} misInsignias={misInsignias} />);
+
+    expect(screen.getByText('🥇 1er Puesto')).toBeInTheDocument();
+    expect(screen.queryByText('Sin resolver antes del cierre')).not.toBeInTheDocument();
+  });
+
+  it('solo muestra "Retirar Set" en exposiciones activas, nunca en finalizadas', () => {
+    render(<ParticipacionesClient {...baseProps} misExposiciones={misExposicionesMock} />);
+
+    // exp1 -> exposición 'activa': botón visible. exp2 -> 'archivada': no debe aparecer.
     expect(screen.getAllByText('Retirar Set')).toHaveLength(1);
   });
 
