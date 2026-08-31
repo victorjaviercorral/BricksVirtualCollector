@@ -2,9 +2,9 @@
 proyecto: bricks-virtual-collector
 tipo: guia
 subtipo: verificacion-manual
-estado: en-ejecucion
-version: 1
-fecha: 2026-08-18
+estado: V1-V4 completos -- pendientes pruebas funcionales B1/B2, D1, D3
+version: 2
+fecha: 2026-08-19
 alcance: tareas V1-V4 de la Iteración 4 (requieren accesos externos, no ejecutables desde el repo)
 relacionada_con: [plan-intervencion-post-iteracion-3, seguimiento-iteracion-3, auditoria-arquitectura]
 tags: [spec-vjc, verificacion, supabase, vercel]
@@ -396,7 +396,7 @@ Repite V3 y la región (V4b) cuando tengas un minuto — no las has enviado toda
 
 | ID | Comprobación | Resultado esperado | Resultado real | ✅/❌ |
 |---|---|---|---|---|
-| V2 | service_role key | existe, sin `NEXT_PUBLIC_` | pendiente — desplegado en Vercel, falta probar borrado de cuenta en real | — |
+| V2 | service_role key | existe, sin `NEXT_PUBLIC_` | ✅ confirmado — borrado de cuenta real en Vercel devolvió 200 y forzó cierre de sesión; la cuenta de prueba ya no permite login, solo registro de nuevo | ✅ |
 | V3 | Redirect URLs + Site URL | dominio estable, sin comodines | ✅ `https://bricks-virtual-collector.vercel.app` en ambos (Site URL y Redirect URLs); la URL con hash del primer despliegue se dejó también en la lista, quedará obsoleta sola en el próximo deploy | ✅ |
 | V4b | Región del proyecto | Frankfurt (UE) | ✅ confirmado por el titular (`eu-central-1`) | ✅ |
 | P1 | Crear set con num_set y notas | se guarda | ✅ confirmado por el titular | ✅ |
@@ -489,9 +489,11 @@ tanto en Site URL como en Redirect URLs para que sobreviva a futuros despliegues
 
 ## Plantilla de resultados — pendiente
 
+**V1–V4 completos.** Solo quedan pendientes las pruebas funcionales de código de la Iteración 4
+(B1/B2, D1, D3) — no verificaciones de infraestructura.
+
 | ID | Comprobación | Resultado esperado | Resultado real | ✅/❌ |
 |---|---|---|---|---|
-| V2 | service_role key en Vercel | borrado de cuenta real → 200 | pendiente | |
 | B1/B2 | Fix de Editar/Eliminar en vitrina | funcionan de extremo a extremo | pendiente de tu confirmación visual | |
 | P4-bis | Voto doble en una **exposición** real | segundo voto rechazado | pendiente | |
 | — | Reclamar un bounty (modelo D1) | dos cuentas distintas pueden reclamar el mismo bounty | pendiente | |
