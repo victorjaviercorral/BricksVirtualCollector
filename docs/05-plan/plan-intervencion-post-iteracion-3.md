@@ -353,3 +353,48 @@ escritas en esta ronda (`20260818120000_bounties_multi_reclamo.sql`,
 código ya desplegado asume que existen. Hasta que se apliquen, reclamar un bounty y archivar una
 exposición con participantes fallarán en producción — mismo patrón de riesgo que N1/N2 de la
 Iteración 3.
+
+---
+
+## 7. Cierre de Iteración 4 y arranque de Iteración 5 (19/08/2026)
+
+### Iteración 4 — estado final tras las pruebas E2E del titular
+
+| Ítem | Estado |
+|---|---|
+| V1–V4 | ✅ Cerrados |
+| C1, C2, C3, H2 | ✅ Cerrados |
+| D2, D3 | ✅ Confirmados funcionando en producción (moderación, reparto de insignias) |
+| H1, H3 | ✅ Cerrados — verificado sin residuos de mock (`grep` limpio) |
+| B1, B2 | ⏳ Corregidos, **pendiente confirmación visual del titular** |
+| D1 | ⏳ Implementado, **pendiente probar reclamar un bounty con dos cuentas** |
+| Nuevo hallazgo (no estaba en ningún documento) | Se podía votar/participar en una exposición ya archivada — solo estaba oculto en la UI, no bloqueado en RLS. **Corregido** (migración `20260819110000`), pendiente de aplicar y verificar. |
+
+### Vitrina de Insignias vacía — no es una deuda, es la decisión D3 funcionando
+
+Confirmado: es exactamente el estado que se decidió a propósito (`ProximamentePanel.tsx`, ver D3
+más arriba). No hay lógica de logros de 24 insignias implementada en ningún sitio -- mostrar algo
+ahí sería inventar datos, lo contrario de lo que D3 corrigió. Queda como decisión de producto
+futura y separada, no como bug.
+
+### Preguntas abiertas para el titular antes de empezar la implementación de Iteración 5
+
+1. **EXIF/geolocalización (ADR-005/ADR-010, hallazgo S2)** — el bloqueo original de ADR-010 era
+   "no hay infraestructura real contra la que verificar". Ya no es cierto: hay Vercel + Supabase
+   en producción. Falta decidir la **técnica**:
+   - `sharp` (ya presente en `node_modules` como dependencia transitiva de `next/image` -- no
+     añadiría una dependencia nueva) vs. parseo manual de bytes EXIF sin dependencias.
+   - Revocar la subida directa del cliente al bucket `fotos_sets` (hoy con la anon key) y
+     sustituirla por un Route Handler que reciba la imagen, la limpie con `sharp` server-side, y
+     suba el resultado con permisos de servidor.
+2. **H5 (detalle/histórico de exposiciones)** — con el hallazgo de esta ronda ya cerrado (no se
+   puede votar tras archivar), la "vista oficial post-cierre" que proponía H5 ya no tiene el
+   riesgo de que el histórico cambie por debajo. ¿Se confirma su alcance tal cual quedó descrito?
+3. **S6 (`reportes`)** — tabla sin ningún consumidor en `src/`. ¿Se construye la UI de denuncia,
+   o se retira el esquema?
+4. **H4 (capturas del README)** — esto sí lo puedo hacer yo con el navegador contra el despliegue
+   real, no hace falta que las tomes tú.
+
+Sin decisión en 1–3, no se puede planificar el coste real de la Iteración 5 con precisión: el
+tamaño de EXIF por sí solo (M–L) domina sobre el resto de ítems ya acotados (S1, E1, E2, E3 son
+S/XS cada uno).
