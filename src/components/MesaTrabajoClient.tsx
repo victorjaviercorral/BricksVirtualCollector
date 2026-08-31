@@ -218,7 +218,8 @@ export default function MesaTrabajoClient() {
             className="hidden" 
           />
           
-          <div 
+          <div
+            data-tour="mesa-foto"
             onClick={() => fileInputRef.current?.click()}
             className="aspect-[4/5] w-full rounded-3xl border-2 border-dashed border-brand-blue/30 bg-brand-blue/5 hover:bg-brand-blue/10 transition-colors flex flex-col items-center justify-center gap-4 cursor-pointer group overflow-hidden relative"
           >
@@ -379,7 +380,8 @@ export default function MesaTrabajoClient() {
             <Link href={selectedVitrinaId ? `/dashboard/vitrina/${selectedVitrinaId}` : "/dashboard"} className="px-6 py-3 font-medium text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white">
               Cancelar
             </Link>
-            <button 
+            <button
+              data-tour="mesa-guardar"
               onClick={handleSubmit}
               disabled={isSubmitting || !selectedVitrinaId}
               title={!selectedVitrinaId ? "Falta seleccionar una vitrina" : ""}

@@ -12,6 +12,12 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+// El launcher del tour depende de <TourProvider> (contexto de React); en este test se renderiza
+// HubClient de forma aislada, así que se sustituye por un stub inerte.
+vi.mock('@/components/tour/TourLauncher', () => ({
+  TourLauncher: () => <button type="button">Ver Tour</button>,
+}));
+
 describe('HubClient', () => {
   const baseProps = {
     userProfile: { total_bricks_recibidos: 0 },

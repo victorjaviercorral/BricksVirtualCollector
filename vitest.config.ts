@@ -78,7 +78,9 @@ export default defineConfig({
         // Iteración 4 (D3): reparto real de insignias al cerrar una exposición
         'src/lib/insignias.ts',
         'src/components/badges/**',
-        'src/app/dashboard/insignias/**'
+        'src/app/dashboard/insignias/**',
+        // Iteración 5 (H6-tour): onboarding interactivo superpuesto
+        'src/components/tour/**'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [

@@ -18,7 +18,8 @@ export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
       <div className="mb-4">
         <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6 leading-none tracking-tight">Mis Vitrinas</h1>
         <div className="flex flex-wrap gap-4">
-          <button 
+          <button
+            data-tour="crear-vitrina"
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm"
           >
@@ -57,13 +58,13 @@ export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
         )}
 
         {/* Vitrinas Cards */}
-        {vitrinas.map((vitrina) => {
+        {vitrinas.map((vitrina, i) => {
           // Obtener la imagen del primer set
           const imageSrc = vitrina.sets && vitrina.sets[0]?.fotos?.[0]?.url;
-          
+
           return (
-            <Link 
-              key={vitrina.id} 
+            <Link
+              key={vitrina.id}
               href={`/dashboard/vitrina/${vitrina.id}`}
               className="bg-panel rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col h-full border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 group"
             >
@@ -99,7 +100,7 @@ export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
                 </div>
               </div>
               
-              <div className="mt-auto pt-2">
+              <div className="mt-auto pt-2" {...(i === 0 ? { "data-tour": "vitrina-visibilidad" } : {})}>
                 {vitrina.visibilidad === 'pública' && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-brand-blue/10 text-brand-blue">
                     <Globe size={12} />

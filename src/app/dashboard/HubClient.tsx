@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Timer, Trophy, Target, Heart, Plus, Shield, ArrowRight, LayoutGrid, Users, Image as ImageIcon } from "lucide-react";
+import { TourLauncher } from "@/components/tour/TourLauncher";
 
 export default function HubClient({ 
   userProfile, 
@@ -37,9 +38,14 @@ export default function HubClient({
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      
+
+      <div className="flex justify-end">
+        <TourLauncher />
+      </div>
+
       {/* Build of the Day / Destacado (Hero) */}
-      <motion.section 
+      <motion.section
+        data-tour="hub-hero"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative rounded-2xl overflow-hidden shadow-md bg-foreground h-64 md:h-80"
@@ -78,10 +84,11 @@ export default function HubClient({
       </motion.section>
 
       {/* BENTO GRID */}
-      <motion.section 
-        variants={container} 
-        initial="hidden" 
-        animate="show" 
+      <motion.section
+        data-tour="hub-bento"
+        variants={container}
+        initial="hidden"
+        animate="show"
         className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6"
       >
         {/* 1. Exposiciones Activas (Red, Tall) */}
@@ -209,7 +216,7 @@ export default function HubClient({
         </motion.div>
 
         {/* 6. Mis Vitrinas (Dark Red / Alternative Red) */}
-        <motion.div variants={item} className="bg-[#B32419] rounded-2xl p-5 text-white shadow-md relative overflow-hidden flex flex-col col-span-1 group">
+        <motion.div data-tour="mis-vitrinas" variants={item} className="bg-[#B32419] rounded-2xl p-5 text-white shadow-md relative overflow-hidden flex flex-col col-span-1 group">
           <Link href="/dashboard/vitrinas" className="absolute inset-0 z-20" aria-label="Mis Vitrinas" />
           <h2 className="font-display font-black text-2xl mb-2 relative z-10 leading-none group-hover:text-brand-yellow transition-colors mt-2">
             Mis<br/>Vitrinas

@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
+import { TourLauncher } from "@/components/tour/TourLauncher";
 
 export function Navbar({ user, profile }: { user: any, profile?: any }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -123,6 +124,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                     <Settings size={16} />
                     Mi Perfil
                   </Link>
+                  <TourLauncher variant="menu-item" onLaunch={() => setIsProfileDropdownOpen(false)} />
                   <button
                     onClick={() => {
                       setIsProfileDropdownOpen(false);
@@ -223,6 +225,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                   <Settings size={18} />
                   Mi Perfil
                 </Link>
+                <TourLauncher variant="menu-item" onLaunch={() => setIsMobileMenuOpen(false)} />
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);

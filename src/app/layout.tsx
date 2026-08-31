@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { TourProvider } from "@/components/tour/TourProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { createClient } from "@/lib/supabase/server";
@@ -56,12 +57,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar user={user} profile={profile} />
-          
-          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-8">
-            {children}
-          </main>
-          <Footer />
+          <TourProvider isAuthed={!!user}>
+            <Navbar user={user} profile={profile} />
+
+            <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+              {children}
+            </main>
+            <Footer />
+          </TourProvider>
           <Toaster position="bottom-center" toastOptions={{ className: "font-sans rounded-xl glass border-white/20" }} />
         </ThemeProvider>
       </body>
