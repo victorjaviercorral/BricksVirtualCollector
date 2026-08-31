@@ -81,6 +81,58 @@ describe('Supabase Middleware', () => {
     expect(NextResponse.redirect).not.toHaveBeenCalled();
   });
 
+  // --- /admin/system: isSystemRole (src/lib/roles.ts) -- antes solo 'sysadmin' por subcadena,
+  // sin ningún test que ejerciera esta rama (vitest.config.ts la marcaba parcialmente cubierta).
+  // Hallazgo del 19/08/2026: 'admin' se añadió porque el titular es la única persona que
+  // gestiona el proyecto (mismo criterio que D2) y una cadena mal formada real
+  // ("admin, sysadmin") coló por el chequeo por subcadena anterior pero fallaba en las
+  // comparaciones exactas de otras partes del código -- ver migración
+  // 20260819100000_validar_role_usuarios_perfil.sql.
+
+  const mockRequestWithProfile = (pathname: string, role: string | null) => {
+    const mockSingle = vi.fn().mockResolvedValue({ data: role === null ? null : { role } });
+    const mockEq = vi.fn(() => ({ single: mockSingle }));
+    const mockSelect = vi.fn(() => ({ eq: mockEq }));
+    const mockFrom = vi.fn(() => ({ select: mockSelect }));
+    const mockGetUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } } });
+    vi.mocked(createServerClient).mockReturnValue({
+      auth: { getUser: mockGetUser },
+      from: mockFrom,
+    } as unknown as ReturnType<typeof createServerClient>);
+
+    return mockRequest(pathname);
+  };
+
+  it('permite acceso a /admin/system con role="sysadmin"', async () => {
+    const req = mockRequestWithProfile('/admin/system/health', 'sysadmin');
+    await updateSession(req);
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+  });
+
+  it('permite acceso a /admin/system con role="admin" (ampliado 19/08/2026)', async () => {
+    const req = mockRequestWithProfile('/admin/system/health', 'admin');
+    await updateSession(req);
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+  });
+
+  it('rechaza /admin/system con role="admin_exposiciones" (no es un rol de sistema)', async () => {
+    const req = mockRequestWithProfile('/admin/system/health', 'admin_exposiciones');
+    await updateSession(req);
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
+  it('rechaza /admin/system con el valor mal formado real "admin, sysadmin"', async () => {
+    const req = mockRequestWithProfile('/admin/system/health', 'admin, sysadmin');
+    await updateSession(req);
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
+  it('rechaza /admin/system si no hay perfil (sin fila en usuarios_perfil)', async () => {
+    const req = mockRequestWithProfile('/admin/system/health', null);
+    await updateSession(req);
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
   it('debe probar setAll del middleware al configurar las cookies del response', async () => {
     const mockGetUser = vi.fn().mockResolvedValue({ data: { user: null } });
     vi.mocked(createServerClient).mockReturnValue({

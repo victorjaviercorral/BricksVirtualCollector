@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isSystemRole } from '@/lib/roles'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -46,7 +47,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Si es una ruta de administración del sistema, verificar rol 'sysadmin'
+  // Si es una ruta de administración del sistema, verificar rol 'admin' o 'sysadmin'
+  // (isSystemRole, src/lib/roles.ts). 'admin' se añadió el 19/08/2026: el titular es la única
+  // persona que gestiona el proyecto y, por la misma decisión que D2, no mantiene una identidad
+  // de sysadmin separada -- un solo rol 'admin' debe dar acceso a todo el panel.
   if (user && isAdminSystemRoute) {
     const { data: profile } = await supabase
       .from('usuarios_perfil')
@@ -54,7 +58,7 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!profile || !profile.role || !profile.role.includes('sysadmin')) {
+    if (!isSystemRole(profile?.role)) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard' // o una página de 'Acceso Denegado'
       return NextResponse.redirect(url)

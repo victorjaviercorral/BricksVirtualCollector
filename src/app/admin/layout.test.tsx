@@ -98,15 +98,17 @@ describe('Admin Layout', () => {
     await waitFor(() => {
       expect(screen.getByTestId('child-content')).toBeInTheDocument();
     });
-    
-    // Y no debe mostrar el link "System"
-    expect(screen.queryByText('System')).not.toBeInTheDocument();
+
+    // Antes esta expectativa era "y no debe mostrar el link System" -- correcta cuando existía
+    // separación de roles, incorrecta desde el 19/08/2026: 'admin' ahora SÍ ve System (ver
+    // isSystemRole, src/lib/roles.ts, y el test dedicado "debe mostrar el link de System si es
+    // admin" más abajo, que cubre este caso explícitamente).
   });
 
   it('debe mostrar el link de System si es sysadmin', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'sys-1' } } });
     mockSingle.mockResolvedValue({ data: { role: 'sysadmin' } });
-    
+
     render(
       <AdminLayout>
         <div>Content</div>
@@ -117,7 +119,43 @@ describe('Admin Layout', () => {
       expect(screen.getByText('System')).toBeInTheDocument();
     });
   });
-  
+
+  // Ampliado 19/08/2026: antes solo "sysadmin" veía el link. El titular gestiona el proyecto en
+  // solitario (mismo criterio que D2) y un valor mal formado real ("admin, sysadmin") coló por
+  // el chequeo anterior por subcadena pero fallaba en comparaciones exactas -- ver
+  // src/lib/roles.ts (isSystemRole) y la migración 20260819100000.
+  it('debe mostrar el link de System si es admin', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'admin-1' } } });
+    mockSingle.mockResolvedValue({ data: { role: 'admin' } });
+
+    render(
+      <AdminLayout>
+        <div>Content</div>
+      </AdminLayout>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('System')).toBeInTheDocument();
+    });
+  });
+
+  it('NO debe mostrar el link de System si es admin_exposiciones (no es un rol de sistema)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'expo-1' } } });
+    mockSingle.mockResolvedValue({ data: { role: 'admin_exposiciones' } });
+
+    render(
+      <AdminLayout>
+        <div>Content</div>
+      </AdminLayout>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Exposiciones')).toBeInTheDocument(); // confirma que ya cargó
+    });
+    expect(screen.queryByText('System')).not.toBeInTheDocument();
+  });
+
+
   it('aplica clase activa al link basado en el pathname', async () => {
     vi.mocked(usePathname).mockReturnValue('/admin/bounties');
     mockGetUser.mockResolvedValue({ data: { user: { id: 'admin-1' } } });
