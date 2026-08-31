@@ -435,3 +435,31 @@ activa es otra y aquella ya está archivada con insignias repartidas.
    exposiciones alimenta también esta vista -- una sola fuente de verdad, no dos.
 
 Sin implementar todavía -- a la espera de que el titular confirme el enfoque.
+
+---
+
+## 9. Actualización 19/08/2026 (continuación) — EXIF server-side implementado (S2/ADR-005/ADR-010)
+
+**Confirmado por el titular:** técnica `sharp`, coste asumible (orden de magnitud analizado en la
+conversación, sin impacto real en un proyecto no comercial). Implementado:
+
+- `src/app/api/sets/foto/route.ts` (nuevo, Node runtime): limpia EXIF/GPS con `sharp` server-side
+  y sube con `SUPABASE_SERVICE_ROLE_KEY`.
+- Migración `20260901100000`: revoca la política que permitía subir directo al bucket
+  `fotos_sets` desde el cliente -- ahora el Route Handler es el único camino posible.
+- `MesaTrabajoClient.tsx`: ya no limpia EXIF en el navegador (retirado `canvas.toBlob()`); envía
+  el fichero en crudo al nuevo endpoint. Añadido guard de `beforeunload` durante la subida y copy
+  específico ("Protegiendo tu foto...") en vez de un "Guardando..." genérico.
+- `sharp` añadido como dependencia directa (ya estaba en `node_modules` como transitiva de
+  `next/image` -- no se introduce peso nuevo real).
+
+Verificado: 9 tests nuevos del Route Handler + tests de `MesaTrabajoClient.tsx` actualizados,
+100% de cobertura en las 4 métricas para el fichero nuevo (verificado contra
+`coverage/coverage-summary.json`, la tabla del terminal no lo mostraba por un problema de
+visualización, no de medición real). ESLint baseline bajado de 172 a 171. `tsc`/build verdes.
+
+**Pendiente del titular:** aplicar la migración `20260901100000` y probar subir una foto real
+desde la app desplegada. **Pendiente estructural (T2):** un test E2E real (no mockeado) que suba
+una foto con GPS real y confirme su ausencia en el fichero servido -- es el criterio literal de
+ADR-005, y esta ronda lo deja parcialmente cumplido (verificado que `sharp` se invoca sin
+`.withMetadata()`, no verificado extremo a extremo contra infraestructura real).

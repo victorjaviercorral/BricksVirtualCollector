@@ -54,29 +54,24 @@ export default function MesaTrabajoClient() {
     fetchVitrinas();
   }, [vitrinaId]);
 
-  const processImageToStripExif = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          return reject(new Error("No 2d context"));
-        }
-        ctx.drawImage(img, 0, 0);
-        
-        // Convert to WebP or JPEG without EXIF
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error("Canvas to Blob failed"));
-        }, "image/jpeg", 0.9);
-      };
-      img.onerror = () => reject(new Error("Image load failed"));
-      img.src = URL.createObjectURL(file);
-    });
-  };
+  // La limpieza de metadatos EXIF/GPS de la foto ya NO ocurre aquí (antes: canvas.toBlob() en
+  // el navegador, hallazgo S2 / ADR-005 / ADR-010). Un cliente modificado podía saltarse esa
+  // limpieza sin que nada lo impidiera -- no era verificable server-side, que es justo lo que
+  // ADR-005 exige. Ahora la foto en crudo se envía a /api/sets/foto, que la limpia con `sharp`
+  // en el servidor y la sube con permisos que el navegador nunca tiene (service_role key). El
+  // bucket fotos_sets ya no acepta subidas directas del cliente (migración 20260901100000).
+
+  // Avisa antes de cerrar/recargar la pestaña mientras hay una subida en curso -- sin esto, el
+  // fetch a /api/sets/foto quedaría abandonado a medias si el usuario navega fuera.
+  useEffect(() => {
+    if (!isSubmitting) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isSubmitting]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,26 +106,23 @@ export default function MesaTrabajoClient() {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData?.user) throw new Error("No autenticado");
 
-      // 1. Upload photo if exists
+      // 1. Upload photo if exists -- vía /api/sets/foto (limpieza EXIF/GPS server-side con
+      // sharp, ver comentario arriba). Se envía el fichero tal cual, sin procesar en el
+      // navegador.
       let uploadedImageUrl = null;
       if (imageFile) {
-        const cleanedBlob = await processImageToStripExif(imageFile);
-        const fileName = `${userData.user.id}/${Date.now()}.jpg`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("fotos_sets")
-          .upload(fileName, cleanedBlob, {
-            contentType: "image/jpeg",
-            upsert: false
-          });
-          
-        if (uploadError) throw new Error("Error al subir la foto: " + uploadError.message);
-        
-        const { data: publicUrlData } = supabase.storage
-          .from("fotos_sets")
-          .getPublicUrl(fileName);
-          
-        uploadedImageUrl = publicUrlData.publicUrl;
+        const photoFormData = new FormData();
+        photoFormData.append("file", imageFile);
+
+        const uploadRes = await fetch("/api/sets/foto", {
+          method: "POST",
+          body: photoFormData,
+        });
+        const uploadBody = await uploadRes.json();
+
+        if (!uploadRes.ok) throw new Error(uploadBody.error || "Error al subir la foto");
+
+        uploadedImageUrl = uploadBody.url;
       }
 
       // 2. Insert into sets
@@ -395,7 +387,8 @@ export default function MesaTrabajoClient() {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" /> Guardando...
+                  <Loader2 size={18} className="animate-spin" />
+                  {imageFile ? "Protegiendo tu foto..." : "Guardando..."}
                 </>
               ) : (
                 <>

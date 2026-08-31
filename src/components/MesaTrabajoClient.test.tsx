@@ -16,51 +16,38 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(),
 }));
 
-// Mock Image
-class MockImage {
-  onload?: () => void;
-  onerror?: () => void;
-  width = 100;
-  height = 100;
-  private _src = '';
-  
-  get src() { return this._src; }
-  set src(val: string) {
-    this._src = val;
-    setTimeout(() => this.onload?.(), 0);
-  }
-}
-
 describe('MesaTrabajoClient', () => {
   let mockGetUser: any;
   let mockSelect: any;
   let mockEq: any;
   let mockInsert: any;
-  let mockUpload: any;
-  let mockGetPublicUrl: any;
+
+  // ADR-005/ADR-010 (hallazgo S2): la limpieza EXIF ya no ocurre en el navegador
+  // (canvas.toBlob()) -- ahora la foto en crudo se envía a /api/sets/foto, que la limpia con
+  // sharp server-side. fetch() distingue por URL entre ese endpoint y el de reclamar bounty,
+  // igual que hace el propio componente.
+  const mockFetch = (url: string, init?: RequestInit) => {
+    if (typeof url === 'string' && url.includes('/api/sets/foto')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true, url: 'http://image.com/file.jpg' }),
+      });
+    }
+    return Promise.resolve({ ok: true, text: () => Promise.resolve('') });
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Canvas & URL mocks
-    window.URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
-    window.Image = MockImage as any;
-    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({ drawImage: vi.fn() }) as any;
-    HTMLCanvasElement.prototype.toBlob = vi.fn().mockImplementation((cb) => {
-      cb(new Blob(['mock-image-data'], { type: 'image/jpeg' }));
-    });
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    window.URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    global.fetch = vi.fn().mockImplementation(mockFetch) as any;
 
     mockGetUser = vi.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null });
-    
+
     mockEq = vi.fn().mockResolvedValue({ data: [{ id: 'vitrina-1', nombre: 'Mi Vitrina' }] });
     mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-    
+
     mockInsert = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { id: 'set-1' }, error: null }) }) });
-    
-    mockUpload = vi.fn().mockResolvedValue({ data: { path: 'file.jpg' }, error: null });
-    mockGetPublicUrl = vi.fn().mockReturnValue({ data: { publicUrl: 'http://image.com/file.jpg' } });
 
     const mockSupabase = {
       auth: { getUser: mockGetUser },
@@ -69,14 +56,8 @@ describe('MesaTrabajoClient', () => {
         if (table === 'sets' || table === 'fotos') return { insert: mockInsert };
         return {};
       }),
-      storage: {
-        from: vi.fn().mockReturnValue({
-          upload: mockUpload,
-          getPublicUrl: mockGetPublicUrl,
-        })
-      }
     };
-    
+
     vi.mocked(createClient).mockReturnValue(mockSupabase as any);
     vi.mocked(useSearchParams).mockReturnValue({ get: vi.fn().mockReturnValue(null) } as any);
   });
@@ -107,7 +88,7 @@ describe('MesaTrabajoClient', () => {
 
   it('debe crear un set sin foto correctamente', async () => {
     render(<MesaTrabajoClient />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Mi Vitrina')).toBeInTheDocument();
     });
@@ -116,12 +97,7 @@ describe('MesaTrabajoClient', () => {
     fireEvent.change(screen.getByPlaceholderText('Ej. 7541'), { target: { value: '500' } });
     fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'AT-AT' } });
     fireEvent.change(screen.getByPlaceholderText('Añade historia sobre tu set, dónde lo conseguiste, qué le falta...'), { target: { value: 'My notes' } });
-    
-    // Selects
-    const tematicaSelect = screen.getAllByRole('combobox')[0]; // Temática is first after vitrina
-    // Actually we can select by generic ways or display value if we don't want to rely on order.
-    // However, vitrina is first if no vitrinaId, but since vitrina-1 is auto selected, the select is not shown (it only shows if !vitrinaId or if isLoading). Wait, the select is shown if `!vitrinaId` from URL, which is true.
-    // Let's just find them by some other means if needed. For now just doing change on some comboboxes.
+
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[1], { target: { value: 'Icons' } }); // tematica
     fireEvent.change(selects[2], { target: { value: 'Montado' } }); // estado
@@ -132,21 +108,20 @@ describe('MesaTrabajoClient', () => {
       expect(mockInsert).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/dashboard/vitrina/vitrina-1');
     });
+
+    // Sin foto, no debe llamarse al endpoint de limpieza EXIF.
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/sets/foto', expect.any(Object));
   });
 
-  it('debe previsualizar la foto seleccionada y crear el set con foto', async () => {
+  it('debe previsualizar la foto seleccionada, subirla vía /api/sets/foto (limpieza EXIF server-side) y crear el set con foto', async () => {
     render(<MesaTrabajoClient />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Mi Vitrina')).toBeInTheDocument();
     });
 
-    const file = new File(['dummy content'], 'test.jpg', { type: 'image/jpeg' });
-    Object.defineProperty(file, 'size', { value: 5 * 1024 * 1024 });
+    const file = new File([new Uint8Array(5 * 1024 * 1024)], 'test.jpg', { type: 'image/jpeg' });
 
-    // Encontramos el input file (es hidden)
-    // No podemos usar getByRole por ser hidden, usamos type file o test-id. 
-    // Usaremos un selector de query o label si hay. En este caso no hay label conectado con htmlFor, el div hace click.
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -155,21 +130,83 @@ describe('MesaTrabajoClient', () => {
     });
 
     fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'X-Wing' } });
+
+    // Mientras se sube, el botón avisa específicamente de la limpieza, no un "Guardando..." genérico.
     fireEvent.click(screen.getByRole('button', { name: /añadir set/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Protegiendo tu foto...')).toBeInTheDocument();
+    });
 
     await waitFor(() => {
-      expect(mockUpload).toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalledWith('/api/sets/foto', expect.objectContaining({ method: 'POST' }));
       expect(mockInsert).toHaveBeenCalledTimes(2); // Una para el set, otra para la foto
       expect(mockPush).toHaveBeenCalledWith('/dashboard/vitrina/vitrina-1');
     });
   });
 
-  it('debe dar error si la imagen supera los 10MB', async () => {
+  it('propaga el error si /api/sets/foto responde con !ok (ej. imagen inválida o demasiado grande)', async () => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/sets/foto')) {
+        return Promise.resolve({ ok: false, json: () => Promise.resolve({ error: 'La imagen no debe superar los 10MB' }) });
+      }
+      return mockFetch(url);
+    }) as any;
+
     render(<MesaTrabajoClient />);
     await waitFor(() => expect(screen.getByText('Mi Vitrina')).toBeInTheDocument());
 
-    const file = new File(['dummy'], 'test.jpg', { type: 'image/jpeg' });
-    Object.defineProperty(file, 'size', { value: 11 * 1024 * 1024 });
+    const file = new File([new Uint8Array(1024)], 'test.jpg', { type: 'image/jpeg' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByAltText('Preview')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'X-Wing' } });
+    fireEvent.click(screen.getByRole('button', { name: /añadir set/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('La imagen no debe superar los 10MB')).toBeInTheDocument();
+    });
+    // No debe haber creado el set si la foto falló en subir.
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('avisa antes de cerrar/recargar la pestaña mientras una subida está en curso', async () => {
+    // fetch que no resuelve nunca durante la ventana de la prueba -- simula una subida en curso.
+    let resolveUpload: (value: unknown) => void = () => {};
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/sets/foto')) {
+        return new Promise((resolve) => { resolveUpload = resolve; });
+      }
+      return mockFetch(url);
+    }) as any;
+
+    render(<MesaTrabajoClient />);
+    await waitFor(() => expect(screen.getByText('Mi Vitrina')).toBeInTheDocument());
+
+    const file = new File([new Uint8Array(1024)], 'test.jpg', { type: 'image/jpeg' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByAltText('Preview')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'X-Wing' } });
+    fireEvent.click(screen.getByRole('button', { name: /añadir set/i }));
+
+    await waitFor(() => expect(screen.getByText('Protegiendo tu foto...')).toBeInTheDocument());
+
+    const event = new Event('beforeunload', { cancelable: true });
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+    window.dispatchEvent(event);
+    expect(preventDefaultSpy).toHaveBeenCalled();
+
+    // Limpieza: deja resolver la subida pendiente para no dejar un timer/promise colgando.
+    resolveUpload({ ok: true, json: () => Promise.resolve({ success: true, url: 'http://image.com/file.jpg' }) });
+  });
+
+  it('debe dar error si la imagen supera los 10MB (comprobación del cliente, antes de llamar al servidor)', async () => {
+    render(<MesaTrabajoClient />);
+    await waitFor(() => expect(screen.getByText('Mi Vitrina')).toBeInTheDocument());
+
+    const file = new File([new Uint8Array(11 * 1024 * 1024)], 'test.jpg', { type: 'image/jpeg' });
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -177,15 +214,16 @@ describe('MesaTrabajoClient', () => {
     await waitFor(() => {
       expect(screen.getByText('La imagen no debe superar los 10MB')).toBeInTheDocument();
     });
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('debe reclamar bounty si viene id en la url', async () => {
-    vi.mocked(useSearchParams).mockReturnValue({ 
-      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null 
+    vi.mocked(useSearchParams).mockReturnValue({
+      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null
     } as any);
 
     render(<MesaTrabajoClient />);
-    
+
     await waitFor(() => expect(screen.getByText('Mi Vitrina')).toBeInTheDocument());
 
     fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'Tie Fighter' } });
@@ -198,8 +236,8 @@ describe('MesaTrabajoClient', () => {
   });
 
   it('debe registrar error si reclamar bounty devuelve !res.ok', async () => {
-    vi.mocked(useSearchParams).mockReturnValue({ 
-      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null 
+    vi.mocked(useSearchParams).mockReturnValue({
+      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null
     } as any);
     global.fetch = vi.fn().mockResolvedValue({ ok: false, text: vi.fn().mockResolvedValue('Bad Request') });
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -216,8 +254,8 @@ describe('MesaTrabajoClient', () => {
   });
 
   it('debe registrar error si fetch de bounty falla', async () => {
-    vi.mocked(useSearchParams).mockReturnValue({ 
-      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null 
+    vi.mocked(useSearchParams).mockReturnValue({
+      get: (param: string) => param === 'bounty_id' ? 'bounty-123' : null
     } as any);
     const mockError = new Error('Network error');
     global.fetch = vi.fn().mockRejectedValue(mockError);
@@ -238,7 +276,7 @@ describe('MesaTrabajoClient', () => {
     mockEq.mockResolvedValueOnce({ data: [] });
 
     render(<MesaTrabajoClient />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Para añadir un set, primero debes crear al menos una vitrina.')).toBeInTheDocument();
     });
@@ -248,14 +286,14 @@ describe('MesaTrabajoClient', () => {
   });
 
   it('debe atrapar error inesperado durante el guardado', async () => {
-    mockInsert.mockReturnValueOnce({ 
-      select: vi.fn().mockReturnValue({ 
-        single: vi.fn().mockResolvedValue({ data: null, error: { message: "Database failure" } }) 
-      }) 
+    mockInsert.mockReturnValueOnce({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: null, error: { message: "Database failure" } })
+      })
     });
 
     render(<MesaTrabajoClient />);
-    
+
     await waitFor(() => expect(screen.getByText('Mi Vitrina')).toBeInTheDocument());
 
     fireEvent.change(screen.getByPlaceholderText('Halcón Milenario UCS'), { target: { value: 'AT-AT' } });

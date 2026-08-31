@@ -24,6 +24,7 @@ export default defineConfig({
       'src/lib/rate-limit.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/auth/confirm/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/api/bricks/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/api/sets/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/api/auth/delete-account/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
@@ -68,6 +69,7 @@ export default defineConfig({
         'src/lib/rate-limit.ts',
         'src/app/auth/confirm/**',
         'src/app/api/bricks/**',
+        'src/app/api/sets/**',
         'src/app/api/auth/delete-account/**',
         // Iteración 3 (Bloque A): retirada de mock data
         'src/app/set/**',

@@ -1,0 +1,37 @@
+-- Cierra la subida directa del cliente al bucket fotos_sets (ADR-005 / ADR-010, hallazgo S2).
+-- Es el paso que la propia migración 20260810150000 dejó explícitamente pendiente:
+--
+--   "Nota de seguridad (relacionada con ADR-010 / hallazgo S5): esta política sigue permitiendo
+--    la subida DIRECTA del cliente autenticado al bucket, que es precisamente lo que ADR-005
+--    exige evitar para que la limpieza de EXIF sea verificable server-side. Cerrar esta vía
+--    (revocando INSERT aquí y exigiendo pasar por un Route Handler) es el paso final de la
+--    migración a EXIF server-side descrita en ADR-010 §Decisión [...]"
+--
+-- A partir de esta migración, subir una foto de set solo es posible vía
+-- src/app/api/sets/foto/route.ts, que limpia EXIF/GPS con sharp y sube con la service_role key
+-- (que bypassa RLS). Un cliente modificado ya no puede saltarse la limpieza subiendo directo al
+-- bucket: la política que se lo permitía deja de existir.
+--
+-- Verificación previa a aplicar (SQL Editor) -- dada la deriva ya detectada en otras tablas
+-- (sets_insignias, exposicion_sets), confirma el nombre exacto antes de asumir que coincide con
+-- el de la migración original:
+--   select policyname, cmd from pg_policies
+--   where schemaname = 'storage' and tablename = 'objects'
+--   and policyname ilike '%fotos%' order by cmd;
+
+drop policy if exists "El usuario sube fotos a su propia carpeta" on storage.objects;
+
+-- ---------------------------------------------------------------------------------------------
+-- Cómo verificar tras aplicar (SQL Editor):
+--
+--   select policyname, cmd from pg_policies
+--   where schemaname = 'storage' and tablename = 'objects'
+--   and policyname ilike '%fotos%';
+--   -- Esperado: solo "Fotos de sets de lectura pública" (SELECT). Ninguna de INSERT.
+--
+-- Prueba funcional real (con sesión de un usuario normal, no admin):
+--   Intentar `supabase.storage.from('fotos_sets').upload(...)` directamente desde la consola del
+--   navegador (no desde la app) debe devolver un error de RLS (403), no un upload silencioso.
+--   Subir una foto de set DESDE LA APP debe seguir funcionando -- ahora pasa por
+--   /api/sets/foto, no por esta vía.
+-- ---------------------------------------------------------------------------------------------

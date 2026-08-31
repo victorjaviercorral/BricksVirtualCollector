@@ -66,16 +66,38 @@ lógica de servidor (`api/bricks`, `api/bounties/claim`, `api/auth/delete-accoun
 misma propiedad de verificabilidad que exige ADR-005 §Decisión sin añadir una plataforma de
 despliegue nueva.
 
-**No implementada en esta iteración.** Se evaluó implementarla directamente (F2.2 de la
-auditoría), pero requiere: (a) decidir la técnica de limpieza (parseo de bytes JPEG/PNG/WebP a
-mano, sin dependencias nuevas, frente a una librería de procesamiento de imágenes con binarios
-nativos como `sharp`), (b) revocar el permiso de subida directa del cliente al bucket
-`fotos_sets` vía política de Storage, y (c) verificación contra un bucket de Supabase real, que no
-está disponible en este entorno de desarrollo. Implementar esto sin poder probarlo contra
-infraestructura real arriesga con dejar el flujo de subida de fotos roto en producción — el
-mismo tipo de riesgo que este proyecto ya sufrió una vez (bug de `created_at` vs `creado_en`,
-hallazgo A5). Queda como tarea de la iteración 3, con el titular disponible para verificar contra
-Supabase real antes de mezclar.
+**Implementada el 19/08/2026** (sesión de trabajo posterior a la Iteración 4). El bloqueo original
+de este ADR era exclusivamente "no hay infraestructura real contra la que verificar" — dejó de
+ser cierto en cuanto el proyecto tuvo un despliegue de Vercel + Supabase reales (Iteración 4). Con
+el bloqueo resuelto, se ejecutaron las tres piezas que este documento dejaba pendientes:
+
+(a) **Técnica**: `sharp`, no parseo manual de bytes. Ya estaba presente en `node_modules` como
+dependencia transitiva de `next/image`, así que se añadió como dependencia directa
+(`package.json`) en vez de una nueva. `sharp(buffer).rotate().jpeg({quality:90}).toBuffer()` —
+`rotate()` aplica la orientación EXIF a los píxeles antes de descartar el propio EXIF (si no, la
+foto sale girada); no llamar a `.withMetadata()` es, por sí solo, la limpieza completa que exige
+la Decisión de este ADR.
+
+(b) **Route Handler**: `src/app/api/sets/foto/route.ts` (Node runtime explícito — sharp es un
+binario nativo, incompatible con Edge). Recibe la foto en crudo, la limpia, y la sube con la
+`SUPABASE_SERVICE_ROLE_KEY` (mismo patrón que `api/auth/delete-account`).
+
+(c) **Revocación de la subida directa**: migración `20260901100000_cerrar_subida_directa_fotos_sets.sql`
+retira la política de `INSERT` que el cliente usaba para subir directo al bucket `fotos_sets`. A
+partir de ahí, el único camino posible para subir una foto de set es el Route Handler — un
+cliente modificado ya no puede saltarse la limpieza.
+
+`MesaTrabajoClient.tsx` ya no ejecuta `canvas.toBlob()` en el navegador: envía el fichero en crudo
+a `/api/sets/foto` vía `FormData`. Se añadió también un guard de `beforeunload` (avisa si se
+intenta cerrar/recargar la pestaña con una subida en curso) y el copy del botón distingue la fase
+de subida ("Protegiendo tu foto...") de un "Guardando..." genérico.
+
+Verificado: 9 tests nuevos del Route Handler (401/400/500/200, incluida la ausencia de
+`.withMetadata()`), tests de `MesaTrabajoClient.tsx` actualizados al nuevo flujo, cobertura 100%
+en las 4 métricas para el fichero nuevo (verificado contra `coverage/coverage-summary.json`, no
+solo la tabla del terminal). **Pendiente de verificación positiva contra Supabase real** (aplicar
+la migración y subir una foto de verdad desde la app desplegada) — mismo criterio de esta
+sesión para toda migración nueva.
 
 ## Alternativas descartadas
 
@@ -104,6 +126,12 @@ Supabase real antes de mezclar.
 ## Criterio de cierre de este ADR
 
 Este documento deja de ser necesario (puede marcarse `estado: resuelta`) cuando:
-1. `src/lib/rate-limit.ts` usa un almacén compartido entre instancias, y
+1. `src/lib/rate-limit.ts` usa un almacén compartido entre instancias -- **sigue sin cumplirse**,
+   bloqueado por la cuenta de Upstash (decisión externa del titular).
 2. Existe un test automatizado que sube una imagen con GPS y verifica su ausencia en el fichero
-   servido — el criterio literal de ADR-005 §Consecuencias.
+   servido -- **cumplido parcialmente**. Los tests de `src/app/api/sets/foto/route.test.ts`
+   verifican que la ruta invoca `sharp` sin `.withMetadata()` (que es la limpieza en sí) y que
+   maneja sus fallos, pero `sharp` está mockeado: no hay todavía un test E2E que suba una imagen
+   real con GPS real contra un Supabase real y confirme la ausencia del dato en el fichero
+   servido -- ese es el criterio *literal* de ADR-005 §Consecuencias, y encaja con T2 (E2E de
+   negocio contra Supabase real) del plan de intervención, no con esta ronda.
