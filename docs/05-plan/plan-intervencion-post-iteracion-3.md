@@ -463,3 +463,23 @@ desde la app desplegada. **Pendiente estructural (T2):** un test E2E real (no mo
 una foto con GPS real y confirme su ausencia en el fichero servido -- es el criterio literal de
 ADR-005, y esta ronda lo deja parcialmente cumplido (verificado que `sharp` se invoca sin
 `.withMetadata()`, no verificado extremo a extremo contra infraestructura real).
+
+---
+
+## 10. Actualización 19/08/2026 (continuación) — cierre real de la subida directa a fotos_sets
+
+La migración `20260901100000` apuntaba a un nombre de política que no coincidía con el real en
+producción (mismo patrón de deriva que sets_insignias/exposicion_sets) -- `drop policy if exists`
+no dio error, pero tampoco hizo nada. Detectado por el titular haciendo la verificación positiva
+que la propia migración pedía. Corregido con `20260901110000` (nombre real: "Usuarios autenticados
+pueden subir fotos"). **Verificado por el titular contra Supabase real**: solo quedan las políticas
+de `SELECT` (x2) y `DELETE` -- ninguna de `INSERT`. La subida directa sin pasar por
+`/api/sets/foto` ya no es posible.
+
+También corregido en la misma ronda: `next.config.ts` con `serverExternalPackages: ["sharp"]` --
+sin esto, Next.js empaqueta el binario nativo de `sharp` con el bundler de la función serverless
+en vez de resolverlo como dependencia externa, causando que la subida se quedara colgada en el
+despliegue real (no reproducible en local, `next dev` no pasa por el mismo empaquetado).
+
+**Pendiente:** confirmar que subir una foto real desde `/mesa-de-trabajo` en el despliegue
+funciona de extremo a extremo tras ambos fixes.
