@@ -1,15 +1,19 @@
 ---
 titulo: Reportar contenido inapropiado
 orden: 10
-resumen: Ayúdanos a mantener la comunidad segura [PENDIENTE].
+resumen: Esta función no está disponible en el prototipo actual.
 ---
 
-`[PENDIENTE: El sistema de reportes está actualmente en desarrollo. Aunque nuestro equipo ya cuenta con herramientas internas para moderar, la opción para que los visitantes envíen reportes desde las vitrinas públicas será añadida en una próxima actualización]`
+Un sistema para que los visitantes reporten contenido desde las vitrinas públicas se valoró en
+las primeras fases del proyecto, pero **se retiró de la hoja de ruta** (19/08/2026): no llegó a
+desarrollarse y no hay planes de construirlo en el corto plazo.
 
-Mantener un entorno seguro es vital. Cuando esta funcionalidad esté activa, permitirá alertar sobre contenido que vulnere nuestras normas.
+## Cómo funciona la moderación hoy
 
-## Nuestro compromiso con los reportes
+*   El contenido enviado a **exposiciones oficiales** pasa por revisión de un administrador antes
+    de publicarse — es un proceso de moderación real, distinto de un sistema de reportes de
+    usuarios.
+*   No existe ningún canal para que un visitante marque una vitrina o un set como inapropiado.
 
-*   **Sin romper el anonimato:** Al reportar, tu identidad nunca será expuesta al usuario reportado.
-*   **Moderación justa:** Un administrador revisará manualmente cada reporte para decidir las acciones oportunas.
-*   **Sin correlación:** Es imposible que un usuario correlacione un reporte con tu dirección IP o tu historial de navegación.
+Si se retoma esta funcionalidad en el futuro, esta página se actualizará para describirla con
+precisión.

@@ -17,7 +17,7 @@ Este documento contiene la auditoría de los tratamientos de datos realizados po
 - **¿Hay cuentas de usuario, subida de contenido, newsletter, venta o donaciones?**: 
   - Cuentas de usuario: solo la cuenta de demostración. Registro público cerrado (ADR-009).
   - Subida de contenido: deshabilitada de facto (escritura revocada a nivel de BBDD, ADR-009).
-  - Moderación/Reportes: no operativa. La tabla `reportes` tiene RLS activado sin políticas (hallazgo S7).
+  - Moderación/Reportes: la tabla `reportes` se retiró (19/08/2026, hallazgo S6) -- sin consumidor en el código, era una idea inicial sin desarrollar. La moderación real (aprobar/rechazar participaciones en exposiciones) sí es operativa vía `exposicion_sets`.
   - Newsletter / Ventas / Donaciones: **no existen ni están previstos**. Es lo que sostiene el encuadre de no-actividad-económica.
 - **¿El público objetivo incluye menores de edad?**: no. Público adulto coleccionista. Sin registro abierto, no se recogen datos de ninguna persona.
 - **Idiomas del sitio**: español únicamente (`lang="es"` en `src/app/layout.tsx`).
@@ -34,7 +34,7 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
   - Subida de imágenes de los sets.
   - Datos de texto: `nombre`, `descripcion`, `tematica`, `num_piezas`, `anio_lanzamiento`, `estado`, `notas`.
   - La configuración de visibilidad elegida por el usuario (pública, privada, privada con enlace).
-- **Reportes de Moderación (`reportes`)**: Motivo del reporte sobre contenido de terceros.
+- ~~Reportes de Moderación (`reportes`)~~: retirado (19/08/2026) -- tabla eliminada, nunca tuvo consumidor.
 
 ---
 

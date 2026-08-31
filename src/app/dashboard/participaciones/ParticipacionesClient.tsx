@@ -7,18 +7,40 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export default function ParticipacionesClient({ 
-  misExposiciones, 
-  misBounties, 
+interface ExposicionParticipacion {
+  id: string;
+  estado: string;
+  exposiciones_temporales?: { titulo?: string; estado?: string; imagen_url?: string | null } | null;
+  sets?: { id?: string; nombre?: string } | null;
+}
+
+interface BountyParticipacion {
+  id: string;
+  nombre_set: string;
+  descripcion?: string | null;
+  recompensa: number;
+}
+
+interface UserProfileSummary {
+  avatar_url?: string | null;
+}
+
+export default function ParticipacionesClient({
+  userProfile,
+  misExposiciones,
+  misBounties,
   misInsignias,
   exposActivas,
-  bountiesActivos 
-}: { 
-  misExposiciones: any[], 
-  misBounties: any[], 
-  misInsignias: any[],
-  exposActivas: any[],
-  bountiesActivos: any[]
+  bountiesActivos
+}: {
+  userProfile: UserProfileSummary | null,
+  misExposiciones: ExposicionParticipacion[],
+  misBounties: BountyParticipacion[],
+  // Recibidas pero sin usar en el render todavía -- ver hallazgo H6
+  // (docs/05-plan/plan-intervencion-post-iteracion-3.md), pendiente de rediseño.
+  misInsignias: unknown[],
+  exposActivas: unknown[],
+  bountiesActivos: unknown[]
 }) {
   const [isWithdrawing, setIsWithdrawing] = useState<string | null>(null);
   const router = useRouter();
@@ -51,7 +73,11 @@ export default function ParticipacionesClient({
         {/* Profile Summary Card */}
         <article className="md:col-span-6 bg-panel rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 neo-brutalism relative overflow-hidden">
           <div className="relative w-24 h-24 rounded-full border-4 border-foreground shadow-[2px_2px_0px_0px_var(--foreground)] bg-white flex items-center justify-center overflow-hidden shrink-0">
-            <img alt="User Profile" className="w-full h-full object-cover" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
+            {userProfile?.avatar_url ? (
+              <img alt="Foto de perfil" className="w-full h-full object-cover" src={userProfile.avatar_url} />
+            ) : (
+              <UserIcon />
+            )}
           </div>
           <div className="flex flex-col justify-center h-full">
             <h1 className="text-3xl md:text-4xl font-display font-black text-foreground tracking-tight uppercase leading-none mb-2">Mis Participaciones</h1>
@@ -171,5 +197,13 @@ export default function ParticipacionesClient({
         </div>
       )}
     </div>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg className="w-12 h-12 text-black/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
   );
 }

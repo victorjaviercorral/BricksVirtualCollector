@@ -24,7 +24,7 @@ Al utilizar **BricksVirtualCollector** (en adelante, la "Plataforma"), aceptas s
 ## 3. Normas de Conducta y Moderación (Ley de Servicios Digitales - DSA)
 Como prestador de servicios de alojamiento de datos, cumplimos con la normativa DSA de la Unión Europea:
 3.1. **Contenido prohibido:** Está estrictamente prohibido subir contenido pornográfico, violento, que incite al odio, difamatorio, que infrinja la propiedad intelectual o que sea manifiestamente ilegal.
-3.2. **Moderación y Reportes:** Ponemos a disposición de los usuarios un sistema de reportes en la Plataforma. Revisaremos los avisos de buena fe y actuaremos con prontitud para retirar o bloquear el acceso a contenido ilegal comprobado (Art. 16 DSA).
+3.2. **Moderación:** El contenido enviado a exposiciones oficiales pasa por revisión interna antes de publicarse. **No existe todavía un canal para que los usuarios reporten contenido** — se retiró de la hoja de ruta del prototipo (19/08/2026); si se implementa en el futuro, este apartado se actualizará para describirlo con precisión, incluida su base legal.
 3.3. **Suspensión de cuentas:** Nos reservamos el derecho de suspender o eliminar cuentas que infrinjan reiteradamente estos Términos o generen reportes infundados de mala fe.
 
 ## 4. Accesibilidad
