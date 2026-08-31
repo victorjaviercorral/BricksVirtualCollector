@@ -226,6 +226,45 @@ lanzamiento en LinkedIn: en una demo de solo lectura, lo único que hace el visi
 **Salida:** cero datos ficticios en rutas de usuario. Cierra de verdad F1.4, que se dio por
 cerrada sin estarlo.
 
+### H5 (nuevo, 19/08/2026) — Vista de detalle/histórico de una exposición
+
+**Origen:** al probar D3 en real, el titular archivó una exposición y confirmó "Insignias
+entregadas a 2 participante(s)" — pero no hay forma de ver **a quién**, ni el ranking, ni
+volver a consultarlo después. Petición: una vista con los datos esenciales de cada exposición
+(número de participantes, ranking, quién ganó qué) accesible tanto al cerrar como después, a
+modo de histórico.
+
+**Evaluación de viabilidad — más barato de lo que parece:**
+
+La pieza más cara (calcular el ranking con dueño de cada set, foto, nombre y recuento de
+bricks) **ya existe y funciona**: `src/app/exposicion/[id]/page.tsx` la calcula entera para la
+vista pública de la exposición (incluye `usuarios_perfil.username` por participante, aunque
+`ExposicionClient.tsx` no lo esté pintando todavía). El panel de admin simplemente no enlaza
+ahí ni añade una capa de resumen. Esto es una extensión, no una función nueva desde cero.
+
+**Dos matices que si no se resuelven, la vista "histórica" puede mentir:**
+1. `/exposicion/[id]` **recalcula el ranking en vivo** a partir de `bricks_recibidos` cada vez
+   que se visita — correcto mientras la exposición está activa, pero una vez archivada el
+   registro *oficial* debería ser lo que se guardó en `sets_insignias` en el momento del cierre
+   (`rango`/`titulo_insignia`), no un recálculo que podría divergir si alguien vota después de
+   archivarse. Hay que comprobar si hoy es posible votar en una exposición ya archivada (no se
+   ha verificado); si lo es, es un hallazgo aparte a cerrar antes de fiarse del histórico.
+2. La respuesta a "quién ganó" para exposiciones **ya archivadas antes de esta implementación**
+   (si las hay) no tiene fila en `sets_insignias` — el histórico solo puede ser completo desde
+   la primera vez que se cierre una exposición con este código ya desplegado.
+
+**Propuesta de alcance (Zero-Duplication: reutilizar, no duplicar la vista pública):**
+
+| Pieza | Qué hace | Coste |
+|---|---|---|
+| Enlace desde `/admin/exposiciones` a `/exposicion/[id]` | Cada tarjeta de exposición enlaza a su vista pública ya existente — acceso inmediato al ranking sin construir nada nuevo | XS |
+| Resumen inline en `/admin/exposiciones` | Nº de participantes aprobados y total de bricks, junto a cada tarjeta, sin tener que entrar | S |
+| Vista "oficial" post-cierre | Cuando `estado='archivada'`, `/exposicion/[id]` deja de recalcular en vivo y muestra el ranking guardado en `sets_insignias` (rango + titulo_insignia reales, inmutable) — requiere decidir primero si hoy se puede votar tras archivar (matiz 1) | M |
+| Índice histórico | Filtro/pestaña en `/admin/exposiciones` para separar activas de archivadas con acceso directo a cada detalle | S |
+
+**Coste total estimado: S–M**, casi todo reutilización. No se implementa en este turno — queda
+registrado aquí para entrar en la Iteración 5 cuando el titular lo confirme.
+
 ### Iteración 6 — "Red de seguridad" · 2–3 días
 
 Objetivo: cerrar estructuralmente la brecha que produjo N1/N2 — no volver a depender de que
