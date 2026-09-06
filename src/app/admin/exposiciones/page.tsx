@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
-import { Map, Plus, Trash2, Calendar, CheckCircle2 } from "lucide-react";
+import { Plus, Calendar, Users, Heart, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { calcularRankingInsignias } from "@/lib/insignias";
+import { resumenExposiciones, rangoFechasExposicion, type ResumenExposicion } from "@/lib/exposiciones";
 
 export default function AdminExposiciones() {
   const [exposiciones, setExposiciones] = useState<any[]>([]);
+  const [resumen, setResumen] = useState<Map<string, ResumenExposicion>>(new Map());
+  const [filtro, setFiltro] = useState<"activas" | "archivadas">("activas");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
@@ -33,8 +37,18 @@ export default function AdminExposiciones() {
       .from("exposiciones_temporales")
       .select("*")
       .order("creado_en", { ascending: false });
-    
-    if (data) setExposiciones(data);
+
+    // Resumen inline (H5): participantes aprobados y total de bricks por exposición, en dos
+    // consultas agregadas -- no una por tarjeta.
+    const [{ data: aprobados }, { data: bricks }] = await Promise.all([
+      supabase.from("exposicion_sets").select("exposicion_id").eq("estado", "aprobado"),
+      supabase.from("bricks_recibidos").select("exposicion_id"),
+    ]);
+
+    if (data) {
+      setExposiciones(data);
+      setResumen(resumenExposiciones(data, aprobados, bricks));
+    }
     setLoading(false);
   };
 
@@ -209,9 +223,28 @@ export default function AdminExposiciones() {
         </button>
       </div>
 
+      {/* Filtro activas / archivadas (H5) */}
+      <div className="flex gap-2 mb-6 border-b-2 border-foreground/10">
+        {(["activas", "archivadas"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFiltro(f)}
+            className={`px-5 py-2.5 font-bold rounded-t-xl capitalize transition-colors ${
+              filtro === f ? "bg-foreground text-background" : "text-foreground/60 hover:bg-black/5 dark:hover:bg-white/5"
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-6">
-        {exposiciones.map((expo) => (
-          <motion.div 
+        {exposiciones
+          .filter((expo) => (filtro === "activas" ? expo.estado === "activa" : expo.estado !== "activa"))
+          .map((expo) => {
+            const r = resumen.get(expo.id) ?? { participantes: 0, bricks: 0 };
+            return (
+          <motion.div
             key={expo.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -223,34 +256,47 @@ export default function AdminExposiciones() {
                 <div className="absolute top-2 left-2 bg-brand-yellow text-black text-xs font-black px-2 py-1 rounded border-2 border-black">ACTIVA</div>
               )}
             </div>
-            
+
             <div className="flex-1 flex flex-col justify-between">
               <div>
                 <h3 className="font-display font-bold text-2xl">{expo.titulo}</h3>
                 <p className="text-sm font-medium text-foreground/80 mt-2 mb-4 line-clamp-2">{expo.descripcion}</p>
-                
-                <div className="flex flex-wrap gap-4 mb-4 text-sm font-bold text-foreground/70">
+
+                <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-sm font-bold text-foreground/70">
                   <div className="flex items-center gap-1">
-                    <Calendar size={16} /> 
-                    {expo.es_continua ? 'Exposición Continua' : `${new Date(expo.fecha_inicio).toLocaleDateString()} - ${new Date(expo.fecha_fin).toLocaleDateString()}`}
+                    <Calendar size={16} />
+                    {rangoFechasExposicion(expo)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users size={16} /> {r.participantes} participante{r.participantes === 1 ? "" : "s"} aprobado{r.participantes === 1 ? "" : "s"}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart size={16} /> {r.bricks} brick{r.bricks === 1 ? "" : "s"}
                   </div>
                 </div>
               </div>
-              
-              <div className="flex gap-3">
+
+              <div className="flex flex-wrap gap-3 items-center">
                 {expo.estado === 'activa' ? (
                   <button onClick={() => handleArchive(expo.id)} className="text-sm font-bold bg-brand-red text-white px-4 py-2 rounded-xl border-2 border-foreground shadow-[2px_2px_0px_0px_#0F172A] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_#0F172A] transition-all">Finalizar y Entregar Insignias</button>
                 ) : (
                   <button onClick={() => handleActivate(expo.id)} className="text-sm font-bold bg-panel px-4 py-2 rounded-xl border-2 border-foreground hover:bg-black/5 transition-colors">Reactivar</button>
                 )}
+                <Link
+                  href={`/exposicion/${expo.id}`}
+                  className="text-sm font-bold px-4 py-2 rounded-xl border-2 border-foreground hover:bg-black/5 transition-colors flex items-center gap-1.5"
+                >
+                  <ExternalLink size={16} /> Ver ficha pública
+                </Link>
               </div>
             </div>
           </motion.div>
-        ))}
+            );
+          })}
 
-        {exposiciones.length === 0 && (
+        {exposiciones.filter((expo) => (filtro === "activas" ? expo.estado === "activa" : expo.estado !== "activa")).length === 0 && (
           <div className="text-center py-20 font-bold text-foreground/50 bg-panel border-2 border-dashed border-foreground rounded-3xl">
-            No hay exposiciones creadas.
+            {filtro === "activas" ? "No hay exposiciones activas." : "No hay exposiciones archivadas."}
           </div>
         )}
       </div>

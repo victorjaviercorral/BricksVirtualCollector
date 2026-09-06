@@ -29,7 +29,10 @@ export default defineConfig({
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/insignias.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/exposiciones.{test,spec}.?(c|m)[jt]s?(x)',
       'src/components/badges/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/exposicion/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/exposiciones/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -80,7 +83,11 @@ export default defineConfig({
         'src/components/badges/**',
         'src/app/dashboard/insignias/**',
         // Iteración 5 (H6-tour): onboarding interactivo superpuesto
-        'src/components/tour/**'
+        'src/components/tour/**',
+        // Iteración 5 (H5): vista de detalle/histórico de exposiciones, un solo flujo
+        'src/lib/exposiciones.ts',
+        'src/app/exposicion/**',
+        'src/app/exposiciones/**'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [

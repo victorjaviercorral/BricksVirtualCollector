@@ -7,8 +7,24 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import type { MotivoHistoricoVacio } from "@/lib/exposiciones";
 
-export default function ExposicionClient({ exposicion, ranking, userSets, userId }: { exposicion: any, ranking: any[], userSets: any[], userId: string | null }) {
+export default function ExposicionClient({
+  exposicion,
+  ranking,
+  userSets,
+  userId,
+  modo = "live",
+  motivoVacio = null,
+}: {
+  exposicion: any,
+  ranking: any[],
+  userSets: any[],
+  userId: string | null,
+  modo?: "live" | "oficial",
+  motivoVacio?: MotivoHistoricoVacio,
+}) {
+  const esOficial = modo === "oficial";
   const [timeLeft, setTimeLeft] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedSet, setSelectedSet] = useState<string | null>(null);
@@ -155,12 +171,22 @@ export default function ExposicionClient({ exposicion, ranking, userSets, userId
 
         {/* Right Column: Leaderboard */}
         <div className="lg:col-span-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-display font-black text-4xl">Ranking del Evento</h2>
+          <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+            <h2 className="font-display font-black text-4xl">
+              {esOficial ? "Ranking Oficial" : "Ranking del Evento"}
+            </h2>
             <div className="bg-panel px-4 py-2 rounded-xl border-2 border-foreground font-bold text-sm">
+              {esOficial && <span className="text-foreground/50">Evento finalizado · </span>}
               {ranking.length} Participantes
             </div>
           </div>
+
+          {esOficial && ranking.length > 0 && (
+            <p className="text-sm font-bold text-foreground/60 -mt-4 mb-6">
+              Resultado registrado al cerrar la exposición. Los bricks quedaron congelados y ya no
+              se puede votar.
+            </p>
+          )}
 
           <div className="space-y-4">
             {ranking.map((set, index) => (
@@ -187,25 +213,59 @@ export default function ExposicionClient({ exposicion, ranking, userSets, userId
                 </div>
                 
                 <div className="flex flex-col items-center gap-2 shrink-0">
-                  <div className="font-mono font-black text-2xl px-4 py-1 bg-brand-red text-white rounded-lg border-2 border-foreground rotate-2">
-                    {set.votos}
-                  </div>
-                  {exposicion.estado === 'activa' && (
-                    <button 
-                      onClick={() => handleVote(set.id)}
-                      className="text-xs font-black uppercase bg-brand-yellow text-black px-3 py-1 rounded-md border-2 border-foreground hover:scale-110 transition-transform"
-                    >
-                      +1 Voto
-                    </button>
+                  {esOficial ? (
+                    <>
+                      {set.titulo_insignia && (
+                        <div className="font-black text-xs uppercase px-3 py-1 bg-brand-yellow/20 text-foreground rounded-lg border-2 border-foreground text-center">
+                          {set.titulo_insignia}
+                        </div>
+                      )}
+                      <div className="font-mono text-xs font-bold text-foreground/40">
+                        {set.votos} bricks
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="font-mono font-black text-2xl px-4 py-1 bg-brand-red text-white rounded-lg border-2 border-foreground rotate-2">
+                        {set.votos}
+                      </div>
+                      {exposicion.estado === 'activa' && (
+                        <button
+                          onClick={() => handleVote(set.id)}
+                          className="text-xs font-black uppercase bg-brand-yellow text-black px-3 py-1 rounded-md border-2 border-foreground hover:scale-110 transition-transform"
+                        >
+                          +1 Voto
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </motion.div>
             ))}
             
             {ranking.length === 0 && (
-              <div className="text-center py-20 bg-panel border-2 border-dashed border-foreground rounded-3xl">
-                <p className="font-display font-black text-2xl text-foreground/50">Aún no hay participantes aprobados.</p>
-                <p className="font-bold text-foreground/40 mt-2">¡Sé el primero en unirte!</p>
+              <div className="text-center py-20 bg-panel border-2 border-dashed border-foreground rounded-3xl px-6">
+                {esOficial ? (
+                  motivoVacio === "anterior-al-registro" ? (
+                    <>
+                      <p className="font-display font-black text-2xl text-foreground/50">Sin ranking oficial guardado</p>
+                      <p className="font-bold text-foreground/40 mt-2 max-w-md mx-auto">
+                        Esta exposición se archivó antes de que existiera el registro histórico de
+                        insignias (agosto de 2026). No se conserva el ranking del cierre.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display font-black text-2xl text-foreground/50">Se cerró sin participantes</p>
+                      <p className="font-bold text-foreground/40 mt-2">Ningún set llegó a aprobarse en esta exposición.</p>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <p className="font-display font-black text-2xl text-foreground/50">Aún no hay participantes aprobados.</p>
+                    <p className="font-bold text-foreground/40 mt-2">¡Sé el primero en unirte!</p>
+                  </>
+                )}
               </div>
             )}
           </div>

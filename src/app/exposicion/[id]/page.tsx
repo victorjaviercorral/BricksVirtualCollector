@@ -1,6 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ExposicionClient from "./ExposicionClient";
+import {
+  contarBricksPorSet,
+  motivoHistoricoVacio,
+  rankingEnVivo,
+  rankingOficial,
+  type FilaRanking,
+} from "@/lib/exposiciones";
+
+const SELECT_SET_ANIDADO = `
+  id,
+  nombre,
+  num_piezas,
+  usuarios_perfil ( username ),
+  fotos ( url )
+`;
 
 export default async function ExposicionPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -17,79 +32,68 @@ export default async function ExposicionPage({ params }: { params: Promise<{ id:
     notFound();
   }
 
-  // 2. Fetch Ranking (Sets Aprobados + Bricks)
-  // Necesitamos obtener los sets aprobados y contar los bricks que tienen asociados a ESTA exposición.
-  const { data: participaciones } = await supabase
-    .from("exposicion_sets")
-    .select(`
-      id,
-      estado,
-      set_id,
-      sets (
-        id,
-        nombre,
-        num_piezas,
-        usuarios_perfil ( username ),
-        fotos ( url )
-      )
-    `)
-    .eq("exposicion_id", id)
-    .eq("estado", "aprobado");
+  const archivada = exposicion.estado === "archivada";
 
-  // Fetch bricks emitted specifically for this exposicion
+  // Bricks emitidos para ESTA exposición. Tras archivar ya no se puede votar (migración
+  // 20260819110000, verificada en pg_policies), así que para una exposición archivada este
+  // recuento está congelado y solo se muestra como dato histórico, no reordena el ranking.
   const { data: bricks } = await supabase
     .from("bricks_recibidos")
     .select("set_id")
     .eq("exposicion_id", id);
 
-  // Calculate ranking
-  let ranking = [];
-  if (participaciones) {
-    ranking = participaciones.map((p: any) => {
-      const setBricks = bricks?.filter(b => b.set_id === p.set_id).length || 0;
-      return {
-        ...p.sets,
-        votos: setBricks,
-        foto_url: p.sets.fotos?.[0]?.url || "https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?q=80&w=1000&auto=format&fit=crop"
-      };
-    }).sort((a, b) => b.votos - a.votos); // Sort descending
+  let ranking: FilaRanking[] = [];
+  let motivoVacio: ReturnType<typeof motivoHistoricoVacio> = null;
+
+  if (archivada) {
+    // 2a. Vista OFICIAL post-cierre: el ranking real es lo que quedó en sets_insignias al
+    // repartir las insignias, no un recálculo en vivo que podría divergir.
+    const { data: insignias } = await supabase
+      .from("sets_insignias")
+      .select(`set_id, rango, titulo_insignia, sets ( ${SELECT_SET_ANIDADO} )`)
+      .eq("exposicion_id", id);
+
+    const { count: aprobadosCount } = await supabase
+      .from("exposicion_sets")
+      .select("id", { count: "exact", head: true })
+      .eq("exposicion_id", id)
+      .eq("estado", "aprobado");
+
+    ranking = rankingOficial(insignias, contarBricksPorSet(bricks));
+    motivoVacio = motivoHistoricoVacio(ranking.length, aprobadosCount || 0);
+  } else {
+    // 2b. Exposición activa: ranking en vivo desde bricks_recibidos (comportamiento previo).
+    const { data: participaciones } = await supabase
+      .from("exposicion_sets")
+      .select(`id, estado, set_id, sets ( ${SELECT_SET_ANIDADO} )`)
+      .eq("exposicion_id", id)
+      .eq("estado", "aprobado");
+
+    ranking = rankingEnVivo(participaciones, bricks);
   }
 
-  // 3. User session for participation
+  // 3. Sesión y sets del usuario -- solo se necesitan para el modal de participación, que no
+  // existe en una exposición archivada.
   const { data: { user } } = await supabase.auth.getUser();
-  let userSets: any[] = [];
-  if (user) {
-    // Fetch all user sets for the modal
+  let userSets: { id: string; nombre: string; fotos: { url: string }[] | null }[] = [];
+  if (user && !archivada) {
     const { data: mySets } = await supabase
       .from("sets")
       .select("id, nombre, fotos(url)")
       .eq("usuario_id", user.id);
-      
-    userSets = mySets || [];
 
-    // Check if user is already participating
-    const userSetIds = userSets.map((s: any) => s.id);
-    
-    // We only need to check participation if the user actually has sets
-    if (userSetIds.length > 0) {
-      const { data: userParticipation } = await supabase
-        .from("exposicion_sets")
-        .select("set_id")
-        .eq("exposicion_id", id)
-        .in("set_id", userSetIds);
-        
-      // For this particular page, we might want to do something with userParticipation, 
-      // but right now it's just fetched and not passed down. Let's make sure it doesn't break.
-    }
+    userSets = mySets || [];
   }
 
   return (
     <div className="bg-background min-h-screen">
-      <ExposicionClient 
-        exposicion={exposicion} 
-        ranking={ranking} 
-        userSets={userSets} 
-        userId={user?.id || null} 
+      <ExposicionClient
+        exposicion={exposicion}
+        ranking={ranking}
+        userSets={userSets}
+        userId={user?.id || null}
+        modo={archivada ? "oficial" : "live"}
+        motivoVacio={motivoVacio}
       />
     </div>
   );
