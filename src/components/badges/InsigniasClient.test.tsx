@@ -20,8 +20,8 @@ describe('InsigniasClient', () => {
 
   it('el contador de "Insignias" del header sale de la longitud real de misInsignias', () => {
     const misInsignias = [
-      { id: 'i1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo A' } },
-      { id: 'i2', rango: 2, titulo_insignia: '🥈 2º Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo B' } },
+      { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo A' } },
+      { id: 'i2', exposicion_id: 'e2', rango: 2, titulo_insignia: '🥈 2º Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo B' } },
     ];
 
     render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={misInsignias} bountiesCount={0} />);
@@ -39,7 +39,7 @@ describe('InsigniasClient', () => {
 
   it('resuelve la relación con exposiciones_temporales aunque el cliente la infiera como array', () => {
     const misInsignias = [
-      { id: 'i1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: [{ titulo: 'Expo Array' }] },
+      { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: [{ titulo: 'Expo Array' }] },
     ];
 
     render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={misInsignias} bountiesCount={0} />);

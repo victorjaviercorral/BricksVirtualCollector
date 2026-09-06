@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { CalendarDays, Award, Stamp } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export interface Sello {
   id: string;
+  exposicion_id: string | null;
   titulo: string;
   fecha: string | null;
   posicion: string;
@@ -44,8 +46,8 @@ export default function ExhibitionPassport({ sellos }: { sellos: Sello[] }) {
                 ? format(new Date(sello.fecha), "d MMM yyyy", { locale: es })
                 : null;
 
-              return (
-                <div key={sello.id} className="relative flex flex-col items-center justify-center p-6 aspect-square border-2 border-dashed border-foreground/20 rounded-full hover:border-foreground/50 transition-colors">
+              const Contenido = (
+                <>
                   <div className={`absolute inset-0 m-4 rounded-full border-[6px] opacity-70 flex flex-col items-center justify-center text-center p-4 transform -rotate-12 ${colorClass}`}>
                     <p className="font-display font-black uppercase text-xl leading-none mb-1">{sello.titulo}</p>
                     {fecha && (
@@ -59,6 +61,19 @@ export default function ExhibitionPassport({ sellos }: { sellos: Sello[] }) {
                   <div className="absolute -bottom-2 bg-foreground text-background text-xs font-bold uppercase px-3 py-1 rounded-full shadow-sm">
                     {sello.posicion}
                   </div>
+                </>
+              );
+
+              const clase =
+                "relative flex flex-col items-center justify-center p-6 aspect-square border-2 border-dashed border-foreground/20 rounded-full hover:border-foreground/50 transition-colors";
+
+              return sello.exposicion_id ? (
+                <Link key={sello.id} href={`/exposicion/${sello.exposicion_id}`} className={clase} aria-label={`Ver ${sello.titulo}`}>
+                  {Contenido}
+                </Link>
+              ) : (
+                <div key={sello.id} className={clase}>
+                  {Contenido}
                 </div>
               );
             })}

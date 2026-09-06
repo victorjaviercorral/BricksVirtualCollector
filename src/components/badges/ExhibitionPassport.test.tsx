@@ -11,8 +11,8 @@ describe('ExhibitionPassport', () => {
 
   it('renderiza un sello por cada insignia real, con su título de exposición y posición', () => {
     const sellos: Sello[] = [
-      { id: 'i1', titulo: 'Star Wars Day', fecha: '2026-05-04T00:00:00.000Z', posicion: '🥇 1er Puesto' },
-      { id: 'i2', titulo: 'Vintage Classics', fecha: null, posicion: 'Participante' },
+      { id: 'i1', exposicion_id: 'e1', titulo: 'Star Wars Day', fecha: '2026-05-04T00:00:00.000Z', posicion: '🥇 1er Puesto' },
+      { id: 'i2', exposicion_id: 'e2', titulo: 'Vintage Classics', fecha: null, posicion: 'Participante' },
     ];
 
     render(<ExhibitionPassport sellos={sellos} />);
@@ -23,9 +23,30 @@ describe('ExhibitionPassport', () => {
     expect(screen.getByText('Participante')).toBeInTheDocument();
   });
 
+  it('cada sello enlaza a la ficha de su exposición (fuente única de verdad)', () => {
+    const sellos: Sello[] = [
+      { id: 'i1', exposicion_id: 'e1', titulo: 'Star Wars Day', fecha: null, posicion: '🥇 1er Puesto' },
+    ];
+
+    render(<ExhibitionPassport sellos={sellos} />);
+
+    expect(screen.getByRole('link', { name: /Ver Star Wars Day/i })).toHaveAttribute('href', '/exposicion/e1');
+  });
+
+  it('un sello sin exposicion_id no es un enlace roto', () => {
+    const sellos: Sello[] = [
+      { id: 'i1', exposicion_id: null, titulo: 'Exposición borrada', fecha: null, posicion: 'Participante' },
+    ];
+
+    render(<ExhibitionPassport sellos={sellos} />);
+
+    expect(screen.getByText('Exposición borrada')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
   it('formatea la fecha del sello cuando existe', () => {
     const sellos: Sello[] = [
-      { id: 'i1', titulo: 'Star Wars Day', fecha: '2026-05-04T00:00:00.000Z', posicion: '🥇 1er Puesto' },
+      { id: 'i1', exposicion_id: 'e1', titulo: 'Star Wars Day', fecha: '2026-05-04T00:00:00.000Z', posicion: '🥇 1er Puesto' },
     ];
 
     render(<ExhibitionPassport sellos={sellos} />);
@@ -35,7 +56,7 @@ describe('ExhibitionPassport', () => {
 
   it('no muestra fecha si el sello no la tiene', () => {
     const sellos: Sello[] = [
-      { id: 'i1', titulo: 'Vintage Classics', fecha: null, posicion: 'Participante' },
+      { id: 'i1', exposicion_id: 'e1', titulo: 'Vintage Classics', fecha: null, posicion: 'Participante' },
     ];
 
     const { container } = render(<ExhibitionPassport sellos={sellos} />);

@@ -10,6 +10,7 @@ import CommunityMosaic from "./CommunityMosaic";
 
 interface InsigniaFila {
   id: string;
+  exposicion_id: string | null;
   rango: number | null;
   titulo_insignia: string;
   fecha_otorgada: string | null;
@@ -40,6 +41,7 @@ export default function InsigniasClient({
     const expo = Array.isArray(i.exposiciones_temporales) ? i.exposiciones_temporales[0] : i.exposiciones_temporales;
     return {
       id: i.id,
+      exposicion_id: i.exposicion_id,
       titulo: expo?.titulo || "Exposición",
       fecha: i.fecha_otorgada,
       posicion: i.titulo_insignia,

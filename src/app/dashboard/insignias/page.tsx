@@ -25,6 +25,7 @@ export default async function MisInsigniasPage() {
 
   let misInsignias: Array<{
     id: string;
+    exposicion_id: string | null;
     rango: number | null;
     titulo_insignia: string;
     fecha_otorgada: string | null;
@@ -34,7 +35,7 @@ export default async function MisInsigniasPage() {
   if (userSetIds.length > 0) {
     const { data } = await supabase
       .from('sets_insignias')
-      .select('id, rango, titulo_insignia, fecha_otorgada, exposiciones_temporales ( titulo )')
+      .select('id, exposicion_id, rango, titulo_insignia, fecha_otorgada, exposiciones_temporales ( titulo )')
       .in('set_id', userSetIds)
       .order('fecha_otorgada', { ascending: false });
     misInsignias = data || [];

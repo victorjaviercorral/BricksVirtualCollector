@@ -1,155 +1,200 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import ParticipacionesPage from './page';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import ParticipacionesPage from "./page";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn().mockImplementation(() => {
+    throw new Error("redirect");
+  }),
 }));
 
-vi.mock('next/navigation', () => ({
-  redirect: vi.fn().mockImplementation(() => { throw new Error('redirect') }),
-}));
-
-interface MockParticipacionesClientProps {
-  misExposiciones: unknown[];
+interface MockClientProps {
   userProfile?: { avatar_url?: string | null } | null;
+  misExposiciones: { exposiciones_temporales?: { titulo?: string } | null }[];
+  posiciones: Record<string, unknown>;
+  exposRecomendadas: { id: string }[];
+  bountiesRecomendados: { id: string }[];
 }
 
-// Mock ParticipacionesClient
-vi.mock('./ParticipacionesClient', () => ({
-  default: ({ misExposiciones, userProfile }: MockParticipacionesClientProps) => (
+vi.mock("./ParticipacionesClient", () => ({
+  default: (props: MockClientProps) => (
     <div data-testid="participaciones-client">
-      Mis Expos: {misExposiciones.length}
-      <span data-testid="avatar-url">{userProfile?.avatar_url ?? 'sin-avatar'}</span>
+      <span data-testid="avatar-url">{props.userProfile?.avatar_url ?? "sin-avatar"}</span>
+      <span data-testid="expos">{props.misExposiciones.map((e) => e.exposiciones_temporales?.titulo).join(",")}</span>
+      <span data-testid="pos">{JSON.stringify(props.posiciones)}</span>
+      <span data-testid="expo-reco">{props.exposRecomendadas.map((e) => e.id).join(",")}</span>
+      <span data-testid="bounty-reco">{props.bountiesRecomendados.map((b) => b.id).join(",")}</span>
     </div>
-  )
+  ),
 }));
 
-type MockFn = ReturnType<typeof vi.fn>;
-interface MockQueryBuilder {
-  select: MockFn;
-  eq: MockFn;
-  in: MockFn;
-  order: MockFn;
-  limit: MockFn;
-  single?: MockFn;
-}
-type MockSupabase = Awaited<ReturnType<typeof createClient>>;
-
-describe('ParticipacionesPage (SSR)', () => {
-  let mockGetUser: MockFn;
-  let mockFrom: MockFn;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
-    mockFrom = vi.fn().mockImplementation((): MockQueryBuilder => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue({ data: [{ id: '1' }] })
-    }));
-    vi.mocked(createClient).mockResolvedValue({
-      auth: { getUser: mockGetUser },
-      from: mockFrom,
-    } as unknown as MockSupabase);
-  });
-
-  it('redirecciona a login si no hay usuario', async () => {
-    mockGetUser.mockResolvedValueOnce({ data: { user: null } });
-
-    try {
-      await ParticipacionesPage();
-    } catch (e) {
-      expect((e as Error).message).toBe('redirect');
+/**
+ * Builder de mock por tabla. Cada rama devuelve la forma de cadena exacta que usa page.tsx.
+ */
+function mockSupabase(o: {
+  user?: { id: string } | null;
+  perfil?: unknown;
+  userSets?: { id: string }[];
+  validExpos?: unknown[];
+  aprobadosActivos?: { exposicion_id: string; set_id: string }[];
+  bricksActivos?: { exposicion_id: string; set_id: string }[];
+  misBounties?: { bounty_id: string }[];
+  exposActivas?: { id: string }[];
+  bountiesActivos?: { id: string }[];
+}) {
+  const from = vi.fn().mockImplementation((table: string) => {
+    if (table === "usuarios_perfil") {
+      return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: o.perfil ?? null }) }) }) };
     }
-
-    expect(redirect).toHaveBeenCalledWith('/login');
+    if (table === "sets") {
+      return { select: () => ({ eq: () => Promise.resolve({ data: o.userSets ?? [] }) }) };
+    }
+    if (table === "exposicion_sets") {
+      return {
+        select: (cols: string) => {
+          if (cols.includes("exposiciones_temporales")) {
+            // validExposiciones: .select(join).in()
+            return { in: () => Promise.resolve({ data: o.validExpos ?? [] }) };
+          }
+          // posiciones: .select('exposicion_id, set_id, creado_en').eq().in().order()
+          return {
+            eq: () => ({ in: () => ({ order: () => Promise.resolve({ data: o.aprobadosActivos ?? [] }) }) }),
+          };
+        },
+      };
+    }
+    if (table === "bricks_recibidos") {
+      return { select: () => ({ in: () => Promise.resolve({ data: o.bricksActivos ?? [] }) }) };
+    }
+    if (table === "bounties_reclamados") {
+      return { select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: o.misBounties ?? [] }) }) }) };
+    }
+    if (table === "exposiciones_temporales") {
+      return { select: () => ({ eq: () => Promise.resolve({ data: o.exposActivas ?? [] }) }) };
+    }
+    if (table === "bounties") {
+      return { select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: o.bountiesActivos ?? [] }) }) }) };
+    }
+    throw new Error(`tabla no mockeada: ${table}`);
   });
 
-  it('renderiza y pasa datos al cliente', async () => {
-    // Mock the chained calls dynamically based on `from` usage
-    mockFrom.mockImplementation((table: string): MockQueryBuilder => {
-      const builder: MockQueryBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [{ id: `mock-${table}` }] })
-      };
-      // Need to resolve properly since there are await chains
-      if (table === 'usuarios_perfil') {
-        builder.eq = vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { avatar_url: 'https://ejemplo.com/foto.jpg' } }) });
-      }
-      if (table === 'sets') {
-        builder.eq = vi.fn().mockResolvedValue({ data: [{ id: 'set1' }] });
-      }
-      if (table === 'exposicion_sets' || table === 'bounties' || table === 'bounties_reclamados' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
-        // all end with a resolver like in, eq, limit
-        builder.in = vi.fn().mockResolvedValue({ data: [{ id: '1' }] });
-        builder.eq = vi.fn().mockReturnThis();
-        builder.limit = vi.fn().mockResolvedValue({ data: [{ id: '2' }] });
-      }
-      // bounties_reclamados: cadena .select().eq('usuario_id', ...).order(...) (modelo
-      // multi-reclamo, D1 -- ver src/app/dashboard/participaciones/page.tsx)
-      if (table === 'bounties_reclamados') {
-        builder.order = vi.fn().mockResolvedValue({ data: [] });
-      }
-      // For exposiciones_temporales
-      if (table === 'exposiciones_temporales') {
-         builder.eq = vi.fn().mockResolvedValue({ data: [] });
-      }
-      return builder;
-    });
+  const user = "user" in o ? o.user : { id: "u1" };
+  return {
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
+    from,
+  } as unknown as Awaited<ReturnType<typeof createClient>>;
+}
 
-    const jsx = await ParticipacionesPage();
-    render(jsx);
+describe("ParticipacionesPage (SSR)", () => {
+  beforeEach(() => vi.clearAllMocks());
 
-    expect(screen.getByTestId('participaciones-client')).toBeInTheDocument();
-    // Hallazgo del 19/08/2026: el perfil real ahora se consulta y se pasa al cliente (antes el
-    // avatar estaba hardcodeado a un dicebear de ejemplo dentro de ParticipacionesClient.tsx).
-    expect(screen.getByTestId('avatar-url')).toHaveTextContent('https://ejemplo.com/foto.jpg');
+  it("redirige a login si no hay usuario", async () => {
+    vi.mocked(createClient).mockResolvedValue(mockSupabase({ user: null }));
+    await expect(ParticipacionesPage()).rejects.toThrow("redirect");
+    expect(redirect).toHaveBeenCalledWith("/login");
   });
 
-  it('maneja el caso de arrays nulos correctamente (userSets == null)', async () => {
-    mockFrom.mockImplementation((table: string): MockQueryBuilder => {
-      const builder: MockQueryBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: null }) // default null
-      };
-      if (table === 'usuarios_perfil') {
-        builder.eq = vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null }) });
-      }
-      if (table === 'sets') {
-        builder.eq = vi.fn().mockResolvedValue({ data: null }); // triggers || []
-      }
-      if (table === 'exposicion_sets' || table === 'bounties' || table === 'bounties_reclamados' || table === 'sets_insignias' || table === 'exposiciones_temporales') {
-        builder.in = vi.fn().mockResolvedValue({ data: null });
-        builder.eq = vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: null }), limit: vi.fn().mockResolvedValue({ data: null }) });
-        builder.limit = vi.fn().mockResolvedValue({ data: null });
-      }
-      if (table === 'bounties' || table === 'bounties_reclamados') {
-        builder.eq = vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: null }),
-          limit: vi.fn().mockResolvedValue({ data: null })
-        });
-      }
-      if (table === 'exposiciones_temporales') {
-        builder.eq = vi.fn().mockResolvedValue({ data: null });
-      }
-      return builder;
-    });
+  it("pasa el perfil real y solo las exposiciones activas al cliente", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      mockSupabase({
+        perfil: { avatar_url: "https://x/foto.jpg" },
+        userSets: [{ id: "set1" }],
+        validExpos: [
+          {
+            id: "p1",
+            estado: "aprobado",
+            creado_en: "2026-08-01",
+            exposicion_id: "e-activa",
+            set_id: "set1",
+            exposiciones_temporales: { id: "e-activa", titulo: "En Curso", estado: "activa", imagen_url: null, fecha_fin: null, es_continua: true },
+            sets: { id: "set1", nombre: "Mi Set" },
+          },
+          {
+            id: "p2",
+            estado: "aprobado",
+            creado_en: "2026-07-01",
+            exposicion_id: "e-cerrada",
+            set_id: "set1",
+            exposiciones_temporales: { id: "e-cerrada", titulo: "Cerrada", estado: "archivada", imagen_url: null, fecha_fin: null, es_continua: true },
+            sets: { id: "set1", nombre: "Mi Set" },
+          },
+        ],
+        aprobadosActivos: [
+          { exposicion_id: "e-activa", set_id: "set1" },
+          { exposicion_id: "e-activa", set_id: "set2" },
+        ],
+        bricksActivos: [{ exposicion_id: "e-activa", set_id: "set2" }],
+      })
+    );
 
-    const jsx = await ParticipacionesPage();
-    render(jsx);
+    render(await ParticipacionesPage());
 
-    // Default mock client says Mis Expos: 0 because validExposiciones is []
-    expect(screen.getByText('Mis Expos: 0')).toBeInTheDocument();
+    expect(screen.getByTestId("avatar-url")).toHaveTextContent("https://x/foto.jpg");
+    // "Cerrada" (archivada) no debe llegar a este panel.
+    expect(screen.getByTestId("expos")).toHaveTextContent("En Curso");
+    expect(screen.getByTestId("expos")).not.toHaveTextContent("Cerrada");
+    // set1 tiene 0 bricks, set2 tiene 1 -> set1 va 2º de 2.
+    expect(screen.getByTestId("pos")).toHaveTextContent('"p1":{"posicion":2,"bricks":0,"total":2}');
+  });
+
+  it("recomienda exposiciones y bounties donde el usuario no participa ni ha reclamado", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      mockSupabase({
+        userSets: [{ id: "set1" }],
+        validExpos: [
+          {
+            id: "p1",
+            estado: "aprobado",
+            creado_en: "2026-08-01",
+            exposicion_id: "e-ya",
+            set_id: "set1",
+            exposiciones_temporales: { id: "e-ya", titulo: "Ya dentro", estado: "activa" },
+            sets: { id: "set1", nombre: "Mi Set" },
+          },
+        ],
+        aprobadosActivos: [{ exposicion_id: "e-ya", set_id: "set1" }],
+        misBounties: [{ bounty_id: "b-ya" }],
+        exposActivas: [{ id: "e-ya" }, { id: "e-nueva" }],
+        bountiesActivos: [{ id: "b-ya" }, { id: "b-nuevo" }],
+      })
+    );
+
+    render(await ParticipacionesPage());
+
+    expect(screen.getByTestId("expo-reco")).toHaveTextContent("e-nueva");
+    expect(screen.getByTestId("expo-reco")).not.toHaveTextContent("e-ya");
+    expect(screen.getByTestId("bounty-reco")).toHaveTextContent("b-nuevo");
+    expect(screen.getByTestId("bounty-reco")).not.toHaveTextContent("b-ya");
+  });
+
+  it("tolera arrays nulos (usuario sin sets)", async () => {
+    vi.mocked(createClient).mockResolvedValue(mockSupabase({ userSets: [], validExpos: [] }));
+    render(await ParticipacionesPage());
+    expect(screen.getByTestId("expos")).toHaveTextContent("");
+  });
+
+  it("sin participaciones aprobadas en exposiciones activas, no calcula posiciones", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      mockSupabase({
+        userSets: [{ id: "set1" }],
+        validExpos: [
+          {
+            id: "p1",
+            estado: "pendiente",
+            creado_en: "2026-08-01",
+            exposicion_id: "e-activa",
+            set_id: "set1",
+            exposiciones_temporales: { id: "e-activa", titulo: "En Curso", estado: "activa" },
+            sets: { id: "set1", nombre: "Mi Set" },
+          },
+        ],
+      })
+    );
+    render(await ParticipacionesPage());
+    expect(screen.getByTestId("pos")).toHaveTextContent("{}");
+    expect(screen.getByTestId("expos")).toHaveTextContent("En Curso");
   });
 });
