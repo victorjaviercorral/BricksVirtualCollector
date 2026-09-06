@@ -32,10 +32,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isProtectedRoute = 
-    request.nextUrl.pathname.startsWith('/dashboard') || 
+  // /exposicion(es), /bounties y /galeria son contenido público navegable ("Explorar"): se
+  // pueden ver sin sesión, igual que /vitrina/[id]. Las acciones dentro (votar, participar,
+  // reclamar) siguen exigiendo sesión vía RLS y comprobaciones de servidor.
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/mesa-de-trabajo') ||
-    request.nextUrl.pathname.startsWith('/exposicion') ||
     request.nextUrl.pathname.startsWith('/admin') ||
     request.nextUrl.pathname.startsWith('/ajustes');
     

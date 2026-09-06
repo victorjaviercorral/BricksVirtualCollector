@@ -30,9 +30,11 @@ export default defineConfig({
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/insignias.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/exposiciones.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/galeria.{test,spec}.?(c|m)[jt]s?(x)',
       'src/components/badges/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/exposicion/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/exposiciones/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/galeria/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -64,7 +66,6 @@ export default defineConfig({
         'src/components/VitrinaClient.tsx',
         'src/app/bounties/**',
         'src/app/api/bounties/**',
-        'src/components/BountiesClient.tsx',
         'src/components/BountiesSectionClient.tsx',
         // Fase 2 (F2.5 / F2.9): superficie de seguridad y capa de acceso a datos
         'src/lib/queries/**',
@@ -87,7 +88,10 @@ export default defineConfig({
         // Iteración 5 (H5): vista de detalle/histórico de exposiciones, un solo flujo
         'src/lib/exposiciones.ts',
         'src/app/exposicion/**',
-        'src/app/exposiciones/**'
+        'src/app/exposiciones/**',
+        // Iteración 5 (flujos): índice público de vitrinas
+        'src/lib/galeria.ts',
+        'src/app/galeria/**'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [

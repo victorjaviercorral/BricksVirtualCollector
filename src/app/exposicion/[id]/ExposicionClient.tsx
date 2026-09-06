@@ -133,13 +133,21 @@ export default function ExposicionClient({
               </div>
             </div>
             
-            {exposicion.estado === 'activa' && (
-              <button 
+            {exposicion.estado === 'activa' && userId && (
+              <button
                 onClick={() => setShowModal(true)}
                 className="bg-brand-blue text-white px-8 py-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] transition-all font-black text-xl w-full md:w-auto text-center"
               >
                 PARTICIPAR
               </button>
+            )}
+            {exposicion.estado === 'activa' && !userId && (
+              <Link
+                href="/login"
+                className="bg-panel text-foreground px-6 py-3 rounded-2xl border-2 border-black font-bold text-sm hover:bg-brand-yellow hover:text-black transition-colors text-center"
+              >
+                Inicia sesión para participar
+              </Link>
             )}
           </div>
         </div>
@@ -221,7 +229,7 @@ export default function ExposicionClient({
                         </div>
                       )}
                       <div className="font-mono text-xs font-bold text-foreground/40">
-                        {set.votos} bricks
+                        {set.votos} {set.votos === 1 ? "brick" : "bricks"}
                       </div>
                     </>
                   ) : (
@@ -229,7 +237,7 @@ export default function ExposicionClient({
                       <div className="font-mono font-black text-2xl px-4 py-1 bg-brand-red text-white rounded-lg border-2 border-foreground rotate-2">
                         {set.votos}
                       </div>
-                      {exposicion.estado === 'activa' && (
+                      {exposicion.estado === 'activa' && userId && (
                         <button
                           onClick={() => handleVote(set.id)}
                           className="text-xs font-black uppercase bg-brand-yellow text-black px-3 py-1 rounded-md border-2 border-foreground hover:scale-110 transition-transform"

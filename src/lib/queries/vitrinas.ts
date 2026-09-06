@@ -16,6 +16,33 @@ import { createClient } from "@/lib/supabase/server";
  * volver a golpear la base de datos. No es una caché entre peticiones (cada visita nueva sigue
  * consultando Supabase); es exactamente el mecanismo que Next.js recomienda para este patrón.
  */
+/**
+ * Índice de vitrinas públicas para /galeria (la superficie "Explorar" que faltaba: antes solo se
+ * llegaba a una vitrina concreta desde la home o el feed del Hub, nunca a un listado navegable).
+ */
+export const getVitrinasPublicas = cache(async () => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("vitrinas")
+    .select(
+      `
+      id,
+      nombre,
+      descripcion,
+      creado_en,
+      usuarios_perfil ( username, alias ),
+      sets ( id, tematica, fotos ( url ) )
+    `
+    )
+    .eq("estado", "publicada")
+    .eq("visibilidad", "pública")
+    .order("creado_en", { ascending: false });
+
+  if (error) return [];
+  return data || [];
+});
+
 export const getVitrinaPublicaById = cache(async (id: string) => {
   const supabase = await createClient();
 

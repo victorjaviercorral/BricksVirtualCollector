@@ -91,6 +91,15 @@ describe("ExposicionClient", () => {
 
   // --- Modo activo ---
 
+  it("visitante sin sesión (userId null): sin PARTICIPAR ni voto, con invitación a iniciar sesión", () => {
+    render(
+      <ExposicionClient {...baseProps} userId={null} ranking={[filaLive("s1", 3)]} />
+    );
+    expect(screen.queryByRole("button", { name: "PARTICIPAR" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+1 Voto/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Inicia sesión para participar/i })).toHaveAttribute("href", "/login");
+  });
+
   it("modo live: botón PARTICIPAR visible y abre el modal", () => {
     render(<ExposicionClient {...baseProps} userSets={[{ id: "s1", nombre: "Mi Set", fotos: [{ url: "x" }] }]} />);
     fireEvent.click(screen.getByRole("button", { name: "PARTICIPAR" }));
