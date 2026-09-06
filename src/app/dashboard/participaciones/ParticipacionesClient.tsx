@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Trash2, Ghost, CheckCircle2, Clock, Target, Award, ArrowRight, Trophy } from "lucide-react";
+import { Trash2, Ghost, CheckCircle2, Clock, Target, Award, ArrowRight, Trophy, Heart } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -67,6 +67,7 @@ function tiempoRestante(expo: ExposicionParticipacion["exposiciones_temporales"]
 
 export default function ParticipacionesClient({
   userProfile,
+  totalBricksRecibidos = 0,
   misExposiciones,
   posiciones,
   misBounties,
@@ -74,6 +75,7 @@ export default function ParticipacionesClient({
   bountiesRecomendados,
 }: {
   userProfile: UserProfileSummary | null;
+  totalBricksRecibidos?: number;
   misExposiciones: ExposicionParticipacion[];
   posiciones: Record<string, PosicionVivo | null>;
   misBounties: BountyParticipacion[];
@@ -106,7 +108,7 @@ export default function ParticipacionesClient({
     <div className="py-8 max-w-6xl mx-auto space-y-10">
       {/* Cabecera */}
       <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <article className="md:col-span-6 bg-panel rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 neo-brutalism relative overflow-hidden">
+        <article className="md:col-span-5 bg-panel rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 neo-brutalism relative overflow-hidden">
           <div className="relative w-24 h-24 rounded-full border-4 border-foreground shadow-[2px_2px_0px_0px_var(--foreground)] bg-white flex items-center justify-center overflow-hidden shrink-0">
             {userProfile?.avatar_url ? (
               <img alt="Foto de perfil" className="w-full h-full object-cover" src={userProfile.avatar_url} />
@@ -116,9 +118,9 @@ export default function ParticipacionesClient({
           </div>
           <div className="flex flex-col justify-center h-full">
             <h1 className="text-3xl md:text-4xl font-display font-black text-foreground tracking-tight uppercase leading-none mb-2">
-              Mis Participaciones
+              Mi Progreso
             </h1>
-            <p className="text-foreground/70 font-bold">Lo que tienes en juego ahora mismo</p>
+            <p className="text-foreground/70 font-bold">Bricks, exposiciones y retos en curso</p>
             <Link
               href="/dashboard/insignias"
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-brand-blue hover:gap-2.5 transition-all"
@@ -128,31 +130,34 @@ export default function ParticipacionesClient({
           </div>
         </article>
 
-        <article
-          className="md:col-span-3 bg-panel rounded-2xl p-6 flex items-center gap-4 border-[3px] border-brand-blue relative overflow-hidden"
-          style={{ boxShadow: "4px 6px 0px 0px var(--color-brand-blue)" }}
-        >
-          <div className="w-16 h-16 rounded-full bg-brand-blue border-4 border-foreground flex items-center justify-center text-white shrink-0 shadow-[inset_0_-4px_0_rgba(0,0,0,0.2)]">
-            <span className="font-display font-black text-2xl">E</span>
-          </div>
-          <div className="flex flex-col">
-            <h2 className="text-sm font-bold text-foreground tracking-widest uppercase">Exposiciones</h2>
-            <span className="text-4xl font-black text-brand-blue leading-none mt-1">{misExposiciones.length}</span>
-          </div>
-        </article>
+        <div className="md:col-span-7 grid grid-cols-3 gap-3 sm:gap-4">
+          <article
+            className="bg-panel rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center justify-center gap-1 border-[3px] border-brand-yellow"
+            style={{ boxShadow: "4px 6px 0px 0px var(--color-brand-yellow)" }}
+          >
+            <Heart size={22} className="text-brand-yellow fill-brand-yellow" strokeWidth={2.5} />
+            <span className="text-3xl sm:text-4xl font-black text-foreground leading-none">{totalBricksRecibidos}</span>
+            <h2 className="text-[10px] sm:text-xs font-bold text-foreground/70 tracking-widest uppercase">Bricks recibidos</h2>
+          </article>
 
-        <article
-          className="md:col-span-3 bg-panel rounded-2xl p-6 flex items-center gap-4 border-[3px] border-brand-red relative overflow-hidden"
-          style={{ boxShadow: "4px 6px 0px 0px var(--color-brand-red)" }}
-        >
-          <div className="w-16 h-16 rounded-full bg-brand-red border-4 border-foreground flex items-center justify-center text-white shrink-0 shadow-[inset_0_-4px_0_rgba(0,0,0,0.2)]">
-            <Target size={28} strokeWidth={3} />
-          </div>
-          <div className="flex flex-col">
-            <h2 className="text-sm font-bold text-foreground tracking-widest uppercase">Bounties</h2>
-            <span className="text-4xl font-black text-brand-red leading-none mt-1">{misBounties.length}</span>
-          </div>
-        </article>
+          <article
+            className="bg-panel rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center justify-center gap-1 border-[3px] border-brand-blue"
+            style={{ boxShadow: "4px 6px 0px 0px var(--color-brand-blue)" }}
+          >
+            <span className="font-display font-black text-2xl text-brand-blue leading-none">E</span>
+            <span className="text-3xl sm:text-4xl font-black text-brand-blue leading-none">{misExposiciones.length}</span>
+            <h2 className="text-[10px] sm:text-xs font-bold text-foreground/70 tracking-widest uppercase">Exposiciones</h2>
+          </article>
+
+          <article
+            className="bg-panel rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center justify-center gap-1 border-[3px] border-brand-red"
+            style={{ boxShadow: "4px 6px 0px 0px var(--color-brand-red)" }}
+          >
+            <Target size={22} className="text-brand-red" strokeWidth={3} />
+            <span className="text-3xl sm:text-4xl font-black text-brand-red leading-none">{misBounties.length}</span>
+            <h2 className="text-[10px] sm:text-xs font-bold text-foreground/70 tracking-widest uppercase">Bounties</h2>
+          </article>
+        </div>
       </section>
 
       {!hayActividad && !hayRecomendaciones ? (

@@ -46,10 +46,10 @@ describe('ParticipacionesDetailClient', () => {
     expect(screen.queryByText('Star Wars')).not.toBeInTheDocument();
   });
 
-  it('enlaza "Volver a Participaciones" a la ruta de listado', () => {
+  it('enlaza "Volver a Mi Progreso" a la ruta de listado', () => {
     render(<ParticipacionesDetailClient participacion={participacion} />);
 
-    const backLink = screen.getByText('Volver a Participaciones').closest('a');
+    const backLink = screen.getByText('Volver a Mi Progreso').closest('a');
     expect(backLink).toHaveAttribute('href', '/dashboard/participaciones');
   });
 });

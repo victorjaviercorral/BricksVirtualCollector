@@ -35,7 +35,7 @@ describe('HubClient', () => {
     expect(screen.getByText('Próximamente...')).toBeInTheDocument();
     expect(screen.getByText('Sin exposición activa')).toBeInTheDocument();
     expect(screen.getByText('¡Participa para ganar!')).toBeInTheDocument();
-    expect(screen.getByText('Pronto más eventos')).toBeInTheDocument();
+    expect(screen.getByText('Explora el histórico')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay actividad.')).toBeInTheDocument();
     expect(screen.getByText('Sin retos ahora')).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument(); // bricks recibidos
@@ -81,10 +81,11 @@ describe('HubClient', () => {
     expect(activeLink).toHaveAttribute('href', '/exposicion/e1');
 
     expect(screen.getByText('Expo Otoño')).toBeInTheDocument();
-    expect(screen.getByText('Continua')).toBeInTheDocument();
+    // "Más Eventos" siempre lleva al índice de exposiciones (H5), no a la 2ª expo concreta.
+    expect(screen.getByText('Expo Otoño').closest('a')).toHaveAttribute('href', '/exposiciones');
   });
 
-  it('no muestra "más eventos" cuando solo hay una exposición activa', () => {
+  it('"Más Eventos" lleva al índice aunque solo haya una exposición activa', () => {
     render(
       <HubClient
         {...baseProps}
@@ -92,7 +93,8 @@ describe('HubClient', () => {
       />
     );
 
-    expect(screen.getByText('Pronto más eventos')).toBeInTheDocument();
+    const link = screen.getByText('Explora el histórico').closest('a');
+    expect(link).toHaveAttribute('href', '/exposiciones');
   });
 
   it('renderiza la última insignia con la exposición que la otorgó', () => {
@@ -140,9 +142,15 @@ describe('HubClient', () => {
     expect(screen.queryByText('Sin retos ahora')).not.toBeInTheDocument();
   });
 
-  it('muestra el total de bricks recibidos del perfil', () => {
+  it('muestra el total de bricks recibidos del perfil y enlaza a Mi Progreso', () => {
     render(<HubClient {...baseProps} userProfile={{ total_bricks_recibidos: 1450 }} />);
 
     expect(screen.getByText('1450')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mi Progreso')).toHaveAttribute('href', '/dashboard/participaciones');
+  });
+
+  it('la celda de bounties lleva a la lista de bounties, no a Mi Progreso', () => {
+    render(<HubClient {...baseProps} />);
+    expect(screen.getByLabelText('Bounties')).toHaveAttribute('href', '/bounties');
   });
 });

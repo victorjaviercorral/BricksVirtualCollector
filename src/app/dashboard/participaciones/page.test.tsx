@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 
 interface MockClientProps {
   userProfile?: { avatar_url?: string | null } | null;
+  totalBricksRecibidos?: number;
   misExposiciones: { exposiciones_temporales?: { titulo?: string } | null }[];
   posiciones: Record<string, unknown>;
   exposRecomendadas: { id: string }[];
@@ -23,6 +24,7 @@ vi.mock("./ParticipacionesClient", () => ({
   default: (props: MockClientProps) => (
     <div data-testid="participaciones-client">
       <span data-testid="avatar-url">{props.userProfile?.avatar_url ?? "sin-avatar"}</span>
+      <span data-testid="bricks">{props.totalBricksRecibidos ?? 0}</span>
       <span data-testid="expos">{props.misExposiciones.map((e) => e.exposiciones_temporales?.titulo).join(",")}</span>
       <span data-testid="pos">{JSON.stringify(props.posiciones)}</span>
       <span data-testid="expo-reco">{props.exposRecomendadas.map((e) => e.id).join(",")}</span>
@@ -38,6 +40,7 @@ function mockSupabase(o: {
   user?: { id: string } | null;
   perfil?: unknown;
   userSets?: { id: string }[];
+  totalBricks?: number;
   validExpos?: unknown[];
   aprobadosActivos?: { exposicion_id: string; set_id: string }[];
   bricksActivos?: { exposicion_id: string; set_id: string }[];
@@ -67,7 +70,12 @@ function mockSupabase(o: {
       };
     }
     if (table === "bricks_recibidos") {
-      return { select: () => ({ in: () => Promise.resolve({ data: o.bricksActivos ?? [] }) }) };
+      return {
+        select: (_cols: string, opts?: { head?: boolean }) => ({
+          in: () =>
+            Promise.resolve(opts?.head ? { count: o.totalBricks ?? 0 } : { data: o.bricksActivos ?? [] }),
+        }),
+      };
     }
     if (table === "bounties_reclamados") {
       return { select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: o.misBounties ?? [] }) }) }) };
@@ -97,11 +105,12 @@ describe("ParticipacionesPage (SSR)", () => {
     expect(redirect).toHaveBeenCalledWith("/login");
   });
 
-  it("pasa el perfil real y solo las exposiciones activas al cliente", async () => {
+  it("pasa el perfil real, el total de bricks y solo las exposiciones activas al cliente", async () => {
     vi.mocked(createClient).mockResolvedValue(
       mockSupabase({
         perfil: { avatar_url: "https://x/foto.jpg" },
         userSets: [{ id: "set1" }],
+        totalBricks: 1450,
         validExpos: [
           {
             id: "p1",
@@ -133,6 +142,7 @@ describe("ParticipacionesPage (SSR)", () => {
     render(await ParticipacionesPage());
 
     expect(screen.getByTestId("avatar-url")).toHaveTextContent("https://x/foto.jpg");
+    expect(screen.getByTestId("bricks")).toHaveTextContent("1450");
     // "Cerrada" (archivada) no debe llegar a este panel.
     expect(screen.getByTestId("expos")).toHaveTextContent("En Curso");
     expect(screen.getByTestId("expos")).not.toHaveTextContent("Cerrada");

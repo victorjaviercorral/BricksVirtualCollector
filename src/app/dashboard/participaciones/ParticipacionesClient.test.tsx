@@ -45,6 +45,7 @@ describe("ParticipacionesClient", () => {
 
   const baseProps: Props = {
     userProfile: {},
+    totalBricksRecibidos: 0,
     misExposiciones: [],
     posiciones: {},
     misBounties: [],
@@ -70,6 +71,13 @@ describe("ParticipacionesClient", () => {
   it("cae a un icono de reserva si no hay avatar", () => {
     render(<ParticipacionesClient {...baseProps} userProfile={{}} />);
     expect(screen.queryByAltText("Foto de perfil")).not.toBeInTheDocument();
+  });
+
+  it("se titula 'Mi Progreso' y muestra el total de bricks recibidos como stat", () => {
+    render(<ParticipacionesClient {...baseProps} totalBricksRecibidos={1450} />);
+    expect(screen.getByRole("heading", { level: 1, name: "Mi Progreso" })).toBeInTheDocument();
+    expect(screen.getByText("1450")).toBeInTheDocument();
+    expect(screen.getByText("Bricks recibidos")).toBeInTheDocument();
   });
 
   it("enlaza al Pasaporte de Exposiciones (el histórico ya no vive aquí)", () => {

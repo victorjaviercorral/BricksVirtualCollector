@@ -78,7 +78,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 href="/dashboard/participaciones" 
                 className={`transition-colors ${pathname === '/dashboard/participaciones' ? 'text-brand-yellow font-bold' : 'hover:text-brand-yellow'}`}
               >
-                Participaciones
+                Mi Progreso
               </Link>
             </>
           )}
@@ -196,7 +196,7 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`p-2 rounded-lg ${pathname === '/dashboard/participaciones' ? 'bg-black/5 dark:bg-white/5 text-brand-yellow font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
-                  Participaciones
+                  Mi Progreso
                 </Link>
               </>
             )}

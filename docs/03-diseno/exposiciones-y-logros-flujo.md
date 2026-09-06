@@ -41,21 +41,29 @@ pantallas sin una fuente de verdad, con una ruta enlazada que no existía (404 e
 | `/exposiciones` *(nuevo)* | Índice de todas (activas primero, luego archivadas) | `/exposicion/[id]` por tarjeta |
 | `/exposicion/[id]` | **Fuente de verdad.** Ranking en vivo (activa) u oficial (archivada) | `/set/[id]` por participante |
 | `/admin/exposiciones` | Gestión: crear, archivar (reparte insignias), reactivar. **+ H5:** resumen inline (participantes aprobados + bricks), filtro activas/archivadas | `/exposicion/[id]` ("Ver ficha pública") |
+| `/dashboard` Hub — "Bricks Recibidos" | Total histórico | `/dashboard/participaciones` ("Mi Progreso" — su casa detallada) |
+| `/dashboard` Hub — "Más Eventos" | Descubrimiento | `/exposiciones` (siempre; antes solo a la 2ª expo activa) |
+| `/dashboard` Hub — "Se Busca (Bounties)" | Descubrimiento | `/bounties` (antes iba a Participaciones) |
 | `/dashboard` Hub — widget "Última Insignia" | El último sello obtenido | `/dashboard/insignias` |
 | `/dashboard/insignias` → **Pasaporte de Exposiciones** | **Único hogar del histórico personal.** Un sello por insignia real (`sets_insignias`) | `/exposicion/[id]` por sello |
 | `/dashboard/insignias` → Vitrina de Insignias / Mosaico | "Próximamente" (sistemas de logros por diseñar, decisión D3) | — |
-| `/dashboard/participaciones` | **Panel de actividad EN CURSO.** Exposiciones activas donde participo (estado de moderación + puesto en vivo + tiempo restante), bounties en curso, "Dónde puedes participar" | `/exposicion/[id]`, `/set/[id]`, `/bounties`, `/dashboard/insignias` (Pasaporte) |
+| `/dashboard/participaciones` — **"Mi Progreso"** (etiqueta en navbar/UI; la URL se mantiene) | **Panel de actividad EN CURSO.** Cabecera con 3 stats: **bricks recibidos (total histórico, dato agregado canónico)**, exposiciones activas, bounties. Luego: exposiciones activas donde participo (estado de moderación + puesto en vivo + tiempo restante), bounties en curso, "Dónde puedes participar" | `/exposicion/[id]`, `/set/[id]`, `/bounties`, `/dashboard/insignias` (Pasaporte) |
 
-## Reparto de responsabilidades entre "Participaciones" y "Mis Insignias"
+## Reparto de responsabilidades entre "Mi Progreso" y "Mis Insignias"
 
-Antes de H5 los dos mostraban "mi resultado en exposiciones cerradas" — duplicación sin
-jerarquía. Ahora:
+Antes de H5 "Participaciones" y "Mis Insignias" mostraban ambos "mi resultado en exposiciones
+cerradas" — duplicación sin jerarquía. Ahora:
 
-- **Participaciones = lo que tengo en juego ahora.** Requiere acción o seguimiento: ¿me han
-  aprobado el set?, ¿voy ganando?, ¿cuánto queda?, ¿dónde más puedo apuntarme? No muestra nada
-  finalizado.
+- **Mi Progreso** (antes "Participaciones") **= lo que tengo en juego ahora.** Requiere acción o
+  seguimiento: ¿me han aprobado el set?, ¿voy ganando?, ¿cuánto queda?, ¿dónde más puedo
+  apuntarme? Más el número agregado de bricks recibidos, que antes no tenía casa clicable. No
+  muestra nada finalizado.
 - **Mis Insignias / Pasaporte = el trofeo.** El palmarés personal, permanente, con cada sello
   enlazando a la ficha de su exposición.
+
+El rebranding de "Participaciones" → "Mi Progreso" es solo de etiqueta (navbar, `<h1>`, Hub,
+"Volver a…"). La ruta `/dashboard/participaciones` y su subruta `[id]` (detalle de bounty) se
+mantienen para no romper marcadores.
 
 ## Lógica compartida
 

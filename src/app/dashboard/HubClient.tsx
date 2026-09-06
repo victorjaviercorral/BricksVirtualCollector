@@ -125,6 +125,7 @@ export default function HubClient({
 
         {/* 2. Total Bricks (Blue, Square) */}
         <motion.div variants={item} className="bg-brand-blue rounded-2xl p-6 text-white shadow-md flex flex-col items-center justify-center col-span-1 relative overflow-hidden group">
+          <Link href="/dashboard/participaciones" className="absolute inset-0 z-20" aria-label="Mi Progreso" />
           <div className="absolute -right-6 -top-6 text-white/10 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">
             <Heart size={120} className="fill-current" />
           </div>
@@ -161,16 +162,19 @@ export default function HubClient({
           </div>
           <h2 className="font-display font-bold text-xl mb-3 relative z-10">Más Eventos</h2>
           <div className="flex-grow flex flex-col justify-end relative z-10">
-            {upcomingExpo ? (
-              <Link href={`/exposicion/${upcomingExpo.id}`} className="bg-white/10 hover:bg-white/20 p-3 rounded-xl backdrop-blur-sm transition-colors border border-white/10">
-                <h3 className="font-bold text-sm leading-tight mb-1">{upcomingExpo.titulo}</h3>
-                <p className="text-[10px] opacity-80 flex items-center gap-1"><Timer size={10} /> {upcomingExpo.es_continua ? 'Continua' : 'Abierta'}</p>
-              </Link>
-            ) : (
-              <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-                <h3 className="font-bold text-sm leading-tight opacity-70">Pronto más eventos</h3>
-              </div>
-            )}
+            <Link href="/exposiciones" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl backdrop-blur-sm transition-colors border border-white/10">
+              {upcomingExpo ? (
+                <>
+                  <h3 className="font-bold text-sm leading-tight mb-1">{upcomingExpo.titulo}</h3>
+                  <p className="text-[10px] opacity-80 flex items-center gap-1"><Timer size={10} /> Ver todas las exposiciones</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-bold text-sm leading-tight mb-1">Explora el histórico</h3>
+                  <p className="text-[10px] opacity-80 flex items-center gap-1"><Timer size={10} /> Exposiciones activas y pasadas</p>
+                </>
+              )}
+            </Link>
           </div>
         </motion.div>
 
@@ -233,7 +237,7 @@ export default function HubClient({
 
         {/* 7. Community Challenges / Bounties (Teal) */}
         <motion.div variants={item} className="bg-brand-teal rounded-2xl p-5 text-white shadow-md relative overflow-hidden flex flex-col col-span-1 group">
-          <Link href="/dashboard/participaciones" className="absolute inset-0 z-20" aria-label="Bounties" />
+          <Link href="/bounties" className="absolute inset-0 z-20" aria-label="Bounties" />
           <h2 className="font-display font-black text-2xl mb-2 relative z-10 leading-none group-hover:text-brand-yellow transition-colors mt-2">
             Se Busca<br/>(Bounties)
           </h2>

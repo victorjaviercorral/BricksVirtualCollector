@@ -24,6 +24,18 @@ export default async function ParticipacionesPage() {
   const { data: userSets } = await supabase.from("sets").select("id").eq("usuario_id", user.id);
   const userSetIds = userSets?.map((s) => s.id) || [];
 
+  // Total de bricks recibidos por todos los sets del usuario -- el dato agregado canónico. Antes
+  // solo vivía como número no clicable en el Hub; ahora "Mi Progreso" es su casa y el Hub enlaza
+  // aquí.
+  let totalBricksRecibidos = 0;
+  if (userSetIds.length > 0) {
+    const { count } = await supabase
+      .from("bricks_recibidos")
+      .select("*", { count: "exact", head: true })
+      .in("set_id", userSetIds);
+    totalBricksRecibidos = count || 0;
+  }
+
   const { data: validExposiciones } = await supabase
     .from("exposicion_sets")
     .select(`
@@ -122,6 +134,7 @@ export default async function ParticipacionesPage() {
   return (
     <ParticipacionesClient
       userProfile={userProfile || {}}
+      totalBricksRecibidos={totalBricksRecibidos}
       misExposiciones={misExposiciones}
       posiciones={posiciones}
       misBounties={misBounties || []}
