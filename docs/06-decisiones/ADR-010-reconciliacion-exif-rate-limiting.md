@@ -95,9 +95,26 @@ de subida ("Protegiendo tu foto...") de un "Guardando..." genérico.
 Verificado: 9 tests nuevos del Route Handler (401/400/500/200, incluida la ausencia de
 `.withMetadata()`), tests de `MesaTrabajoClient.tsx` actualizados al nuevo flujo, cobertura 100%
 en las 4 métricas para el fichero nuevo (verificado contra `coverage/coverage-summary.json`, no
-solo la tabla del terminal). **Pendiente de verificación positiva contra Supabase real** (aplicar
-la migración y subir una foto de verdad desde la app desplegada) — mismo criterio de esta
-sesión para toda migración nueva.
+solo la tabla del terminal).
+
+**Verificación positiva contra Supabase/Vercel real — completada (19/08/2026):**
+1. Migración `20260901100000` aplicada por el titular, pero apuntaba a un nombre de política que
+   no coincidía con el real en producción (mismo patrón de deriva ya visto en `sets_insignias` /
+   `exposicion_sets`) — `drop policy if exists` no dio error, pero tampoco cerró nada. Corregido
+   con `20260901110000` (nombre real: "Usuarios autenticados pueden subir fotos"). Verificado por
+   consulta a `pg_policies`: solo quedan `SELECT` (x2) y `DELETE`, ninguna de `INSERT`.
+2. Tras desplegar, la subida se quedaba colgada en "Protegiendo tu foto..." — `sharp` es un
+   binario nativo y, sin `serverExternalPackages: ["sharp"]` en `next.config.ts`, Next.js lo
+   empaquetaba con el bundler de la función en vez de resolverlo como dependencia externa. No
+   reproducible en local (`next dev` no pasa por el mismo empaquetado que una función desplegada).
+   Corregido.
+3. **Prueba real completada por el titular**: foto subida desde `/mesa-de-trabajo` en el
+   despliegue real, servida correctamente desde `fotos_sets` (200 OK, visible en la vitrina). El
+   flujo completo -- limpieza server-side + bloqueo de la subida directa -- funciona de extremo a
+   extremo contra infraestructura real, no solo contra mocks.
+
+**S2 queda cerrado.** Lo único que sigue abierto de este ADR es el rate limiting compartido
+(bloqueado por la cuenta de Upstash) y el test E2E no mockeado con GPS real (T2, ver más abajo).
 
 ## Alternativas descartadas
 
