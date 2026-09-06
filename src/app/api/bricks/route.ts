@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+// Hallazgo S1 (auditoría original): sin validar la forma del payload, un cuerpo malformado
+// dependía de que Postgres lo rechazara más adelante en el flujo con un error genérico. Zod lo
+// rechaza aquí, antes de tocar la base de datos, con un mensaje claro.
+const bodySchema = z.object({
+  set_id: z.string().uuid(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -10,11 +18,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized. Debes iniciar sesión." }, { status: 401 });
     }
 
-    const { set_id } = await request.json();
-
-    if (!set_id) {
-      return NextResponse.json({ error: "set_id is required" }, { status: 400 });
+    const parsed = bodySchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "set_id debe ser un identificador válido" }, { status: 400 });
     }
+    const { set_id } = parsed.data;
 
     // Use user.id as the unique identifier for the vote
     // Insert into bricks_recibidos (DB trigger will increment totals)

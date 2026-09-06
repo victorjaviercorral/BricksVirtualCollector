@@ -17,12 +17,14 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }));
 
-function createRequest(body: any) {
+function createRequest(body: Record<string, unknown>) {
   return new Request('http://localhost:3000/api/bricks', {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
+
+const SET_ID = '11111111-1111-4111-8111-111111111111';
 
 describe('POST /api/bricks', () => {
   beforeEach(() => {
@@ -32,7 +34,7 @@ describe('POST /api/bricks', () => {
   it('devuelve 401 si no hay usuario autenticado', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } });
 
-    const res = await POST(createRequest({ set_id: 'set1' }));
+    const res = await POST(createRequest({ set_id: SET_ID }));
 
     expect(res.status).toBe(401);
     expect(mockFrom).not.toHaveBeenCalled();
@@ -45,17 +47,30 @@ describe('POST /api/bricks', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('set_id is required');
+    expect(body.error).toBe('set_id debe ser un identificador válido');
+  });
+
+  // Hallazgo S1: antes cualquier string no vacío pasaba (p.ej. "set1", usado en los tests
+  // originales) -- ahora Zod exige un UUID real, coherente con el tipo de columna en Postgres.
+  it('devuelve 400 si set_id no es un UUID válido', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user1' } } });
+
+    const res = await POST(createRequest({ set_id: 'no-es-un-uuid' }));
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('set_id debe ser un identificador válido');
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
   it('inserta el brick usando el id del usuario como hash_visitante y devuelve éxito', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user1' } } });
     mockInsert.mockResolvedValue({ error: null });
 
-    const res = await POST(createRequest({ set_id: 'set1' }));
+    const res = await POST(createRequest({ set_id: SET_ID }));
 
     expect(mockFrom).toHaveBeenCalledWith('bricks_recibidos');
-    expect(mockInsert).toHaveBeenCalledWith({ set_id: 'set1', hash_visitante: 'user1' });
+    expect(mockInsert).toHaveBeenCalledWith({ set_id: SET_ID, hash_visitante: 'user1' });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ success: true });
@@ -65,7 +80,7 @@ describe('POST /api/bricks', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user1' } } });
     mockInsert.mockResolvedValue({ error: { code: '23505', message: 'duplicate key' } });
 
-    const res = await POST(createRequest({ set_id: 'set1' }));
+    const res = await POST(createRequest({ set_id: SET_ID }));
 
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -76,7 +91,7 @@ describe('POST /api/bricks', () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user1' } } });
     mockInsert.mockResolvedValue({ error: { code: 'XXOOO', message: 'db error' } });
 
-    const res = await POST(createRequest({ set_id: 'set1' }));
+    const res = await POST(createRequest({ set_id: SET_ID }));
 
     expect(res.status).toBe(500);
   });

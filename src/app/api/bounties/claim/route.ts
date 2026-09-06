@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 // Límite defensivo sobre el número de bricks que se insertan como recompensa. `recompensa` la
 // fija un administrador desde /admin/bounties (no es un input directo del usuario que llama a
@@ -7,13 +8,21 @@ import { createClient } from "@/lib/supabase/server";
 // generase un insert masivo desproporcionado.
 const MAX_REWARD_BRICKS = 1000;
 
+// Hallazgo S1 (auditoría original): sin validar la forma del payload, un bountyId/setId
+// malformado dependía de que Postgres lo rechazara más adelante con un error genérico. Zod lo
+// rechaza aquí, antes de tocar la base de datos.
+const bodySchema = z.object({
+  bountyId: z.string().uuid(),
+  setId: z.string().uuid(),
+});
+
 export async function POST(request: Request) {
   try {
-    const { bountyId, setId } = await request.json();
-
-    if (!bountyId || !setId) {
+    const parsed = bodySchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
     }
+    const { bountyId, setId } = parsed.data;
 
     const supabase = await createClient();
 
