@@ -123,6 +123,40 @@ queda para la iteración 3.
   - El uso de `getByTestId` arrojaba error estricto (`TestingLibraryElementError`) cuando el DOM virtual simulaba el spinner usando CSS `animate-spin` en lugar de un `data-testid`. Se optimizó usando `container.querySelector('.animate-spin')`.
   - Se probó a fondo la API POST de `claim`, incluyendo ramas de error (400, 401, 404, 500) y la transacción final simulando la recompensa de `Bricks`.
 
+## H5: Exposiciones y logros — un solo flujo (Iteración 5)
+- **Archivos nuevos al gate:** `src/lib/exposiciones.ts`, `src/app/exposicion/**`
+  (`page.tsx` + `ExposicionClient.tsx`, que llevaban desde la Fase 2 explícitamente **fuera**
+  del gate), `src/app/exposiciones/**` (índice nuevo). Añadidos a `test.include` y
+  `coverage.include` de `vitest.config.ts` en el mismo commit.
+- **Cobertura alcanzada:** global tras la entrega — Statements 95,35% · Branches 86,84% ·
+  Functions 92,85% · Lines 96,51% (`npx vitest run --coverage`, 374 tests). Por fichero nuevo:
+  `exposiciones.ts` L100/B90, `exposicion/[id]/page.tsx` L100/B93, `ExposicionClient.tsx`
+  L96/B91, `exposiciones/page.tsx` L100/B93.
+- **Estado:** ✅ Aprobado.
+- **Cambios en tests existentes (regla 1 de AGENTS.md — no son tests rotos que se ocultan):**
+  - `src/app/dashboard/participaciones/ParticipacionesClient.test.tsx` y `page.test.tsx`
+    reescritos. Motivo documentado: "Mis Participaciones" dejó de ser un histórico y pasó a ser
+    un panel de **actividad en curso** (decisión del titular, ver
+    `docs/05-plan/plan-intervencion-post-iteracion-3.md` §H5). Los tests de la sección
+    "Exposiciones Finalizadas" se **retiraron de aquí** porque ese comportamiento se **reubicó**
+    a `/dashboard/insignias` → Pasaporte (fuente única de verdad), no porque fallaran. Su
+    equivalente vive ahora en `ExhibitionPassport.test.tsx` (cada sello enlaza a su ficha) y en
+    los tests de `page.test.tsx` del propio panel.
+  - `src/app/admin/exposiciones/page.test.tsx` — andamiaje de mocks actualizado: `fetchExposiciones`
+    ahora hace 2 consultas agregadas más (resumen inline) y el texto de estado vacío cambió por
+    pestaña. Los intents originales (validación de creación, reparto de insignias al archivar,
+    reactivar) se conservan íntegros.
+  - `src/components/badges/ExhibitionPassport.test.tsx` / `InsigniasClient.test.tsx` — fixtures
+    de `Sello`/`InsigniaFila` ganan `exposicion_id` (el sello es ahora un enlace a
+    `/exposicion/[id]`).
+- **Observaciones:**
+  - Toda la lógica no trivial (rankings en vivo y oficial, motivo de histórico vacío, resumen
+    inline, rango de fechas, puesto en vivo) se extrajo a `src/lib/exposiciones.ts` como
+    funciones puras, probadas sin mockear Supabase — mismo patrón que `src/lib/insignias.ts`.
+  - `ExposicionClient.tsx` entró al gate por primera vez con una suite propia (18 casos): ambos
+    modos (`live`/`oficial`), timer, participar, votar (23505/genérico), y los dos estados
+    vacíos honestos del modo oficial.
+
 ## Resumen Global (histórico — ver aviso de estado al inicio)
 - **Cobertura registrada en su momento:** 94.45% en líneas, 87.65% en ramas lógicas (branches), 88.48% en funciones, 93.2% en declaraciones — **sobre la lista blanca de `coverage.include`, no sobre el proyecto completo**. Hoy no es reproducible: la suite está en rojo.
 - **Control de Regresiones:** Configurado en `vitest.config.ts`.

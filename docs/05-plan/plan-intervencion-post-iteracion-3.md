@@ -228,6 +228,14 @@ cerrada sin estarlo.
 
 ### H5 (nuevo, 19/08/2026) — Vista de detalle/histórico de una exposición
 
+> **✅ COMPLETADA (06/09/2026).** El alcance creció durante la implementación de "4 piezas de
+> enlace" a una consolidación del flujo completo de exposiciones y logros — ver §11 al final de
+> este documento y `docs/03-diseno/exposiciones-y-logros-flujo.md`. Motivo del cambio de
+> alcance: al mapear el código (regla 2/4 de AGENTS.md) se detectó que el problema real no era
+> un enlace que faltaba, sino que "mi resultado en una exposición cerrada" vivía duplicado en
+> `/dashboard/participaciones` y en `/dashboard/insignias`, sin fuente canónica, y que el enlace
+> "Explorar Exposiciones" de Participaciones apuntaba a una ruta inexistente (404 en producción).
+
 **Origen:** al probar D3 en real, el titular archivó una exposición y confirmó "Insignias
 entregadas a 2 participante(s)" — pero no hay forma de ver **a quién**, ni el ranking, ni
 volver a consultarlo después. Petición: una vista con los datos esenciales de cada exposición
@@ -483,3 +491,49 @@ despliegue real (no reproducible en local, `next dev` no pasa por el mismo empaq
 
 **Pendiente:** confirmar que subir una foto real desde `/mesa-de-trabajo` en el despliegue
 funciona de extremo a extremo tras ambos fixes.
+
+---
+
+## 11. Actualización 06/09/2026 — H5 completada como consolidación del flujo de exposiciones y logros
+
+**Qué se pidió:** una vista de detalle/histórico de exposición (4 piezas de enlace/resumen).
+
+**Qué se detectó al mapear el código antes de implementar:**
+- `sets_insignias` se pintaba en **3 sitios** (widget "Última Insignia" del Hub, pestaña
+  "Pasaporte de Exposiciones", sección "Exposiciones Finalizadas" de Participaciones). "Mi
+  resultado en una exposición cerrada" vivía a la vez en Participaciones y en Pasaporte, sin
+  fuente canónica.
+- `/exposicion/[id]` recalculaba el ranking en vivo **también para exposiciones archivadas**.
+- La ruta `/exposiciones` **no existía**: el enlace "Explorar Exposiciones" de
+  `ParticipacionesClient.tsx` daba 404 en producción.
+- `/admin/exposiciones` no enlazaba a la ficha, no mostraba participantes, y renderizaba
+  "1/1/1970 - 1/1/1970" cuando `fecha_inicio`/`fecha_fin` eran null.
+
+**Decisiones del titular (antes de implementar):**
+1. Histórico personal → **solo Pasaporte**. Participaciones deja de mostrarlo.
+2. Participaciones → **panel de actividad en curso** completo (activo + "dónde puedes participar").
+3. `/exposiciones` índice público → **sí**.
+4. `/exposicion/[id]` archivada → **medalla + puesto + bricks congelados en gris**.
+
+**Entregado (6 piezas, cada una desplegable de forma independiente):**
+
+| Pieza | Resultado |
+|---|---|
+| `src/lib/exposiciones.ts` | Lógica pura: `rankingEnVivo`, `rankingOficial`, `motivoHistoricoVacio`, `resumenExposiciones`, `rangoFechasExposicion`, `posicionEnRankingVivo`. Probada sin mockear Supabase. |
+| `/exposicion/[id]` modo oficial | `estado='archivada'` → ranking desde `sets_insignias` (rango + `titulo_insignia`, inmutable) + recuento de bricks congelado en gris; sin botones de voto. Estado vacío honesto: `sin-participantes` vs `anterior-al-registro` (exposiciones cerradas antes de D3, sin fila en `sets_insignias`). |
+| `/admin/exposiciones` | Enlace "Ver ficha pública" a `/exposicion/[id]`, resumen inline (participantes aprobados + bricks) en 2 consultas agregadas, filtro activas/archivadas, `rangoFechasExposicion` (fin del "1/1/1970"). |
+| `/exposiciones` (nuevo) | Índice de todas las exposiciones (activas primero), cada una enlaza a su ficha. Arregla el 404. |
+| Consolidación del histórico personal | "Exposiciones Finalizadas" retirada de `/dashboard/participaciones`. Cada sello del Pasaporte (`ExhibitionPassport.tsx`) enlaza a `/exposicion/[id]`. |
+| `/dashboard/participaciones` refactor | Panel de actividad en curso: exposiciones activas con estado de moderación + puesto en el ranking en vivo (`#N de M · X bricks`) + tiempo restante + enlace a la ficha; "Mis Bounties"; sección "Dónde puedes participar" (`exposActivas`/`bountiesActivos` que antes se consultaban y se descartaban); enlace "Ver tu Pasaporte de Exposiciones". |
+
+**Fiabilidad del histórico — verificada:** la migración `20260819110000` (no se puede votar ni
+participar en una exposición archivada) está **aplicada y confirmada en `pg_policies`** por el
+titular. El ranking congelado en `sets_insignias` no puede quedar obsoleto por votos
+posteriores al cierre. **Sin migraciones nuevas** en esta entrega (no se toca esquema ni RLS).
+
+**Verificación:** `tsc` limpio · `npm run test:coverage` verde, 374 tests, 4 métricas ≥ 85%
+(S 95,35 / B 86,84 / F 92,85 / L 96,51) · `lint:ci` dentro del baseline (bajado de 168 a 165) ·
+`next build` verde, `/exposiciones` en la lista de rutas.
+
+**Pendiente del titular:** verificación visual autenticada contra el despliegue real (ver la
+fila 17 de `docs/00-proyecto/FASES_Y_MEJORAS.md` para la lista de comprobaciones).
