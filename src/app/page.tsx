@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Lock, Box, ArrowRight } from "lucide-react";
-import BountiesSectionClient from "@/components/BountiesSectionClient";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -99,45 +98,63 @@ export default async function Home() {
         </div>
         
         <div className="w-full lg:w-1/2 flex flex-col gap-3">
-            <BountiesSectionClient bounties={bounties || []} />
+          {(bounties && bounties.length > 0) ? (
+            <>
+              {bounties.map((b) => (
+                <div key={b.id} className="bg-panel rounded-2xl p-4 flex items-center justify-between gap-4 border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA]">
+                  <p className="font-bold text-foreground leading-tight">{b.nombre_set}</p>
+                  <span className="shrink-0 font-mono text-xs font-black bg-brand-red text-white px-2 py-1 rounded">+{b.recompensa}</span>
+                </div>
+              ))}
+              <Link href="/bounties" className="mt-1 inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-5 py-3 rounded-xl font-black text-sm border-2 border-foreground shadow-[2px_2px_0px_0px_#0F172A] dark:shadow-[2px_2px_0px_0px_#F8F9FA] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_#0F172A] transition-all">
+                Ver todos los bounties <ArrowRight size={16} />
+              </Link>
+            </>
+          ) : (
+            <Link href="/bounties" className="bg-panel rounded-2xl p-6 text-center border-2 border-foreground font-bold text-foreground/70 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              No hay bounties abiertos ahora mismo — míralos aquí
+            </Link>
+          )}
         </div>
       </section>
 
-      {/* 3. Bento Grid Features */}
+      {/* 3. Bento Grid Features -- cada tarjeta enlaza a la sección real */}
       <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Feature 1: Privacy */}
-        <div className="md:col-span-8 bg-brand-blue rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between overflow-hidden relative group min-h-[250px]">
+        {/* Feature 1: Privacy -> Cómo funciona */}
+        <Link href="/como-funciona" className="md:col-span-8 bg-brand-blue rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between overflow-hidden relative group min-h-[250px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="relative z-10 space-y-3 max-w-sm">
             <span className="bg-panel text-foreground font-bold text-xs px-3 py-1 rounded-full border-2 border-foreground inline-block">
               Privacidad
             </span>
             <h3 className="text-3xl font-display font-bold text-white leading-tight">Tú tienes el control total</h3>
             <p className="text-base text-white/90">Decide quién puede ver tus colecciones. Mantén tu vitrina privada o compártela públicamente con la comunidad.</p>
+            <span className="inline-flex items-center gap-1 text-white font-bold text-sm">Cómo funciona <ArrowRight size={16} /></span>
           </div>
           <Lock className="absolute -bottom-8 -right-8 w-56 h-56 text-white opacity-20 group-hover:scale-110 transition-transform duration-500" />
-        </div>
+        </Link>
 
-        {/* Feature 2: Organization */}
-        <div className="md:col-span-4 bg-panel rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[250px]">
+        {/* Feature 2: Organization -> Galería (filtro por temática) */}
+        <Link href="/galeria" className="md:col-span-4 bg-panel rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[250px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="space-y-3">
             <span className="bg-brand-yellow text-black font-bold text-xs px-3 py-1 rounded-full border-2 border-foreground inline-block">
               Organización
             </span>
             <h3 className="text-2xl font-display font-bold text-foreground">Tags & Categorías</h3>
-            <p className="text-foreground/80 text-sm">Clasifica tus modelos por temática, año o dificultad. Encuentra cualquier pieza en segundos.</p>
+            <p className="text-foreground/80 text-sm">Explora las colecciones de la comunidad por temática: Star Wars, Technic, City…</p>
           </div>
           <div className="flex gap-2 flex-wrap mt-4">
             <span className="bg-brand-red text-white text-xs px-2 py-1 rounded-md border-2 border-foreground font-bold">Space</span>
             <span className="bg-brand-blue text-white text-xs px-2 py-1 rounded-md border-2 border-foreground font-bold">Technic</span>
             <span className="bg-brand-yellow text-black text-xs px-2 py-1 rounded-md border-2 border-foreground font-bold">Creator</span>
           </div>
-        </div>
+        </Link>
 
-        {/* Feature 3: Analytics */}
-        <div className="md:col-span-5 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[200px]">
+        {/* Feature 3: Analytics -> Mi Progreso */}
+        <Link href="/dashboard/participaciones" className="md:col-span-5 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="space-y-3">
             <h3 className="text-2xl font-display font-bold text-white">Estadísticas Detalladas</h3>
-            <p className="text-white/90 text-sm">Conoce el valor de tu colección, número total de piezas y el tiempo estimado de construcción.</p>
+            <p className="text-white/90 text-sm">Tus bricks recibidos, tu puesto en cada exposición y tus retos en curso, en un vistazo.</p>
+            <span className="inline-flex items-center gap-1 text-white font-bold text-sm">Ver Mi Progreso <ArrowRight size={16} /></span>
           </div>
           <div className="mt-6">
             <div className="h-4 bg-panel rounded-full border-2 border-foreground overflow-hidden flex">
@@ -145,28 +162,29 @@ export default async function Home() {
               <div className="w-1/3 bg-brand-yellow border-r-2 border-foreground"></div>
             </div>
           </div>
-        </div>
+        </Link>
 
-        {/* Feature 4: 3D View */}
-        <div className="md:col-span-7 bg-panel rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between relative overflow-hidden group cursor-pointer min-h-[200px]">
+        {/* Feature 4: 3D View -> Galería */}
+        <Link href="/galeria" className="md:col-span-7 bg-panel rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between relative overflow-hidden group cursor-pointer min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="relative z-10 space-y-3 max-w-sm">
             <span className="bg-brand-blue text-white font-bold text-xs px-3 py-1 rounded-full border-2 border-foreground inline-block">
               Interactividad
             </span>
-            <h3 className="text-3xl font-display font-bold text-foreground">Explorador Virtual</h3>
-            <p className="text-foreground/80 text-sm">Visualiza tus modelos en un entorno detallado. Gira, acerca y explora cada detalle.</p>
+            <h3 className="text-3xl font-display font-bold text-foreground">Explorador de Vitrinas</h3>
+            <p className="text-foreground/80 text-sm">Recorre las colecciones públicas de la comunidad y descubre nuevas construcciones.</p>
+            <span className="inline-flex items-center gap-1 text-foreground font-bold text-sm">Abrir la Galería <ArrowRight size={16} /></span>
           </div>
           <div className="absolute right-0 bottom-0 w-40 h-40 bg-foreground/5 dark:bg-foreground/10 rounded-tl-[3rem] border-l-2 border-t-2 border-foreground flex items-center justify-center translate-x-4 translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-300">
             <Box className="w-16 h-16 text-brand-blue" />
           </div>
-        </div>
+        </Link>
       </section>
 
       {/* 4. Featured Showcases Gallery */}
       <section className="space-y-6 pt-4">
         <div className="flex justify-between items-end border-b-2 border-foreground pb-4">
           <h2 className="text-3xl font-display font-bold text-foreground">Vitrinas Destacadas</h2>
-          <Link href="/dashboard" className="hidden sm:flex font-bold text-brand-blue items-center gap-2 hover:underline text-sm">
+          <Link href="/galeria" className="hidden sm:flex font-bold text-brand-blue items-center gap-2 hover:underline text-sm">
             Ver Galería Completa <ArrowRight size={16} />
           </Link>
         </div>

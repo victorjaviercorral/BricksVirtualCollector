@@ -184,10 +184,10 @@ export default function HubClient({
             <Users size={60} />
           </div>
           <div className="mb-4 relative z-10 flex justify-between items-end">
-            <div>
+            <Link href="/galeria" className="hover:underline">
               <h2 className="font-display font-bold text-xl">Comunidad</h2>
               <p className="text-sm opacity-90">Últimos sets subidos globalmente.</p>
-            </div>
+            </Link>
             <Link href="/dashboard/vitrinas" className="hidden sm:flex text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg items-center gap-1 transition-colors">
               <Plus size={14} /> Subir el tuyo
             </Link>
