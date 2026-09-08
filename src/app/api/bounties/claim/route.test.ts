@@ -20,8 +20,6 @@ const mockClaimSingle = vi.fn();
 const mockClaimInsertSelect = vi.fn(() => ({ single: mockClaimSingle }));
 const mockClaimInsert = vi.fn(() => ({ select: mockClaimInsertSelect }));
 
-const mockBricksInsert = vi.fn();
-
 const mockFrom = vi.fn((table: string) => {
   if (table === 'sets') {
     return { select: mockSetSelect };
@@ -31,9 +29,6 @@ const mockFrom = vi.fn((table: string) => {
   }
   if (table === 'bounties_reclamados') {
     return { insert: mockClaimInsert };
-  }
-  if (table === 'bricks_recibidos') {
-    return { insert: mockBricksInsert };
   }
   return {};
 });
@@ -45,6 +40,21 @@ vi.mock('@/lib/supabase/server', () => ({
   }))
 }));
 
+// Hallazgo S4: los bricks de recompensa ya no se insertan con el cliente de sesión (su política
+// RLS ahora exige hash_visitante = auth.uid(), incompatible con los hashes sintéticos de
+// recompensa) -- se insertan con el cliente admin (service_role), igual que
+// api/sets/foto/route.ts.
+const mockBricksInsert = vi.fn();
+const mockAdminFrom = vi.fn((table: string) => {
+  if (table === 'bricks_recibidos') {
+    return { insert: mockBricksInsert };
+  }
+  return {};
+});
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({ from: mockAdminFrom })),
+}));
+
 // Hallazgo S1: la ruta valida bountyId/setId con Zod (z.string().uuid()) -- los identificadores
 // de prueba tienen que ser UUIDs reales, no los literales cortos ("b1", "s1") que bastaban antes
 // de añadir la validación de esquema.
@@ -53,14 +63,22 @@ const SET_ID = '00000000-0000-4000-8000-000000000002';
 const SET_ID_2 = '00000000-0000-4000-8000-000000000003';
 
 describe('POST /api/bounties/claim (modelo multi-reclamo, D1)', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_SUPABASE_URL: 'https://proyecto.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
+    };
     // Por defecto: el set SÍ pertenece al usuario (la mayoría de tests no prueban ownership).
     mockSetSingle.mockResolvedValue({ data: { id: SET_ID }, error: null });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    process.env = originalEnv;
   });
 
   const createRequest = (body: Record<string, unknown>) => {
@@ -262,6 +280,41 @@ describe('POST /api/bounties/claim (modelo multi-reclamo, D1)', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.success).toBe(true);
+  });
+
+  // Hallazgo S4: los bricks de recompensa se insertan con el cliente admin (service_role), no
+  // con el de sesión -- la política RLS de un voto normal (hash_visitante = auth.uid()) es
+  // incompatible con los hashes sintéticos de recompensa.
+  it('inserta los bricks de recompensa con el cliente admin (service_role), no con el de sesión', async () => {
+    const req = createRequest({ bountyId: BOUNTY_ID, setId: SET_ID });
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+    mockBountySingle.mockResolvedValue({ data: { id: BOUNTY_ID, estado: 'pendiente', nombre_set: 'X', recompensa: 3 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+    mockBricksInsert.mockResolvedValue({ error: null });
+
+    await POST(req);
+
+    // El cliente de sesión nunca ve la tabla bricks_recibidos -- solo sets/bounties/bounties_reclamados.
+    expect(mockFrom).not.toHaveBeenCalledWith('bricks_recibidos');
+    expect(mockAdminFrom).toHaveBeenCalledWith('bricks_recibidos');
+    expect(mockBricksInsert).toHaveBeenCalled();
+  });
+
+  it('el reclamo tiene éxito aunque falte SUPABASE_SERVICE_ROLE_KEY (no se conceden bricks, se registra el fallo)', async () => {
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const req = createRequest({ bountyId: BOUNTY_ID, setId: SET_ID });
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+    mockBountySingle.mockResolvedValue({ data: { id: BOUNTY_ID, estado: 'pendiente', nombre_set: 'X', recompensa: 5 }, error: null });
+    mockClaimSingle.mockResolvedValue({ data: { id: 'r1' }, error: null });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(mockBricksInsert).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('debería retornar 500 si hay un error general no controlado', async () => {

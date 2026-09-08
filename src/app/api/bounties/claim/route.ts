@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 // Límite defensivo sobre el número de bricks que se insertan como recompensa. `recompensa` la
@@ -99,15 +100,35 @@ export async function POST(request: Request) {
       hash_visitante: `bounty-${bountyId}-${i}-${crypto.randomUUID()}`
     }));
 
-    const { error: insertError } = await supabase
-      .from('bricks_recibidos')
-      .insert(inserts);
+    // Hallazgo S4: la política RLS de bricks_recibidos para un voto normal de usuario exige
+    // hash_visitante = auth.uid() (ver migración 20260901120000) -- correcto para un voto real,
+    // pero incompatible con estos hashes sintéticos de recompensa (varios por reclamo, ninguno
+    // igual a auth.uid()). El ownership del set y la elegibilidad del bounty ya se han validado
+    // arriba con el cliente de sesión normal; esta inserción concreta usa la service_role key
+    // (bypassa RLS) -- mismo patrón ya establecido en api/sets/foto/route.ts y
+    // api/auth/delete-account/route.ts para operaciones privilegiadas ya verificadas.
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (insertError) {
-      // No hay transacción cross-tabla aquí: el reclamo (bounties_reclamados) ya quedó
-      // registrado y no se revierte. Se documenta en vez de fingir atomicidad que no existe --
-      // el mismo criterio que ya aplicaba esta ruta antes de esta reescritura.
-      console.error("Error al insertar los bricks de recompensa:", insertError);
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY for bounty reward bricks.");
+      // El reclamo ya quedó registrado (bounties_reclamados) -- se informa del fallo de
+      // recompensa sin revertirlo, mismo criterio que el resto de esta ruta.
+    } else {
+      const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { error: insertError } = await supabaseAdmin
+        .from('bricks_recibidos')
+        .insert(inserts);
+
+      if (insertError) {
+        // No hay transacción cross-tabla aquí: el reclamo (bounties_reclamados) ya quedó
+        // registrado y no se revierte. Se documenta en vez de fingir atomicidad que no existe --
+        // el mismo criterio que ya aplicaba esta ruta antes de esta reescritura.
+        console.error("Error al insertar los bricks de recompensa:", insertError);
+      }
     }
 
     return NextResponse.json({ success: true, reward: rewardBricks, reclamoId: reclamo?.id });
