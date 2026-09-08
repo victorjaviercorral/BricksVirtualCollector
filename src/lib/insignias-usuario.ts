@@ -517,6 +517,77 @@ export function contarPodios(
   return conteo;
 }
 
+// ------------------------------------------------------------------------------------------
+// Mosaico Comunitario
+// ------------------------------------------------------------------------------------------
+
+/** Fila cruda de `insignias_usuario` con su dueño, tal y como la devuelve PostgREST. */
+export interface HitoCrudo {
+  id: string;
+  insignia: string;
+  otorgado_en: string | null;
+  usuario_id: string;
+  usuarios_perfil?:
+    | { username?: string | null; avatar_url?: string | null }
+    | { username?: string | null; avatar_url?: string | null }[]
+    | null;
+}
+
+export interface BloqueMosaico {
+  id: string;
+  slug: string;
+  nombre: string;
+  familia: string;
+  eje: EjeInsignia;
+  icono: string;
+  tramo: number | null;
+  autor: string;
+  avatar: string | null;
+  fecha: string | null;
+  /** Los bloques propios se destacan en el mural. */
+  esMio: boolean;
+}
+
+/**
+ * Convierte las filas de `insignias_usuario` de toda la comunidad en bloques del mosaico.
+ *
+ * Un bloque = un hito real conseguido por alguien. No hay esquema propio del mosaico ni hace
+ * falta: es la capa comunitaria del sistema de insignias, no un mural aparte. Un mural de sets
+ * públicos habría sido /galeria otra vez (regla 2 de AGENTS.md).
+ *
+ * Las filas con un slug que ya no está en el catálogo se descartan en vez de pintarse sin
+ * nombre: si una insignia se retira algún día, sus filas antiguas siguen en la tabla.
+ */
+export function bloquesMosaico(
+  filas: HitoCrudo[] | null | undefined,
+  miUsuarioId: string | null | undefined
+): BloqueMosaico[] {
+  return (filas || [])
+    .map((f) => {
+      const entrada = CATALOGO_POR_SLUG[f.insignia];
+      if (!entrada) return null;
+
+      // Sin tipos generados de Supabase (bloqueado por A1, ver ADR-010) la relación llega como
+      // objeto o como array según el join -- se normalizan las dos formas.
+      const perfil = Array.isArray(f.usuarios_perfil) ? f.usuarios_perfil[0] : f.usuarios_perfil;
+
+      return {
+        id: f.id,
+        slug: f.insignia,
+        nombre: entrada.nombre,
+        familia: entrada.familia,
+        eje: entrada.eje,
+        icono: entrada.icono,
+        tramo: entrada.tramo,
+        autor: perfil?.username || "Coleccionista",
+        avatar: perfil?.avatar_url || null,
+        fecha: f.otorgado_en,
+        esMio: Boolean(miUsuarioId) && f.usuario_id === miUsuarioId,
+      };
+    })
+    .filter((b): b is BloqueMosaico => b !== null);
+}
+
 /** Días completos transcurridos desde una fecha ISO. Fecha ausente o futura -> 0. */
 export function diasDesde(iso: string | null | undefined, ahora: Date = new Date()): number {
   if (!iso) return 0;

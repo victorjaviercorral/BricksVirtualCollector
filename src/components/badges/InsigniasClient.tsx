@@ -11,6 +11,7 @@ import { formatearNumero } from "./BadgeMedal";
 import {
   avisoPiezasIncompletas,
   type AgregadosUsuario,
+  type BloqueMosaico,
   type ResultadoInsignias,
 } from "@/lib/insignias-usuario";
 
@@ -52,12 +53,14 @@ export default function InsigniasClient({
   misInsignias = [],
   agregados,
   insignias,
+  mosaico = { bloques: [], total: 0 },
 }: {
   userProfile: UserProfileResumen | null;
   user: { created_at?: string } | null;
   misInsignias?: InsigniaFila[];
   agregados: AgregadosUsuario;
   insignias: ResultadoInsignias;
+  mosaico?: { bloques: BloqueMosaico[]; total: number };
 }) {
   const createdAt = userProfile?.creado_en || user?.created_at;
   const memberSince = createdAt ? format(new Date(createdAt), "MMMM yyyy", { locale: es }) : "Desconocido";
@@ -159,7 +162,7 @@ export default function InsigniasClient({
           <h2 className="font-display text-2xl font-black uppercase tracking-tight mb-6">
             Mosaico Comunitario
           </h2>
-          <CommunityMosaic />
+          <CommunityMosaic bloques={mosaico.bloques} totalHitos={mosaico.total} />
         </section>
       </div>
     </div>

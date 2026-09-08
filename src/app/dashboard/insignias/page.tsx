@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import InsigniasClient from "@/components/badges/InsigniasClient";
-import { getDatosInsignias } from "@/lib/queries/insignias-usuario";
+import { getDatosInsignias, getMosaicoComunitario } from "@/lib/queries/insignias-usuario";
 import { evaluarInsignias } from "@/lib/insignias-usuario";
 
 export default async function MisInsigniasPage() {
@@ -31,6 +31,9 @@ export default async function MisInsigniasPage() {
 
   const insignias = evaluarInsignias(agregados);
 
+  // Mosaico Comunitario: los hitos de TODA la comunidad, no solo los del usuario.
+  const mosaico = await getMosaicoComunitario(supabase, user.id);
+
   return (
     <InsigniasClient
       userProfile={userProfile || {}}
@@ -38,6 +41,7 @@ export default async function MisInsigniasPage() {
       misInsignias={insigniasDeSets}
       agregados={agregados}
       insignias={insignias}
+      mosaico={mosaico}
     />
   );
 }

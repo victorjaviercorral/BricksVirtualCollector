@@ -19,10 +19,11 @@ interface MockInsigniasClientProps {
   misInsignias: unknown[];
   agregados: AgregadosUsuario;
   insignias: ResultadoInsignias;
+  mosaico: { bloques: { esMio: boolean }[]; total: number };
 }
 
 vi.mock('@/components/badges/InsigniasClient', () => ({
-  default: ({ userProfile, user, misInsignias, agregados, insignias }: MockInsigniasClientProps) => (
+  default: ({ userProfile, user, misInsignias, agregados, insignias, mosaico }: MockInsigniasClientProps) => (
     <div data-testid="insignias-client">
       <span data-testid="user-id">{user.id}</span>
       <span data-testid="profile-keys">{Object.keys(userProfile).length}</span>
@@ -37,6 +38,9 @@ vi.mock('@/components/badges/InsigniasClient', () => ({
       <span data-testid="bounties">{agregados.bountiesReclamados}</span>
       <span data-testid="botin">{agregados.bricksDeBounties}</span>
       <span data-testid="desbloqueadas">{insignias.desbloqueadas.map((i) => i.id).join(',')}</span>
+      <span data-testid="mosaico-bloques">{mosaico.bloques.length}</span>
+      <span data-testid="mosaico-mios">{mosaico.bloques.filter((b) => b.esMio).length}</span>
+      <span data-testid="mosaico-total">{mosaico.total}</span>
     </div>
   ),
 }));
@@ -57,6 +61,11 @@ describe('MisInsigniasPage (SSR)', () => {
       fotosCount: 6,
       vitrinasCount: 2,
       exposicion_sets: [{ exposicion_id: 'e1' }, { exposicion_id: 'e1' }, { exposicion_id: 'e2' }],
+      hitos: [
+        { id: 'h1', insignia: 'cantera-1', otorgado_en: '2026-09-01', usuario_id: 'user1', usuarios_perfil: { username: 'yo', avatar_url: null } },
+        { id: 'h2', insignia: 'oro', otorgado_en: '2026-08-30', usuario_id: 'otra', usuarios_perfil: { username: 'vecina', avatar_url: null } },
+      ],
+      totalHitos: 2,
     };
     const data = { ...defaults, ...overrides };
 
@@ -86,6 +95,14 @@ describe('MisInsigniasPage (SSR)', () => {
       }
       if (table === 'fotos') {
         return { select: () => ({ in: () => Promise.resolve({ count: data.fotosCount }) }) };
+      }
+      if (table === 'insignias_usuario') {
+        return {
+          select: (_cols: string, opts?: { head?: boolean }) =>
+            opts?.head
+              ? Promise.resolve({ count: data.totalHitos })
+              : { order: () => ({ limit: () => Promise.resolve({ data: data.hitos }) }) },
+        };
       }
       if (table === 'exposicion_sets') {
         return { select: () => ({ eq: () => ({ in: () => Promise.resolve({ data: data.exposicion_sets }) }) }) };
@@ -169,6 +186,24 @@ describe('MisInsigniasPage (SSR)', () => {
     expect(slugs).toContain('pieza-estrella');   // 30 bricks en un solo set
     expect(slugs).toContain('botin-1');          // 1.000 bricks de recompensa
     expect(slugs).not.toContain('cantera-2');    // no llega a 5.000 piezas
+  });
+
+  it('pinta en el Mosaico los hitos de toda la comunidad, marcando los propios', async () => {
+    vi.mocked(createClient).mockResolvedValue(buildSupabase() as unknown as MockSupabase);
+
+    render(await MisInsigniasPage());
+
+    expect(screen.getByTestId('mosaico-bloques')).toHaveTextContent('2');
+    expect(screen.getByTestId('mosaico-mios')).toHaveTextContent('1');
+    expect(screen.getByTestId('mosaico-total')).toHaveTextContent('2');
+  });
+
+  it('un mural todavía vacío no se rellena con nada', async () => {
+    vi.mocked(createClient).mockResolvedValue(buildSupabase({ hitos: [], totalHitos: 0 }) as unknown as MockSupabase);
+
+    render(await MisInsigniasPage());
+
+    expect(screen.getByTestId('mosaico-bloques')).toHaveTextContent('0');
   });
 
   it('pasa un perfil vacío ({}) si la consulta no devuelve datos', async () => {

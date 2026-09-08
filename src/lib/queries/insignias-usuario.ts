@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   AGREGADOS_VACIOS,
+  bloquesMosaico,
   contarPodios,
   derivarDeSets,
   diasDesde,
   type AgregadosUsuario,
+  type BloqueMosaico,
+  type HitoCrudo,
   type SetParaAgregados,
 } from "@/lib/insignias-usuario";
 import { totalBricksGanados } from "@/lib/bounties";
@@ -186,5 +189,34 @@ export async function getAgregadosUsuario(
     bountiesReclamados: (entrada.reclamos || []).length,
     bricksDeBounties: totalBricksGanados(entrada.reclamos),
     diasDesdeRegistro: diasDesde(entrada.creadoEn),
+  };
+}
+
+/** Cuántos bloques del mural se pintan. El mosaico es un mural vivo, no un archivo histórico. */
+export const MAX_BLOQUES_MOSAICO = 120;
+
+/**
+ * Los hitos más recientes de TODA la comunidad para el Mosaico Comunitario, más el total.
+ *
+ * La política de SELECT de `insignias_usuario` es pública desde la migración inicial ("Insignias
+ * are viewable by everyone"), y ese es justo el diseño que hace posible el mural: los logros son
+ * públicos, el resto de datos del usuario no se toca.
+ */
+export async function getMosaicoComunitario(
+  supabase: SupabaseClient,
+  miUsuarioId: string | null
+): Promise<{ bloques: BloqueMosaico[]; total: number }> {
+  const [recientes, totales] = await Promise.all([
+    supabase
+      .from("insignias_usuario")
+      .select("id, insignia, otorgado_en, usuario_id, usuarios_perfil ( username, avatar_url )")
+      .order("otorgado_en", { ascending: false })
+      .limit(MAX_BLOQUES_MOSAICO),
+    supabase.from("insignias_usuario").select("*", { count: "exact", head: true }),
+  ]);
+
+  return {
+    bloques: bloquesMosaico((recientes.data as HitoCrudo[] | null) || [], miUsuarioId),
+    total: totales.count || 0,
   };
 }
