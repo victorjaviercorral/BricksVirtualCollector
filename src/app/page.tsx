@@ -72,7 +72,7 @@ export default async function Home() {
             Eleva tu colección a otro nivel
           </h1>
           <p className="text-lg text-foreground/80 max-w-lg">
-            Digitaliza tus modelos físicos en una vitrina 3D interactiva. Colecciona, exhibe y comparte tus construcciones con la comunidad.
+            Digitaliza tus modelos físicos y móntalos en vitrinas para exhibirlos. Colecciona, comparte y recorre las colecciones de la comunidad.
           </p>
           <Link href="/dashboard" className="inline-block bg-brand-blue text-white font-bold text-base px-6 py-3 rounded-xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0px_0px_0px_0px_#0F172A] dark:active:shadow-[0px_0px_0px_0px_#F8F9FA] transition-all w-full sm:w-auto text-center">
             Empezar a Coleccionar
@@ -81,10 +81,10 @@ export default async function Home() {
         <div className="order-1 lg:order-2 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 relative overflow-hidden aspect-square flex items-center justify-center">
           {/* Subtle dots pattern */}
           <div className="absolute inset-0 opacity-20 dark:opacity-10 bg-[radial-gradient(circle_at_center,_var(--foreground)_2px,_transparent_2px)] bg-[length:24px_24px]" />
-          <img 
-            className="relative z-10 w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4ZWkmZe7Qiu7TMXDL3T8w5KQF7lK6hFFxt3t7GAXsiBZ3QXKLRf3BSgd2qO485T5PYI-JSPPaJmjGOreiGcKJI_Amy-iT9RRKMRo903D1i6ZP6gOTUt9UjALT9tfPE5Tp4HtfoDzJ69ggSFfmDc6-bN__LcqPqDxyNklPpLk-PiogCmcyYalMjZfRAqUXVBeTkF1hUXIfHtOZ5QPe6bIEJnJZCz7ldB4M5QGUgVDrOxqdOEAAf0Ahuw" 
-            alt="Hero Spaceship" 
+          <img
+            className="relative z-10 w-full h-full object-contain hover:scale-105 transition-transform duration-500"
+            src="/hero-vitrina.svg"
+            alt="Vitrina virtual con construcciones de ladrillos expuestas en sus estantes"
           />
         </div>
       </section>
@@ -166,7 +166,7 @@ export default async function Home() {
           </div>
         </Link>
 
-        {/* Feature 4: 3D View -> Galería */}
+        {/* Feature 4: Explorador de Vitrinas -> Galería */}
         <Link href="/galeria" className="md:col-span-7 bg-panel rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between relative overflow-hidden group cursor-pointer min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="relative z-10 space-y-3 max-w-sm">
             <span className="bg-brand-blue text-white font-bold text-xs px-3 py-1 rounded-full border-2 border-foreground inline-block">

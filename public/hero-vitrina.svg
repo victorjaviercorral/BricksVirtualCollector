@@ -1,0 +1,103 @@
+<svg width="420" height="420" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vitrina virtual con construcciones de ladrillos en sus estantes">
+  <defs>
+    <clipPath id="cabinet">
+      <rect x="78" y="70" width="264" height="286" rx="18" />
+    </clipPath>
+  </defs>
+
+  <g stroke="#0F172A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- hard offset shadow of the cabinet -->
+    <rect x="90" y="84" width="264" height="286" rx="18" fill="#0F172A" stroke="none" />
+
+    <!-- cabinet body -->
+    <rect x="78" y="70" width="264" height="286" rx="18" fill="#F5EEDD" />
+
+    <!-- interior back panel -->
+    <rect x="98" y="90" width="224" height="246" rx="8" fill="#FBF7EC" />
+
+    <g clip-path="url(#cabinet)">
+      <!-- shelves -->
+      <rect x="90" y="168" width="240" height="12" rx="3" fill="#E8A927" />
+      <rect x="90" y="256" width="240" height="12" rx="3" fill="#E8A927" />
+
+      <!-- ===== TOP SHELF: brick rocket ===== -->
+      <g>
+        <!-- exhaust -->
+        <path d="M150 150 L136 158 L150 158 Z" fill="#E8A927" />
+        <!-- body -->
+        <path d="M150 158 L150 130 L232 130 Q252 130 258 144 L246 158 Z" fill="#2C6CA8" />
+        <!-- nose cone -->
+        <path d="M232 130 L246 158 L268 148 Q262 130 246 126 Z" fill="#D6392E" />
+        <!-- fin -->
+        <path d="M158 130 L158 116 L178 130 Z" fill="#E8A927" />
+        <!-- window -->
+        <circle cx="182" cy="144" r="7" fill="#FBF7EC" />
+        <!-- studs -->
+        <rect x="164" y="120" width="16" height="10" rx="2" fill="#2C6CA8" />
+        <rect x="192" y="120" width="16" height="10" rx="2" fill="#2C6CA8" />
+      </g>
+
+      <!-- ===== MIDDLE SHELF: castle turret + tree ===== -->
+      <g>
+        <!-- turret body -->
+        <rect x="132" y="204" width="42" height="52" fill="#D6392E" />
+        <!-- crenellations -->
+        <rect x="132" y="194" width="10" height="12" fill="#D6392E" />
+        <rect x="148" y="194" width="10" height="12" fill="#D6392E" />
+        <rect x="164" y="194" width="10" height="12" fill="#D6392E" />
+        <!-- door -->
+        <path d="M144 256 L144 230 Q153 220 162 230 L162 256 Z" fill="#0F172A" stroke="none" />
+      </g>
+      <g>
+        <rect x="236" y="238" width="12" height="18" fill="#8C43C4" />
+        <path d="M242 190 L266 224 L218 224 Z" fill="#3F8552" />
+        <path d="M242 206 L262 232 L222 232 Z" fill="#3F8552" />
+      </g>
+
+      <!-- ===== BOTTOM SHELF: classic 2x4 brick stack ===== -->
+      <g>
+        <rect x="150" y="300" width="120" height="30" rx="4" fill="#D6392E" />
+        <rect x="158" y="290" width="18" height="12" rx="3" fill="#D6392E" />
+        <rect x="186" y="290" width="18" height="12" rx="3" fill="#D6392E" />
+        <rect x="214" y="290" width="18" height="12" rx="3" fill="#D6392E" />
+        <rect x="242" y="290" width="18" height="12" rx="3" fill="#D6392E" />
+        <rect x="164" y="308" width="92" height="30" rx="4" fill="#2C6CA8" />
+      </g>
+
+      <!-- glass sheen -->
+      <path d="M110 90 L190 90 L120 336 L98 336 Z" fill="#FFFFFF" fill-opacity="0.22" stroke="none" />
+    </g>
+
+    <!-- cabinet feet -->
+    <path d="M104 356 L104 372" />
+    <path d="M316 356 L316 372" />
+
+    <!-- ===== floating bricks (the "digitized" pieces) ===== -->
+    <g transform="rotate(-14 66 132)">
+      <rect x="40" y="112" width="52" height="30" rx="5" fill="#009F75" />
+      <rect x="47" y="103" width="14" height="11" rx="3" fill="#009F75" />
+      <rect x="70" y="103" width="14" height="11" rx="3" fill="#009F75" />
+    </g>
+    <g transform="rotate(12 356 286)">
+      <rect x="330" y="268" width="48" height="28" rx="5" fill="#8C43C4" />
+      <rect x="337" y="260" width="13" height="10" rx="3" fill="#8C43C4" />
+      <rect x="358" y="260" width="13" height="10" rx="3" fill="#8C43C4" />
+    </g>
+    <g transform="rotate(-8 342 116)">
+      <rect x="322" y="102" width="40" height="24" rx="5" fill="#E8A927" />
+      <rect x="329" y="95" width="11" height="9" rx="3" fill="#E8A927" />
+      <rect x="345" y="95" width="11" height="9" rx="3" fill="#E8A927" />
+    </g>
+
+    <!-- "digitize" viewfinder brackets -->
+    <path d="M96 58 L76 58 L76 78" />
+    <path d="M324 58 L344 58 L344 78" />
+  </g>
+
+  <!-- scan sparkle -->
+  <g stroke="#0F172A" stroke-width="5" stroke-linecap="round">
+    <path d="M356 150 L356 168" />
+    <path d="M347 159 L365 159" />
+  </g>
+</svg>
