@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import InsigniasClient from "@/components/badges/InsigniasClient";
+import { getAgregadosUsuario } from "@/lib/queries/insignias-usuario";
+import { evaluarInsignias } from "@/lib/insignias-usuario";
 
 export default async function MisInsigniasPage() {
   const supabase = await createClient();
@@ -20,7 +22,15 @@ export default async function MisInsigniasPage() {
   // Hallazgo D3 (Iteración 4): esta página mostraba datos simulados porque ningún flujo real
   // repartía insignias todavía. Ahora que admin/exposiciones/page.tsx sí lo hace al archivar una
   // exposición, se consultan los datos reales.
-  const { data: userSets } = await supabase.from('sets').select('id').eq('usuario_id', user.id);
+  //
+  // Las columnas que se piden de `sets` son exactamente las que necesitan los agregados del
+  // sistema de insignias (ver src/lib/insignias-usuario.ts): una sola consulta alimenta el
+  // recuento de sets, el total de piezas, las temáticas distintas, el set más antiguo y el set
+  // más votado.
+  const { data: userSets } = await supabase
+    .from('sets')
+    .select('id, num_piezas, tematica, anio_lanzamiento, bricks_recibidos')
+    .eq('usuario_id', user.id);
   const userSetIds = (userSets || []).map((s) => s.id);
 
   let misInsignias: Array<{
@@ -41,19 +51,32 @@ export default async function MisInsigniasPage() {
     misInsignias = data || [];
   }
 
-  // Bounties reclamados (modelo multi-reclamo, D1): recuento real, sustituye al literal
-  // simulatedBountiesCount = 12 que tenía InsigniasClient.
-  const { count: bountiesCount } = await supabase
+  // Bounties reclamados (modelo multi-reclamo, D1). Se traen las filas completas, no solo el
+  // recuento: la sección Recompensas necesita cada reclamo, y de ellas sale también el total de
+  // Bricks ganados que alimenta la familia de insignias "Botín".
+  const { data: reclamos } = await supabase
     .from('bounties_reclamados')
-    .select('*', { count: 'exact', head: true })
-    .eq('usuario_id', user.id);
+    .select('id, nombre_set, recompensa, creado_en, set_id, sets ( id, nombre )')
+    .eq('usuario_id', user.id)
+    .order('creado_en', { ascending: false });
+
+  const agregados = await getAgregadosUsuario(supabase, user.id, {
+    sets: userSets,
+    setIds: userSetIds,
+    insigniasDeSets: misInsignias,
+    reclamos: reclamos || [],
+    creadoEn: userProfile?.creado_en || user.created_at,
+  });
+
+  const insignias = evaluarInsignias(agregados);
 
   return (
     <InsigniasClient
       userProfile={userProfile || {}}
       user={user}
       misInsignias={misInsignias}
-      bountiesCount={bountiesCount || 0}
+      agregados={agregados}
+      insignias={insignias}
     />
   );
 }

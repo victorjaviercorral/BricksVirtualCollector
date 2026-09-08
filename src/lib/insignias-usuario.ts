@@ -441,3 +441,87 @@ export function avisoPiezasIncompletas(a: AgregadosUsuario): string | null {
   if (sinDato <= 0) return null;
   return `${sinDato} ${sinDato === 1 ? "set no tiene" : "sets no tienen"} el nº de piezas informado — este total se queda corto.`;
 }
+
+// ------------------------------------------------------------------------------------------
+// Derivación de agregados a partir de filas crudas. Se mantiene aquí, puro, para que la capa de
+// acceso a datos (src/lib/queries/insignias-usuario.ts) solo tenga que hacer las consultas.
+// ------------------------------------------------------------------------------------------
+
+/** Un set anterior a este año cuenta como pieza de coleccionista para la insignia Arqueólogo. */
+export const ANIO_VINTAGE = 2000;
+
+/** Forma mínima de un set para los agregados. Son columnas reales de `public.sets`. */
+export interface SetParaAgregados {
+  num_piezas?: number | null;
+  tematica?: string | null;
+  anio_lanzamiento?: number | null;
+  bricks_recibidos?: number | null;
+}
+
+export type AgregadosDeSets = Pick<
+  AgregadosUsuario,
+  "numSets" | "piezasTotales" | "setsConPiezas" | "tematicas" | "setAntiguo" | "maxBricksUnSet"
+>;
+
+/**
+ * Agregados que salen de los sets del usuario, en una sola pasada.
+ *
+ * Sobre `maxBricksUnSet`: usa la columna `sets.bricks_recibidos` que mantiene el trigger
+ * `increment_bricks`, no un recuento de filas. **Por set** esa columna no puede desviarse (no
+ * existe ningún camino de borrado de bricks en la aplicación, y borrar un set se lleva sus filas
+ * por cascada junto con el propio contador). Lo que sí se desvía es
+ * `usuarios_perfil.total_bricks_recibidos`, que sobrevive al borrado de un set y por eso NO se
+ * usa en ningún sitio: el total del usuario se cuenta siempre desde `bricks_recibidos`.
+ */
+export function derivarDeSets(sets: SetParaAgregados[] | null | undefined): AgregadosDeSets {
+  const filas = sets || [];
+  const tematicas = new Set<string>();
+  let piezasTotales = 0;
+  let setsConPiezas = 0;
+  let setAntiguo = false;
+  let maxBricksUnSet = 0;
+
+  filas.forEach((s) => {
+    if (typeof s.num_piezas === "number" && Number.isFinite(s.num_piezas)) {
+      piezasTotales += s.num_piezas;
+      setsConPiezas += 1;
+    }
+    const tema = (s.tematica || "").trim();
+    if (tema) tematicas.add(tema.toLocaleLowerCase("es-ES"));
+    if (typeof s.anio_lanzamiento === "number" && s.anio_lanzamiento < ANIO_VINTAGE) setAntiguo = true;
+    if (typeof s.bricks_recibidos === "number" && s.bricks_recibidos > maxBricksUnSet) {
+      maxBricksUnSet = s.bricks_recibidos;
+    }
+  });
+
+  return {
+    numSets: filas.length,
+    piezasTotales,
+    setsConPiezas,
+    tematicas: tematicas.size,
+    setAntiguo,
+    maxBricksUnSet,
+  };
+}
+
+/** Reparte las filas de `sets_insignias` del usuario por metal. Rangos > 3 no son podio. */
+export function contarPodios(
+  insignias: { rango?: number | null }[] | null | undefined
+): Pick<AgregadosUsuario, "oros" | "platas" | "bronces"> {
+  const conteo = { oros: 0, platas: 0, bronces: 0 };
+  (insignias || []).forEach((i) => {
+    if (i.rango === 1) conteo.oros += 1;
+    else if (i.rango === 2) conteo.platas += 1;
+    else if (i.rango === 3) conteo.bronces += 1;
+  });
+  return conteo;
+}
+
+/** Días completos transcurridos desde una fecha ISO. Fecha ausente o futura -> 0. */
+export function diasDesde(iso: string | null | undefined, ahora: Date = new Date()): number {
+  if (!iso) return 0;
+  const desde = new Date(iso).getTime();
+  if (Number.isNaN(desde)) return 0;
+  const dias = Math.floor((ahora.getTime() - desde) / (1000 * 60 * 60 * 24));
+  return dias > 0 ? dias : 0;
+}

@@ -1,70 +1,124 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import InsigniasClient from './InsigniasClient';
+import { AGREGADOS_VACIOS, evaluarInsignias, type AgregadosUsuario } from '@/lib/insignias-usuario';
 
-vi.mock('./BadgeShowcase', () => ({ default: () => <div data-testid="badge-showcase" /> }));
+vi.mock('./BadgeShowcase', () => ({
+  default: ({ avisoPiezas }: { avisoPiezas?: string | null }) => (
+    <div data-testid="badge-showcase">{avisoPiezas || 'sin-aviso'}</div>
+  ),
+}));
 vi.mock('./CommunityMosaic', () => ({ default: () => <div data-testid="community-mosaic" /> }));
 vi.mock('./ExhibitionPassport', () => ({
   default: ({ sellos }: { sellos: unknown[] }) => <div data-testid="exhibition-passport">Sellos: {sellos.length}</div>,
 }));
 
-describe('InsigniasClient', () => {
-  const userProfile = { avatar_url: null, creado_en: '2026-01-15T00:00:00.000Z' };
-  const user = { id: 'u1', created_at: '2026-01-15T00:00:00.000Z' };
+const agregados = (over: Partial<AgregadosUsuario> = {}): AgregadosUsuario => ({
+  ...AGREGADOS_VACIOS,
+  ...over,
+});
 
-  it('muestra el recuento real de bounties recibido por props, no un valor simulado', () => {
-    render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={[]} bountiesCount={7} />);
+const renderCliente = (props: Partial<React.ComponentProps<typeof InsigniasClient>> = {}) => {
+  const datos = props.agregados ?? agregados();
+  return render(
+    <InsigniasClient
+      userProfile={{ avatar_url: null, creado_en: '2026-01-15T00:00:00.000Z' }}
+      user={{ created_at: '2026-01-15T00:00:00.000Z' }}
+      misInsignias={[]}
+      agregados={datos}
+      insignias={evaluarInsignias(datos)}
+      {...props}
+    />
+  );
+};
 
-    expect(screen.getByText('7')).toBeInTheDocument();
+describe('InsigniasClient — cabecera de estadísticas', () => {
+  it('muestra los 4 contadores, incluido el total de piezas que antes no estaba en ninguna pantalla', () => {
+    renderCliente({ agregados: agregados({ piezasTotales: 12480, bricksRecibidos: 37, exposicionesAprobadas: 4, bountiesReclamados: 2 }) });
+
+    expect(screen.getByText('Piezas')).toBeInTheDocument();
+    expect(screen.getByText('12.480')).toBeInTheDocument();
+    expect(screen.getByText('Bricks recibidos')).toBeInTheDocument();
+    expect(screen.getByText('37')).toBeInTheDocument();
+    expect(screen.getByText('Exposiciones')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('Retos')).toBeInTheDocument();
   });
 
-  it('el contador de "Insignias" del header sale de la longitud real de misInsignias', () => {
-    const misInsignias = [
-      { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo A' } },
-      { id: 'i2', exposicion_id: 'e2', rango: 2, titulo_insignia: '🥈 2º Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo B' } },
-    ];
-
-    render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={misInsignias} bountiesCount={0} />);
-
-    // El "2" aparece tanto en el stat de cabecera como en el badge de la pestaña Pasaporte.
-    expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1);
+  it('el contador de retos muestra los Bricks ganados, que hasta ahora no tenían dónde consultarse', () => {
+    renderCliente({ agregados: agregados({ bountiesReclamados: 3, bricksDeBounties: 2500 }) });
+    expect(screen.getByText('2.500 Bricks ganados')).toBeInTheDocument();
   });
 
-  it('el Mosaico se muestra como "Próximamente", no con un número inventado', () => {
-    render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={[]} bountiesCount={0} />);
-
-    expect(screen.getByText('Próximamente')).toBeInTheDocument();
-    expect(screen.queryByText(/Blocks/i)).not.toBeInTheDocument();
+  it('sin recompensas no inventa una nota de Bricks ganados', () => {
+    renderCliente({ agregados: agregados({ bountiesReclamados: 0, bricksDeBounties: 0 }) });
+    expect(screen.queryByText(/Bricks ganados/)).not.toBeInTheDocument();
   });
 
-  it('resuelve la relación con exposiciones_temporales aunque el cliente la infiera como array', () => {
-    const misInsignias = [
-      { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: [{ titulo: 'Expo Array' }] },
-    ];
-
-    render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={misInsignias} bountiesCount={0} />);
-
-    fireEvent.click(screen.getByText('Pasaporte de Exposiciones'));
-    expect(screen.getByTestId('exhibition-passport')).toHaveTextContent('Sellos: 1');
+  it('se titula "Mis Insignias", el mismo nombre que la entrada de navegación', () => {
+    renderCliente();
+    expect(screen.getByRole('heading', { level: 1, name: 'Mis Insignias' })).toBeInTheDocument();
   });
 
-  it('cambia entre pestañas mostrando el panel correcto', () => {
-    render(<InsigniasClient userProfile={userProfile} user={user} misInsignias={[]} bountiesCount={0} />);
+  it('muestra desde cuándo es miembro usando creado_en del perfil', () => {
+    renderCliente();
+    expect(screen.getByText(/enero 2026/)).toBeInTheDocument();
+  });
 
-    // Por defecto: Vitrina de Insignias
+  it('cae a created_at del usuario si el perfil no tiene creado_en', () => {
+    renderCliente({ userProfile: { avatar_url: null }, user: { created_at: '2026-03-10T00:00:00.000Z' } });
+    expect(screen.getByText(/marzo 2026/)).toBeInTheDocument();
+  });
+
+  it('sin ninguna fecha no inventa una: lo declara desconocido', () => {
+    renderCliente({ userProfile: null, user: null });
+    expect(screen.getByText(/Desconocido/)).toBeInTheDocument();
+  });
+});
+
+describe('InsigniasClient — secciones', () => {
+  it('todas las secciones están en la página a la vez: ya no hay pestañas que oculten contenido', () => {
+    renderCliente();
     expect(screen.getByTestId('badge-showcase')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Pasaporte de Exposiciones'));
     expect(screen.getByTestId('exhibition-passport')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Mosaico Comunitario'));
     expect(screen.getByTestId('community-mosaic')).toBeInTheDocument();
   });
 
-  it('usa valores por defecto seguros si no se pasan misInsignias/bountiesCount', () => {
-    render(<InsigniasClient userProfile={userProfile} user={user} />);
+  it('los chips de ancla apuntan a cada sección de la página', () => {
+    renderCliente();
+    const nav = screen.getByRole('navigation', { name: 'Secciones de Mis Insignias' });
+    expect(nav).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Insignias' })).toHaveAttribute('href', '#insignias');
+    expect(screen.getByRole('link', { name: 'Pasaporte' })).toHaveAttribute('href', '#pasaporte');
+    expect(screen.getByRole('link', { name: 'Mosaico' })).toHaveAttribute('href', '#mosaico');
+  });
 
-    // Bounties e Insignias caen ambos a "0" por defecto -- puede haber más de un "0" en pantalla.
-    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1);
+  it('pasa al Pasaporte un sello por cada insignia real', () => {
+    renderCliente({
+      misInsignias: [
+        { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo A' } },
+        { id: 'i2', exposicion_id: 'e2', rango: 2, titulo_insignia: '🥈 2º Puesto', fecha_otorgada: null, exposiciones_temporales: { titulo: 'Expo B' } },
+      ],
+    });
+    expect(screen.getByTestId('exhibition-passport')).toHaveTextContent('Sellos: 2');
+  });
+
+  it('resuelve la relación con exposiciones_temporales aunque el cliente la infiera como array', () => {
+    renderCliente({
+      misInsignias: [
+        { id: 'i1', exposicion_id: 'e1', rango: 1, titulo_insignia: '🥇 1er Puesto', fecha_otorgada: null, exposiciones_temporales: [{ titulo: 'Expo Array' }] },
+      ],
+    });
+    expect(screen.getByTestId('exhibition-passport')).toHaveTextContent('Sellos: 1');
+  });
+
+  it('traslada a la Vitrina el aviso de piezas incompletas en vez de fingir un total completo', () => {
+    renderCliente({ agregados: agregados({ numSets: 5, setsConPiezas: 2, piezasTotales: 900 }) });
+    expect(screen.getByTestId('badge-showcase')).toHaveTextContent('3 sets no tienen');
+  });
+
+  it('con todos los sets informados no traslada ningún aviso', () => {
+    renderCliente({ agregados: agregados({ numSets: 3, setsConPiezas: 3 }) });
+    expect(screen.getByTestId('badge-showcase')).toHaveTextContent('sin-aviso');
   });
 });
