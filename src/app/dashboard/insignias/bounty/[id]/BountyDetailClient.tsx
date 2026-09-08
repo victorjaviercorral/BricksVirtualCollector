@@ -15,7 +15,7 @@ interface ParticipacionDetail {
   set: { id: string; nombre: string } | null;
 }
 
-export default function ParticipacionesDetailClient({ participacion }: { participacion: ParticipacionDetail }) {
+export default function BountyDetailClient({ participacion }: { participacion: ParticipacionDetail }) {
   const fecha = participacion.fechaReclamo
     ? format(new Date(participacion.fechaReclamo), "d 'de' MMMM 'de' yyyy", { locale: es })
     : null;
@@ -24,9 +24,9 @@ export default function ParticipacionesDetailClient({ participacion }: { partici
     <div className="py-8 max-w-5xl mx-auto space-y-6">
       {/* Back Button */}
       <div>
-        <Link href="/dashboard/participaciones" className="inline-flex items-center gap-2 bg-panel neo-brutalism-sm px-6 py-3 font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+        <Link href="/dashboard/insignias#recompensas" className="inline-flex items-center gap-2 bg-panel neo-brutalism-sm px-6 py-3 font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
           <ChevronLeft size={20} />
-          Volver a Mi Progreso
+          Volver a Mis Insignias
         </Link>
       </div>
 

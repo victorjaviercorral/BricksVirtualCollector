@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import InsigniasClient from "@/components/badges/InsigniasClient";
-import { getDatosInsignias, getMosaicoComunitario } from "@/lib/queries/insignias-usuario";
+import {
+  getActividadEnCurso,
+  getDatosInsignias,
+  getMosaicoComunitario,
+} from "@/lib/queries/insignias-usuario";
 import { evaluarInsignias } from "@/lib/insignias-usuario";
 
 export default async function MisInsigniasPage() {
@@ -23,7 +27,7 @@ export default async function MisInsigniasPage() {
   // repartía insignias todavía. Ahora todo sale de datos reales: los sellos del Pasaporte de
   // sets_insignias, las recompensas de bounties_reclamados y las insignias de usuario del motor
   // de src/lib/insignias-usuario.ts evaluado contra los agregados de la cuenta.
-  const { insigniasDeSets, agregados } = await getDatosInsignias(
+  const { setIds, insigniasDeSets, reclamos, agregados } = await getDatosInsignias(
     supabase,
     user.id,
     userProfile?.creado_en || user.created_at
@@ -31,8 +35,12 @@ export default async function MisInsigniasPage() {
 
   const insignias = evaluarInsignias(agregados);
 
-  // Mosaico Comunitario: los hitos de TODA la comunidad, no solo los del usuario.
-  const mosaico = await getMosaicoComunitario(supabase, user.id);
+  const [mosaico, actividad] = await Promise.all([
+    // Mosaico Comunitario: los hitos de TODA la comunidad, no solo los del usuario.
+    getMosaicoComunitario(supabase, user.id),
+    // Actividad en curso: migrada desde /dashboard/participaciones al fusionar esa pantalla aquí.
+    getActividadEnCurso(supabase, setIds),
+  ]);
 
   return (
     <InsigniasClient
@@ -42,6 +50,8 @@ export default async function MisInsigniasPage() {
       agregados={agregados}
       insignias={insignias}
       mosaico={mosaico}
+      actividad={actividad}
+      reclamos={reclamos}
     />
   );
 }

@@ -6,6 +6,8 @@ import { Blocks, Heart, Plane, Target } from "lucide-react";
 import BadgeShowcase from "./BadgeShowcase";
 import ExhibitionPassport, { type Sello } from "./ExhibitionPassport";
 import CommunityMosaic from "./CommunityMosaic";
+import ActividadEnCurso from "./ActividadEnCurso";
+import RecompensasGanadas from "./RecompensasGanadas";
 import SincronizarInsignias from "./SincronizarInsignias";
 import { formatearNumero } from "./BadgeMedal";
 import {
@@ -14,6 +16,11 @@ import {
   type BloqueMosaico,
   type ResultadoInsignias,
 } from "@/lib/insignias-usuario";
+import type {
+  ParticipacionActiva,
+  PosicionVivo,
+  ReclamoBounty,
+} from "@/lib/queries/insignias-usuario";
 
 interface InsigniaFila {
   id: string;
@@ -32,6 +39,8 @@ interface UserProfileResumen {
 /** Secciones de la página, en orden. Los chips de ancla se generan de aquí. */
 const SECCIONES = [
   { id: "insignias", etiqueta: "Insignias" },
+  { id: "en-curso", etiqueta: "En curso" },
+  { id: "recompensas", etiqueta: "Recompensas" },
   { id: "pasaporte", etiqueta: "Pasaporte" },
   { id: "mosaico", etiqueta: "Mosaico" },
 ];
@@ -54,6 +63,8 @@ export default function InsigniasClient({
   agregados,
   insignias,
   mosaico = { bloques: [], total: 0 },
+  actividad = { participaciones: [], posiciones: {} },
+  reclamos = [],
 }: {
   userProfile: UserProfileResumen | null;
   user: { created_at?: string } | null;
@@ -61,6 +72,8 @@ export default function InsigniasClient({
   agregados: AgregadosUsuario;
   insignias: ResultadoInsignias;
   mosaico?: { bloques: BloqueMosaico[]; total: number };
+  actividad?: { participaciones: ParticipacionActiva[]; posiciones: Record<string, PosicionVivo | null> };
+  reclamos?: ReclamoBounty[];
 }) {
   const createdAt = userProfile?.creado_en || user?.created_at;
   const memberSince = createdAt ? format(new Date(createdAt), "MMMM yyyy", { locale: es }) : "Desconocido";
@@ -149,6 +162,19 @@ export default function InsigniasClient({
       <div className="space-y-16">
         <section id="insignias" className="scroll-mt-24">
           <BadgeShowcase insignias={insignias} avisoPiezas={avisoPiezasIncompletas(agregados)} />
+        </section>
+
+        <section id="en-curso" className="scroll-mt-24">
+          <h2 className="font-display text-2xl font-black uppercase tracking-tight mb-6">En curso</h2>
+          <ActividadEnCurso
+            participaciones={actividad.participaciones}
+            posiciones={actividad.posiciones}
+          />
+        </section>
+
+        <section id="recompensas" className="scroll-mt-24">
+          <h2 className="font-display text-2xl font-black uppercase tracking-tight mb-6">Recompensas</h2>
+          <RecompensasGanadas reclamos={reclamos} />
         </section>
 
         <section id="pasaporte" className="scroll-mt-24">

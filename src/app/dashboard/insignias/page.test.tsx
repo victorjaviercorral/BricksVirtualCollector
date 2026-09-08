@@ -20,10 +20,12 @@ interface MockInsigniasClientProps {
   agregados: AgregadosUsuario;
   insignias: ResultadoInsignias;
   mosaico: { bloques: { esMio: boolean }[]; total: number };
+  actividad: { participaciones: { exposicion_id: string }[]; posiciones: Record<string, unknown> };
+  reclamos: unknown[];
 }
 
 vi.mock('@/components/badges/InsigniasClient', () => ({
-  default: ({ userProfile, user, misInsignias, agregados, insignias, mosaico }: MockInsigniasClientProps) => (
+  default: ({ userProfile, user, misInsignias, agregados, insignias, mosaico, actividad, reclamos }: MockInsigniasClientProps) => (
     <div data-testid="insignias-client">
       <span data-testid="user-id">{user.id}</span>
       <span data-testid="profile-keys">{Object.keys(userProfile).length}</span>
@@ -41,6 +43,9 @@ vi.mock('@/components/badges/InsigniasClient', () => ({
       <span data-testid="mosaico-bloques">{mosaico.bloques.length}</span>
       <span data-testid="mosaico-mios">{mosaico.bloques.filter((b) => b.esMio).length}</span>
       <span data-testid="mosaico-total">{mosaico.total}</span>
+      <span data-testid="actividad">{actividad.participaciones.map((p) => p.exposicion_id).join(',')}</span>
+      <span data-testid="posiciones">{JSON.stringify(actividad.posiciones)}</span>
+      <span data-testid="reclamos">{reclamos.length}</span>
     </div>
   ),
 }));
@@ -66,6 +71,26 @@ describe('MisInsigniasPage (SSR)', () => {
         { id: 'h2', insignia: 'oro', otorgado_en: '2026-08-30', usuario_id: 'otra', usuarios_perfil: { username: 'vecina', avatar_url: null } },
       ],
       totalHitos: 2,
+      participaciones: [
+        {
+          id: 'p1',
+          estado: 'aprobado',
+          exposicion_id: 'e1',
+          set_id: 's1',
+          exposiciones_temporales: { id: 'e1', titulo: 'Expo Viva', estado: 'activa' },
+          sets: { id: 's1', nombre: 'Halcón' },
+        },
+        {
+          id: 'p2',
+          estado: 'aprobado',
+          exposicion_id: 'e9',
+          set_id: 's1',
+          exposiciones_temporales: { id: 'e9', titulo: 'Expo Cerrada', estado: 'archivada' },
+          sets: { id: 's1', nombre: 'Halcón' },
+        },
+      ],
+      aprobadosEnActivas: [{ exposicion_id: 'e1', set_id: 's1', creado_en: '2026-01-01' }],
+      bricksEnExpos: [{ exposicion_id: 'e1', set_id: 's1' }],
     };
     const data = { ...defaults, ...overrides };
 
@@ -87,8 +112,11 @@ describe('MisInsigniasPage (SSR)', () => {
       }
       if (table === 'bricks_recibidos') {
         return {
-          select: () => ({
-            in: () => Promise.resolve({ count: data.bricksCount }),
+          select: (_cols: string, opts?: { head?: boolean }) => ({
+            in: () =>
+              opts?.head
+                ? Promise.resolve({ count: data.bricksCount })
+                : Promise.resolve({ data: data.bricksEnExpos }),
             or: () => Promise.resolve({ count: data.bricksDadosCount }),
           }),
         };
@@ -105,7 +133,19 @@ describe('MisInsigniasPage (SSR)', () => {
         };
       }
       if (table === 'exposicion_sets') {
-        return { select: () => ({ eq: () => ({ in: () => Promise.resolve({ data: data.exposicion_sets }) }) }) };
+        // Dos usos distintos: los agregados filtran por estado y luego por set;
+        // getActividadEnCurso pide directamente por set_id.
+        return {
+          select: () => ({
+            eq: () => ({
+              in: () => ({
+                order: () => Promise.resolve({ data: data.aprobadosEnActivas }),
+                then: (r: (v: unknown) => unknown) => Promise.resolve({ data: data.exposicion_sets }).then(r),
+              }),
+            }),
+            in: () => Promise.resolve({ data: data.participaciones }),
+          }),
+        };
       }
       return {};
     });
@@ -204,6 +244,31 @@ describe('MisInsigniasPage (SSR)', () => {
     render(await MisInsigniasPage());
 
     expect(screen.getByTestId('mosaico-bloques')).toHaveTextContent('0');
+  });
+
+  it('la actividad en curso solo incluye exposiciones ACTIVAS, no el histórico', async () => {
+    vi.mocked(createClient).mockResolvedValue(buildSupabase() as unknown as MockSupabase);
+
+    render(await MisInsigniasPage());
+
+    expect(screen.getByTestId('actividad')).toHaveTextContent('e1');
+    expect(screen.getByTestId('actividad')).not.toHaveTextContent('e9');
+  });
+
+  it('calcula el puesto en vivo de cada participación aprobada', async () => {
+    vi.mocked(createClient).mockResolvedValue(buildSupabase() as unknown as MockSupabase);
+
+    render(await MisInsigniasPage());
+
+    expect(screen.getByTestId('posiciones')).toHaveTextContent('"posicion":1');
+  });
+
+  it('pasa los reclamos completos a la sección Recompensas, no solo su recuento', async () => {
+    vi.mocked(createClient).mockResolvedValue(buildSupabase() as unknown as MockSupabase);
+
+    render(await MisInsigniasPage());
+
+    expect(screen.getByTestId('reclamos')).toHaveTextContent('1');
   });
 
   it('pasa un perfil vacío ({}) si la consulta no devuelve datos', async () => {

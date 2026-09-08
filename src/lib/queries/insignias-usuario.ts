@@ -11,6 +11,7 @@ import {
   type SetParaAgregados,
 } from "@/lib/insignias-usuario";
 import { totalBricksGanados } from "@/lib/bounties";
+import { contarBricksPorSet, posicionEnRankingVivo } from "@/lib/exposiciones";
 
 /**
  * Capa de acceso a datos del sistema de insignias de usuario. Vive junto a
@@ -219,4 +220,117 @@ export async function getMosaicoComunitario(
     bloques: bloquesMosaico((recientes.data as HitoCrudo[] | null) || [], miUsuarioId),
     total: totales.count || 0,
   };
+}
+
+/** Participación viva del usuario en una exposición activa. */
+export interface ParticipacionActiva {
+  id: string;
+  estado: string;
+  exposicion_id: string;
+  set_id?: string | null;
+  exposiciones_temporales?: {
+    titulo?: string;
+    estado?: string;
+    imagen_url?: string | null;
+    fecha_fin?: string | null;
+    es_continua?: boolean | null;
+  } | null;
+  sets?: { id?: string; nombre?: string } | null;
+}
+
+export interface PosicionVivo {
+  posicion: number;
+  bricks: number;
+  total: number;
+}
+
+/**
+ * La actividad EN CURSO del usuario: sus participaciones en exposiciones ACTIVAS, con el puesto
+ * en el ranking en vivo de cada una.
+ *
+ * Solo activas a propósito. El histórico de exposiciones cerradas vive en el Pasaporte
+ * (`sets_insignias`), que es su fuente única desde H5; repintarlo aquí sería la duplicación que
+ * aquella consolidación deshizo.
+ *
+ * Migrado desde `/dashboard/participaciones` al fusionar esa pantalla en "Mis Insignias".
+ */
+export async function getActividadEnCurso(
+  supabase: SupabaseClient,
+  setIds: string[]
+): Promise<{ participaciones: ParticipacionActiva[]; posiciones: Record<string, PosicionVivo | null> }> {
+  if (setIds.length === 0) return { participaciones: [], posiciones: {} };
+
+  const { data: filas } = await supabase
+    .from("exposicion_sets")
+    .select(`
+      id,
+      estado,
+      creado_en,
+      exposicion_id,
+      set_id,
+      exposiciones_temporales ( id, titulo, estado, imagen_url, fecha_fin, es_continua ),
+      sets ( id, nombre )
+    `)
+    .in("set_id", setIds);
+
+  // Sin tipos generados de Supabase (bloqueado por A1, ver ADR-010) el cliente infiere las
+  // relaciones foráneas como array salvo que se declaren explícitamente.
+  type FilaCruda = {
+    id: string;
+    estado: string;
+    exposicion_id: string;
+    set_id: string | null;
+    exposiciones_temporales: Record<string, unknown> | Record<string, unknown>[] | null;
+    sets: Record<string, unknown> | Record<string, unknown>[] | null;
+  };
+
+  const participaciones: ParticipacionActiva[] = ((filas as FilaCruda[] | null) || [])
+    .map((p) => {
+      const expo = (Array.isArray(p.exposiciones_temporales) ? p.exposiciones_temporales[0] : p.exposiciones_temporales) as ParticipacionActiva["exposiciones_temporales"];
+      const set = (Array.isArray(p.sets) ? p.sets[0] : p.sets) as ParticipacionActiva["sets"];
+      return {
+        id: p.id,
+        estado: p.estado,
+        exposicion_id: p.exposicion_id,
+        set_id: p.set_id,
+        exposiciones_temporales: expo || null,
+        sets: set || null,
+      };
+    })
+    .filter((p) => p.exposiciones_temporales?.estado === "activa");
+
+  const idsActivas = Array.from(
+    new Set(participaciones.filter((e) => e.estado === "aprobado").map((e) => e.exposicion_id))
+  );
+
+  let posiciones: Record<string, PosicionVivo | null> = {};
+  if (idsActivas.length > 0) {
+    const [{ data: aprobados }, { data: bricks }] = await Promise.all([
+      supabase
+        .from("exposicion_sets")
+        .select("exposicion_id, set_id, creado_en")
+        .eq("estado", "aprobado")
+        .in("exposicion_id", idsActivas)
+        .order("creado_en", { ascending: true }),
+      supabase.from("bricks_recibidos").select("exposicion_id, set_id").in("exposicion_id", idsActivas),
+    ]);
+
+    posiciones = Object.fromEntries(
+      participaciones
+        .filter((e) => e.estado === "aprobado" && e.set_id)
+        .map((e) => {
+          const setsExpo = (aprobados || [])
+            .filter((a: { exposicion_id: string }) => a.exposicion_id === e.exposicion_id)
+            .map((a: { set_id: string }) => a.set_id);
+          const bricksExpo = contarBricksPorSet(
+            ((bricks as { exposicion_id: string; set_id: string }[] | null) || []).filter(
+              (b) => b.exposicion_id === e.exposicion_id
+            )
+          );
+          return [e.id, posicionEnRankingVivo(e.set_id as string, setsExpo, bricksExpo)];
+        })
+    );
+  }
+
+  return { participaciones, posiciones };
 }

@@ -9,6 +9,17 @@ vi.mock('./BadgeShowcase', () => ({
   ),
 }));
 vi.mock('./CommunityMosaic', () => ({ default: () => <div data-testid="community-mosaic" /> }));
+vi.mock('./SincronizarInsignias', () => ({ default: () => null }));
+vi.mock('./ActividadEnCurso', () => ({
+  default: ({ participaciones }: { participaciones: unknown[] }) => (
+    <div data-testid="actividad-en-curso">{participaciones.length}</div>
+  ),
+}));
+vi.mock('./RecompensasGanadas', () => ({
+  default: ({ reclamos }: { reclamos: unknown[] }) => (
+    <div data-testid="recompensas">{reclamos.length}</div>
+  ),
+}));
 vi.mock('./ExhibitionPassport', () => ({
   default: ({ sellos }: { sellos: unknown[] }) => <div data-testid="exhibition-passport">Sellos: {sellos.length}</div>,
 }));
@@ -80,17 +91,30 @@ describe('InsigniasClient — secciones', () => {
   it('todas las secciones están en la página a la vez: ya no hay pestañas que oculten contenido', () => {
     renderCliente();
     expect(screen.getByTestId('badge-showcase')).toBeInTheDocument();
+    expect(screen.getByTestId('actividad-en-curso')).toBeInTheDocument();
+    expect(screen.getByTestId('recompensas')).toBeInTheDocument();
     expect(screen.getByTestId('exhibition-passport')).toBeInTheDocument();
     expect(screen.getByTestId('community-mosaic')).toBeInTheDocument();
   });
 
   it('los chips de ancla apuntan a cada sección de la página', () => {
     renderCliente();
-    const nav = screen.getByRole('navigation', { name: 'Secciones de Mis Insignias' });
-    expect(nav).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Secciones de Mis Insignias' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Insignias' })).toHaveAttribute('href', '#insignias');
+    expect(screen.getByRole('link', { name: 'En curso' })).toHaveAttribute('href', '#en-curso');
+    expect(screen.getByRole('link', { name: 'Recompensas' })).toHaveAttribute('href', '#recompensas');
     expect(screen.getByRole('link', { name: 'Pasaporte' })).toHaveAttribute('href', '#pasaporte');
     expect(screen.getByRole('link', { name: 'Mosaico' })).toHaveAttribute('href', '#mosaico');
+  });
+
+  it('la actividad en curso y las recompensas viven aquí, no en una pantalla aparte', () => {
+    renderCliente({
+      actividad: { participaciones: [{ id: 'p1' }, { id: 'p2' }] as never, posiciones: {} },
+      reclamos: [{ id: 'r1' }] as never,
+    });
+
+    expect(screen.getByTestId('actividad-en-curso')).toHaveTextContent('2');
+    expect(screen.getByTestId('recompensas')).toHaveTextContent('1');
   });
 
   it('pasa al Pasaporte un sello por cada insignia real', () => {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import ParticipacionesDetailClient from './ParticipacionesDetailClient';
+import BountyDetailClient from './BountyDetailClient';
 
-describe('ParticipacionesDetailClient', () => {
+describe('BountyDetailClient', () => {
   const participacion = {
     id: 'r1',
     nombreSet: 'Halcón Milenario UCS',
@@ -14,7 +14,7 @@ describe('ParticipacionesDetailClient', () => {
   };
 
   it('renderiza el nombre del set, la temática y la recompensa', () => {
-    render(<ParticipacionesDetailClient participacion={participacion} />);
+    render(<BountyDetailClient participacion={participacion} />);
 
     expect(screen.getByText('Halcón Milenario UCS')).toBeInTheDocument();
     expect(screen.getByText('Star Wars')).toBeInTheDocument();
@@ -22,34 +22,34 @@ describe('ParticipacionesDetailClient', () => {
   });
 
   it('enlaza al set real con el que se reclamó el bounty', () => {
-    render(<ParticipacionesDetailClient participacion={participacion} />);
+    render(<BountyDetailClient participacion={participacion} />);
 
     const setLink = screen.getByText('Mi Halcón Milenario').closest('a');
     expect(setLink).toHaveAttribute('href', '/set/s1');
   });
 
   it('muestra la fecha de reclamo formateada', () => {
-    render(<ParticipacionesDetailClient participacion={participacion} />);
+    render(<BountyDetailClient participacion={participacion} />);
 
     expect(screen.getAllByText(/18 de agosto de 2026/i).length).toBeGreaterThan(0);
   });
 
   it('no muestra el enlace al set si el reclamo no tiene uno asociado (reclamos anteriores a la migración)', () => {
-    render(<ParticipacionesDetailClient participacion={{ ...participacion, set: null }} />);
+    render(<BountyDetailClient participacion={{ ...participacion, set: null }} />);
 
     expect(screen.queryByText('Mi Halcón Milenario')).not.toBeInTheDocument();
   });
 
   it('no muestra la etiqueta de temática si no hay bounty asociado', () => {
-    render(<ParticipacionesDetailClient participacion={{ ...participacion, tematica: null }} />);
+    render(<BountyDetailClient participacion={{ ...participacion, tematica: null }} />);
 
     expect(screen.queryByText('Star Wars')).not.toBeInTheDocument();
   });
 
-  it('enlaza "Volver a Mi Progreso" a la ruta de listado', () => {
-    render(<ParticipacionesDetailClient participacion={participacion} />);
+  it('enlaza "Volver a Mis Insignias" a la ruta de listado', () => {
+    render(<BountyDetailClient participacion={participacion} />);
 
-    const backLink = screen.getByText('Volver a Mi Progreso').closest('a');
-    expect(backLink).toHaveAttribute('href', '/dashboard/participaciones');
+    const backLink = screen.getByText('Volver a Mis Insignias').closest('a');
+    expect(backLink).toHaveAttribute('href', '/dashboard/insignias#recompensas');
   });
 });
