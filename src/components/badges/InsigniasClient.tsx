@@ -6,6 +6,7 @@ import { Blocks, Heart, Plane, Target } from "lucide-react";
 import BadgeShowcase from "./BadgeShowcase";
 import ExhibitionPassport, { type Sello } from "./ExhibitionPassport";
 import CommunityMosaic from "./CommunityMosaic";
+import SincronizarInsignias from "./SincronizarInsignias";
 import { formatearNumero } from "./BadgeMedal";
 import {
   avisoPiezasIncompletas,
@@ -77,6 +78,8 @@ export default function InsigniasClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <SincronizarInsignias />
+
       {/* Cabecera */}
       <div className="bg-panel border-2 border-foreground rounded-2xl shadow-[8px_8px_0px_0px_#0F172A] dark:shadow-[8px_8px_0px_0px_#F8F9FA] p-6 sm:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-8">
         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-brand-yellow overflow-hidden bg-white shrink-0 flex items-center justify-center">
