@@ -4,16 +4,24 @@ import { useState } from "react";
 import { Plus, Eye, Globe, Lock, Link as LinkIcon, Package } from "lucide-react";
 import Link from "next/link";
 import { CrearVitrinaModal } from "./CrearVitrinaModal";
+import VitrinasStats from "./VitrinasStats";
+
+interface EstadisticasVitrinas {
+  numSets: number;
+  bricksRecibidos: number;
+  temas: string[];
+}
 
 interface MisVitrinasClientProps {
   vitrinas: any[];
+  stats?: EstadisticasVitrinas;
 }
 
-export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
+export function MisVitrinasClient({ vitrinas, stats }: MisVitrinasClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-10 pb-20">
+    <div className="flex flex-col gap-10">
       {/* Header Section */}
       <div className="mb-4">
         <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6 leading-none tracking-tight">Mis Vitrinas</h1>
@@ -26,7 +34,7 @@ export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
             <Plus size={18} />
             Crear Vitrina
           </button>
-          <Link 
+          <Link
             href="/mesa-de-trabajo"
             className="flex items-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm"
           >
@@ -35,6 +43,12 @@ export function MisVitrinasClient({ vitrinas }: MisVitrinasClientProps) {
           </Link>
         </div>
       </div>
+
+      {/* Contexto rápido sobre la colección: sets, bricks recibidos y temáticas. Se oculta sola
+          (VitrinasStats) si todavía no hay ningún set. */}
+      {stats && (
+        <VitrinasStats numSets={stats.numSets} bricksRecibidos={stats.bricksRecibidos} temas={stats.temas} />
+      )}
 
       {/* Grid Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 xl:gap-8">

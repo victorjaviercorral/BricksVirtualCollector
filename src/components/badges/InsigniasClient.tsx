@@ -10,6 +10,7 @@ import ActividadEnCurso from "./ActividadEnCurso";
 import RecompensasGanadas from "./RecompensasGanadas";
 import SincronizarInsignias from "./SincronizarInsignias";
 import { formatearNumero } from "./BadgeMedal";
+import StatTile from "@/components/StatTile";
 import {
   avisoPiezasIncompletas,
   type AgregadosUsuario,
@@ -116,22 +117,22 @@ export default function InsigniasClient({
           </p>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Contador
+            <StatTile
               icono={<Blocks size={20} className="text-brand-red" strokeWidth={2.5} />}
               valor={formatearNumero(agregados.piezasTotales)}
               etiqueta="Piezas"
             />
-            <Contador
+            <StatTile
               icono={<Heart size={20} className="text-brand-yellow fill-brand-yellow" strokeWidth={2.5} />}
               valor={formatearNumero(agregados.bricksRecibidos)}
               etiqueta="Bricks recibidos"
             />
-            <Contador
+            <StatTile
               icono={<Plane size={20} className="text-brand-blue" strokeWidth={2.5} />}
               valor={formatearNumero(agregados.exposicionesAprobadas)}
               etiqueta="Exposiciones"
             />
-            <Contador
+            <StatTile
               icono={<Target size={20} className="text-brand-green" strokeWidth={2.5} />}
               valor={formatearNumero(agregados.bountiesReclamados)}
               etiqueta="Retos"
@@ -192,27 +193,6 @@ export default function InsigniasClient({
         </section>
       </div>
     </div>
-  );
-}
-
-function Contador({
-  icono,
-  valor,
-  etiqueta,
-  nota,
-}: {
-  icono: React.ReactNode;
-  valor: string;
-  etiqueta: string;
-  nota?: string;
-}) {
-  return (
-    <article className="bg-black/5 dark:bg-white/5 rounded-xl px-4 py-3 flex flex-col items-center sm:items-start gap-1">
-      {icono}
-      <p className="text-2xl sm:text-3xl font-black leading-none tabular-nums">{valor}</p>
-      <h2 className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">{etiqueta}</h2>
-      {nota && <p className="text-[10px] font-bold text-brand-green">{nota}</p>}
-    </article>
   );
 }
 
