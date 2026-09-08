@@ -17,6 +17,7 @@ vi.mock('./PerfilPublicoClient', () => ({
     <div data-testid="perfil-client">
       <span data-testid="profile-id">{profile.id}</span>
       <span data-testid="sets-count">{sets.length}</span>
+      <span data-testid="bricks">{profile.total_bricks_recibidos}</span>
     </div>
   ),
 }));
@@ -26,7 +27,7 @@ vi.mock('./PerfilPublicoClient', () => ({
  * la URL y mostraba siempre MOCK_USER/MOCK_SETS: cualquier perfil que se visitara mostraba
  * "MasterBuilder_84". Ahora consulta usuarios_perfil por id real y sus vitrinas públicas.
  */
-function mockSupabase({ profile, vitrinas }: { profile: any; vitrinas: any }) {
+function mockSupabase({ profile, vitrinas, bricksCount = 0 }: { profile: any; vitrinas: any; bricksCount?: number | null }) {
   const from = vi.fn((table: string) => {
     if (table === 'usuarios_perfil') {
       return {
@@ -48,9 +49,17 @@ function mockSupabase({ profile, vitrinas }: { profile: any; vitrinas: any }) {
         }),
       };
     }
+    if (table === 'bricks_recibidos') {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({ count: bricksCount }),
+        }),
+      };
+    }
     return {};
   });
   (createClient as any).mockResolvedValue({ from });
+  return from;
 }
 
 describe('PerfilPublico Page (SSR)', () => {
@@ -93,6 +102,45 @@ describe('PerfilPublico Page (SSR)', () => {
     render(jsx);
 
     expect(screen.getByTestId('sets-count')).toHaveTextContent('3');
+  });
+
+  it('cuenta los bricks en vez de leer usuarios_perfil.total_bricks_recibidos, que se desvía', async () => {
+    // La columna la mantiene un trigger que solo incrementa: borrar un set cascadea sus filas de
+    // bricks_recibidos pero deja el contador del perfil inflado. Aquí la columna dice 999 y el
+    // recuento real es 42; debe ganar el recuento, que es el que ve el propio dueño en su Hub.
+    mockSupabase({
+      profile: { id: 'user-real-123', username: 'ana', alias: null, avatar_url: null, total_bricks_recibidos: 999, creado_en: null },
+      vitrinas: [{ id: 'v1', sets: [{ id: 's1' }] }],
+      bricksCount: 42,
+    });
+
+    render(await PerfilPublico({ params: mockParams }));
+
+    expect(screen.getByTestId('bricks')).toHaveTextContent('42');
+  });
+
+  it('un usuario sin sets públicos no consulta bricks (evita un .in() vacío) y muestra 0', async () => {
+    const from = mockSupabase({
+      profile: { id: 'user-real-123', username: 'ana', alias: null, avatar_url: null, total_bricks_recibidos: 999, creado_en: null },
+      vitrinas: [],
+    });
+
+    render(await PerfilPublico({ params: mockParams }));
+
+    expect(from).not.toHaveBeenCalledWith('bricks_recibidos');
+    expect(screen.getByTestId('bricks')).toHaveTextContent('0');
+  });
+
+  it('un recuento nulo se trata como 0, no como vacío', async () => {
+    mockSupabase({
+      profile: { id: 'user-real-123', username: 'ana', alias: null, avatar_url: null, total_bricks_recibidos: 0, creado_en: null },
+      vitrinas: [{ id: 'v1', sets: [{ id: 's1' }] }],
+      bricksCount: null,
+    });
+
+    render(await PerfilPublico({ params: mockParams }));
+
+    expect(screen.getByTestId('bricks')).toHaveTextContent('0');
   });
 
   it('pasa un array de sets vacío si el usuario no tiene vitrinas públicas', async () => {

@@ -142,14 +142,16 @@ describe('HubClient', () => {
     expect(screen.queryByText('Sin retos ahora')).not.toBeInTheDocument();
   });
 
-  it('muestra el total de bricks recibidos del perfil y enlaza a Mi Progreso', () => {
+  it('muestra el total de bricks recibidos del perfil y enlaza a Mis Insignias', () => {
     render(<HubClient {...baseProps} userProfile={{ total_bricks_recibidos: 1450 }} />);
 
     expect(screen.getByText('1450')).toBeInTheDocument();
-    expect(screen.getByLabelText('Mi Progreso')).toHaveAttribute('href', '/dashboard/participaciones');
+    // "Mi Progreso" se fusionó en "Mis Insignias": la celda lleva a su nueva casa, no a la
+    // ruta antigua (que hoy solo redirige).
+    expect(screen.getByLabelText('Mis Insignias')).toHaveAttribute('href', '/dashboard/insignias');
   });
 
-  it('la celda de bounties lleva a la lista de bounties, no a Mi Progreso', () => {
+  it('la celda de bounties lleva a la lista de bounties, no a Mis Insignias', () => {
     render(<HubClient {...baseProps} />);
     expect(screen.getByLabelText('Bounties')).toHaveAttribute('href', '/bounties');
   });

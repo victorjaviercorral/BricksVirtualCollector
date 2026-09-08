@@ -151,12 +151,12 @@ export default async function Home() {
           </div>
         </Link>
 
-        {/* Feature 3: Analytics -> Mi Progreso */}
-        <Link href="/dashboard/participaciones" className="md:col-span-5 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
+        {/* Feature 3: Analytics -> Mis Insignias */}
+        <Link href="/dashboard/insignias" className="md:col-span-5 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="space-y-3">
-            <h3 className="text-2xl font-display font-bold text-white">Estadísticas Detalladas</h3>
-            <p className="text-white/90 text-sm">Tus bricks recibidos, tu puesto en cada exposición y tus retos en curso, en un vistazo.</p>
-            <span className="inline-flex items-center gap-1 text-white font-bold text-sm">Ver Mi Progreso <ArrowRight size={16} /></span>
+            <h3 className="text-2xl font-display font-bold text-white">Tu Progreso e Insignias</h3>
+            <p className="text-white/90 text-sm">Tus insignias, tus bricks recibidos, tu puesto en cada exposición y lo ganado en retos.</p>
+            <span className="inline-flex items-center gap-1 text-white font-bold text-sm">Ver Mis Insignias <ArrowRight size={16} /></span>
           </div>
           <div className="mt-6">
             <div className="h-4 bg-panel rounded-full border-2 border-foreground overflow-hidden flex">

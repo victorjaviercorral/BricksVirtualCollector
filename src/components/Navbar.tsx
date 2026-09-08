@@ -107,12 +107,6 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 Mis Vitrinas
               </Link>
               <Link
-                href="/dashboard/participaciones"
-                className={`transition-colors ${pathname === '/dashboard/participaciones' ? 'text-brand-yellow font-bold' : 'hover:text-brand-yellow'}`}
-              >
-                Mi Progreso
-              </Link>
-              <Link
                 href="/dashboard/insignias"
                 className={`transition-colors ${pathname === '/dashboard/insignias' ? 'text-brand-red font-bold' : 'hover:text-brand-red'}`}
               >
@@ -236,13 +230,6 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                   className={`p-2 rounded-lg ${pathname === '/dashboard/vitrinas' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
                   Mis Vitrinas
-                </Link>
-                <Link
-                  href="/dashboard/participaciones"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`p-2 rounded-lg ${pathname === '/dashboard/participaciones' ? 'bg-black/5 dark:bg-white/5 text-brand-yellow font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                >
-                  Mi Progreso
                 </Link>
                 <Link
                   href="/dashboard/insignias"

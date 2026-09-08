@@ -125,7 +125,7 @@ export default function HubClient({
 
         {/* 2. Total Bricks (Blue, Square) */}
         <motion.div variants={item} className="bg-brand-blue rounded-2xl p-6 text-white shadow-md flex flex-col items-center justify-center col-span-1 relative overflow-hidden group">
-          <Link href="/dashboard/participaciones" className="absolute inset-0 z-20" aria-label="Mi Progreso" />
+          <Link href="/dashboard/insignias" className="absolute inset-0 z-20" aria-label="Mis Insignias" />
           <div className="absolute -right-6 -top-6 text-white/10 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">
             <Heart size={120} className="fill-current" />
           </div>
