@@ -29,6 +29,9 @@ export default defineConfig({
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/insignias.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/insignias-usuario.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/bounties.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/api/insignias/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/exposiciones.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/galeria.{test,spec}.?(c|m)[jt]s?(x)',
       'src/components/badges/**/*.{test,spec}.?(c|m)[jt]s?(x)',
@@ -91,7 +94,12 @@ export default defineConfig({
         'src/app/exposiciones/**',
         // Iteración 5 (flujos): índice público de vitrinas
         'src/lib/galeria.ts',
-        'src/app/galeria/**'
+        'src/app/galeria/**',
+        // Iteración 6: sistema de insignias de usuario, mosaico y recompensas de bounties
+        'src/lib/insignias-usuario.ts',
+        'src/lib/bounties.ts',
+        'src/app/api/insignias/**',
+        'src/components/DondePuedesParticipar.tsx'
       ],
       // Excluir de cobertura ficheros puramente config o que se cubren con E2E
       exclude: [
