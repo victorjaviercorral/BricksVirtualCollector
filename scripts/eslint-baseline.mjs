@@ -16,7 +16,7 @@
  */
 import { ESLint } from 'eslint';
 
-const ESLINT_BASELINE = 164;
+const ESLINT_BASELINE = 157;
 
 const eslint = new ESLint();
 const results = await eslint.lintFiles(['.']);

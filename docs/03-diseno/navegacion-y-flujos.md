@@ -20,7 +20,7 @@ flujos duplicados. Este documento fija el modelo para que no vuelva a divergir.
 | Contexto | Qué es | Secciones |
 |---|---|---|
 | **Explorar** | Contenido público navegable. Visible con o sin sesión (las *acciones* dentro siguen exigiendo sesión vía RLS y comprobaciones de servidor). | `/exposiciones` · `/exposicion/[id]` · `/bounties` · `/galeria` · `/vitrina/[id]` · `/set/[id]` · `/perfil/[id]` |
-| **Mi Museo** | Lo del usuario. Tras la puerta de sesión (`middleware.ts`). | `/dashboard` (Hub) · `/dashboard/vitrinas` · `/dashboard/participaciones` ("Mi Progreso") · `/dashboard/insignias` ("Mis Insignias") · `/mesa-de-trabajo` · `/dashboard/perfil` |
+| **Mi Museo** | Lo del usuario. Tras la puerta de sesión (`middleware.ts`). | `/dashboard` (Hub) · `/dashboard/vitrinas` · `/dashboard/insignias` ("Mis Insignias") · `/dashboard/insignias/bounty/[id]` · `/mesa-de-trabajo` · `/dashboard/perfil` |
 
 ## Regla de navegación
 
@@ -28,7 +28,7 @@ flujos duplicados. Este documento fija el modelo para que no vuelva a divergir.
 > celdas del Hub y las tarjetas de la home son *atajos* hacia esas secciones, nunca la única
 > puerta.
 
-- Navbar logueado: `Inicio · Explorar ▾ · Mis Vitrinas · Mi Progreso · Mis Insignias · Cómo funciona`
+- Navbar logueado: `Inicio · Explorar ▾ · Mis Vitrinas · Mis Insignias · Cómo funciona`
   (Explorar va justo tras Inicio: el usuario consulta y explora la aplicación antes de entrar
   en su propia información)
 - Navbar sin sesión: `Explorar ▾ · Cómo funciona · Entrar` (la home se alcanza por el logo)
@@ -40,8 +40,11 @@ flujos duplicados. Este documento fija el modelo para que no vuelva a divergir.
 |---|---|---|
 | Resultado de una exposición | `/exposicion/[id]` (live si activa, oficial de `sets_insignias` si archivada) | enlaza aquí — ver [[exposiciones-y-logros-flujo]] |
 | Reclamar un bounty | `BountiesSectionClient` (tablero + modal: reclamar con set existente **o** subir nuevo, multi-reclamo) usado en `/bounties` y como teaser en la home | Se eliminó `BountiesClient` (implementación paralela con el modelo de un solo ganador que D1 retiró y sin flujo de reclamo real) |
-| Histórico personal de exposiciones | `/dashboard/insignias` → Pasaporte | "Mi Progreso" enlaza aquí, no lo re-pinta |
-| Bricks recibidos (agregado) | `/dashboard/participaciones` ("Mi Progreso") | la celda del Hub enlaza aquí |
+| Histórico personal de exposiciones | `/dashboard/insignias` → Pasaporte | nadie más lo re-pinta |
+| Progreso del usuario (insignias, actividad, recompensas, palmarés) | `/dashboard/insignias` ("Mis Insignias") | `/dashboard/participaciones` se fusionó aquí y hoy solo redirige — ver [[sistema-de-insignias]] |
+| Bricks recibidos (agregado) | `count(bricks_recibidos)`, nunca `usuarios_perfil.total_bricks_recibidos` | Hub, Mis Insignias y `/perfil/[id]` cuentan igual |
+| Recompensas de retos | `/dashboard/insignias` → Recompensas | el detalle vive en `/dashboard/insignias/bounty/[id]` |
+| Tope de recompensa de un bounty | `src/lib/bounties.ts` | lo leen la API que concede, el admin que crea, la tarjeta que anuncia y la home |
 | Explorar vitrinas de la comunidad | `/galeria` (índice con filtro por temática) | "Explorador de Vitrinas" y "Ver Galería Completa" de la home, celda "Comunidad" del Hub |
 
 ## Conexiones de la home (`/`)
@@ -54,7 +57,7 @@ Cada tarjeta del bento tiene destino real:
 | Bounties Comunitarios (teaser, ya no abre modal) | `/bounties` |
 | "Privacidad — Tú tienes el control total" | `/como-funciona` |
 | "Organización — Tags & Categorías" | `/galeria` (filtro por temática) |
-| "Estadísticas Detalladas" | `/dashboard/participaciones` (Mi Progreso) |
+| "Tu Progreso e Insignias" | `/dashboard/insignias` (antes: "Estadísticas Detalladas" → Mi Progreso) |
 | "Explorador de Vitrinas" | `/galeria` |
 | "Ver Galería Completa" | `/galeria` |
 | Vitrinas Destacadas | `/vitrina/[id]` |
@@ -64,12 +67,33 @@ Cada tarjeta del bento tiene destino real:
 | Celda | Destino | Nota |
 |---|---|---|
 | Evento Activo | `/exposicion/[activa]` | |
-| Bricks Recibidos | `/dashboard/participaciones` | antes: número no clicable |
+| Bricks Recibidos | `/dashboard/insignias` | antes: `/dashboard/participaciones` |
 | Última Insignia | `/dashboard/insignias` | |
 | Más Eventos | `/exposiciones` | antes: solo a la 2ª expo activa, o texto muerto |
 | Comunidad | `/galeria` | antes: `/dashboard/vitrinas` (era "mis vitrinas") |
 | Mis Vitrinas | `/dashboard/vitrinas` | |
 | Se Busca (Bounties) | `/bounties` | antes: `/dashboard/participaciones` |
+
+## Rutas absorbidas (redirecciones vivas)
+
+`/dashboard/participaciones` ("Mi Progreso") se fusionó en `/dashboard/insignias` el 08/09/2026:
+las dos pantallas mostraban avatar, estadísticas y actividad del mismo usuario, con dos entradas
+de navbar distintas. Las rutas se conservan como **redirecciones**, no se borran: estuvieron
+enlazadas desde la home, el Hub y la navbar durante varias iteraciones y pueden estar en
+marcadores.
+
+| Ruta antigua | Destino |
+|---|---|
+| `/dashboard/participaciones` | `/dashboard/insignias` |
+| `/dashboard/participaciones/[id]` | `/dashboard/insignias/bounty/[id]` (preserva el id) |
+
+Secciones de `/dashboard/insignias`, en orden, con chips de ancla: **Insignias · En curso ·
+Recompensas · Pasaporte · Mosaico**. Cada una responde a una pregunta distinta y ninguna
+re-pinta el dato de otra; ninguna sección nueva entra sin retirar su duplicado de otra pantalla.
+Detalle en [[sistema-de-insignias]].
+
+"Dónde puedes participar" se mudó de allí a `/dashboard/vitrinas`, que es donde el usuario tiene
+sus sets delante en el momento de decidir con cuál apuntarse.
 
 ## Deuda de navegación pendiente (no en este alcance)
 

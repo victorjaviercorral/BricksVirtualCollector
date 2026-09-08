@@ -33,11 +33,13 @@
 
 ## Registro de tests eliminados
 
-`AGENTS.md` §1 prohíbe eliminar tests que fallan. Se documenta aquí el único caso de eliminación,
-que **no responde a un test en rojo que se tape**, sino a la desaparición de su sujeto.
+`AGENTS.md` §1 prohíbe eliminar tests que fallan. Se documentan aquí los casos de eliminación,
+que **no responden a tests en rojo que se tapen**, sino a la desaparición de su sujeto.
 
 | Fecha | Test eliminado | Motivo |
 | :--- | :--- | :--- |
+| 2026-09-08 | `src/components/badges/ProximamentePanel.test.tsx` | `ProximamentePanel` era el estado vacío honesto que la decisión D3 puso en la Vitrina de Insignias y el Mosaico Comunitario cuando mostraban datos inventados. Sus **dos únicos consumidores** pasan a tener datos reales en esta entrega, así que el componente se elimina y su test con él. No hay pérdida de cobertura de comportamiento: lo que aquel test verificaba (que se anuncia honestamente lo que no existe) ya no aplica porque ahora existe. Mismo criterio que la fila de `mis-vitrinas/page.test.tsx`. |
+| 2026-09-08 | `src/app/dashboard/participaciones/ParticipacionesClient.test.tsx` | Su sujeto (`ParticipacionesClient.tsx`) desaparece al fusionar "Mi Progreso" en "Mis Insignias". **Ningún caso se pierde: todos se reubican** — ver la sección "Fusión de Mi Progreso" más abajo para el mapa test-a-test. |
 | 2026-08-10 | `src/app/mis-vitrinas/page.test.tsx` | El test afirmaba que la página renderizaba el texto `"Pantalla Mis Vitrinas"` y `"Contenido simulado para verificar el flujo."`, es decir, **validaba un placeholder de andamiaje**, no comportamiento de producto. Cuando la página se implementó de verdad, el test se rompió porque medía el stub. En la tarea QW-04 se eliminó la ruta `/mis-vitrinas` completa por duplicar `/dashboard/vitrinas` (regla de Zero-Duplication, `AGENTS.md` §2) y por contener un defecto de esquema (`created_at` en lugar de `creado_en`). Al desaparecer el sujeto del test, el test desaparece con él. La funcionalidad equivalente vive en `/dashboard/vitrinas` y **queda sin cobertura**: crear ese test es trabajo pendiente de la iteración 2. |
 
 ## Deuda de linting detectada (nueva, 2026-08-10)
@@ -156,6 +158,46 @@ queda para la iteración 3.
   - `ExposicionClient.tsx` entró al gate por primera vez con una suite propia (18 casos): ambos
     modos (`live`/`oficial`), timer, participar, votar (23505/genérico), y los dos estados
     vacíos honestos del modo oficial.
+
+## Fusión de "Mi Progreso" y sistema de insignias (Iteración 6)
+
+- **Ficheros nuevos al gate**, añadidos a `test.include` y `coverage.include` de
+  `vitest.config.ts` **en el mismo commit que el código** (el proyecto ya había sufrido tres
+  veces código nuevo invisible al gate): `src/lib/insignias-usuario.ts`, `src/lib/bounties.ts`,
+  `src/app/api/insignias/**`, `src/components/DondePuedesParticipar.tsx`. Los cinco componentes
+  nuevos de `src/components/badges/**`, la capa `src/lib/queries/**` y la ruta
+  `src/app/dashboard/insignias/bounty/[id]` ya quedaban cubiertos por globs existentes.
+  `src/components/DondePuedesParticipar.tsx` es el que se olvida con facilidad: `src/components/**`
+  está en `test.include`, pero `coverage.include` lista los componentes **uno a uno**.
+- **Cobertura alcanzada** (`coverage/coverage-summary.json`, no la tabla del terminal):
+  Statements 95,67% · Branches 88,22% · Functions 94,33% · Lines 96,92%. Suite 387 → **544 tests**.
+
+### Cambios en tests existentes (regla 1 de `AGENTS.md` — no son tests rotos que se oculten)
+
+| Test | Qué cambió y por qué |
+| :--- | :--- |
+| `ParticipacionesClient.test.tsx` | **Eliminado con su sujeto, con todos sus casos reubicados.** Actividad en exposiciones activas, estados de moderación, puesto en vivo y retirada de un set → `badges/ActividadEnCurso.test.tsx`. Bounties reclamados → `badges/RecompensasGanadas.test.tsx`. Cabecera de estadísticas → `badges/InsigniasClient.test.tsx`. "Dónde puedes participar" → `DondePuedesParticipar.test.tsx`. |
+| `dashboard/participaciones/page.test.tsx` | Reescrito: la página es ahora una redirección a `/dashboard/insignias`. Se conserva la ruta, no se borra, porque estuvo enlazada desde la home, el Hub y la navbar y puede estar en marcadores. |
+| `dashboard/participaciones/[id]/*` | **Movidos**, no eliminados, a `dashboard/insignias/bounty/[id]/` junto con su código (`ParticipacionesDetailClient` → `BountyDetailClient`). La ruta antigua queda como redirección que **preserva el id**, y hay un test que lo fija. |
+| `HubClient.test.tsx` | La celda "Bricks Recibidos" afirmaba `href="/dashboard/participaciones"`. Se actualiza porque **el destino cambió**, no porque fallara. |
+| `BountiesSectionClient.test.tsx` | Afirmaba `"+50 pts"`. La expectativa era el vocabulario antiguo: la recompensa se entrega en **Bricks** (filas reales de `bricks_recibidos`) y no existe ninguna moneda de puntos en el esquema. Se añade además un caso que fija la recompensa **efectiva** frente a la nominal. |
+| `perfil/[id]/page.test.tsx` | Gana tres casos: el total de bricks se **cuenta** en vez de leerse de `usuarios_perfil.total_bricks_recibidos`, que se desvía porque el trigger solo incrementa. Uno de ellos pone la columna en 999 y el recuento real en 42 para fijar cuál gana. |
+| `badges/BadgeShowcase.test.tsx` · `badges/CommunityMosaic.test.tsx` | **Reescritos, no eliminados**: solo comprobaban que aparecía el texto "Próximamente". Ahora verifican comportamiento real (progreso, plegable de criterios, bloques del mural, estados vacíos honestos). |
+
+### Dos defectos reales que encontraron los tests nuevos
+
+- **Clases de Tailwind interpoladas.** `BadgeMedal` construía `bg-${color}` en runtime; el JIT
+  escanea literales, así que esas clases nunca habrían llegado a la hoja de estilos. Corregido
+  con un mapa de clases literales.
+- **`toLocaleString("es-ES")` no agrupa millares en este entorno.** Un Node con `small-icu`
+  devuelve `2480` en vez de `2.480` sin avisar. El test lo detectó y se sustituyó por un
+  formateador determinista: el formato de un contador no puede depender de cómo esté compilado el
+  runtime.
+
+### Una expectativa mía que era incorrecta
+
+`CommunityMosaic.test.tsx` esperaba `"1 sept 2026"`. `date-fns` con locale `es` abrevia
+septiembre como **`sep`**. Se corrigió el test, no el código.
 
 ## Resumen Global (histórico — ver aviso de estado al inicio)
 - **Cobertura registrada en su momento:** 94.45% en líneas, 87.65% en ramas lógicas (branches), 88.48% en funciones, 93.2% en declaraciones — **sobre la lista blanca de `coverage.include`, no sobre el proyecto completo**. Hoy no es reproducible: la suite está en rojo.
