@@ -28,7 +28,9 @@ flujos duplicados. Este documento fija el modelo para que no vuelva a divergir.
 > celdas del Hub y las tarjetas de la home son *atajos* hacia esas secciones, nunca la única
 > puerta.
 
-- Navbar logueado: `Inicio · Mis Vitrinas · Mi Progreso · Mis Insignias · Explorar ▾ · Cómo funciona`
+- Navbar logueado: `Inicio · Explorar ▾ · Mis Vitrinas · Mi Progreso · Mis Insignias · Cómo funciona`
+  (Explorar va justo tras Inicio: el usuario consulta y explora la aplicación antes de entrar
+  en su propia información)
 - Navbar sin sesión: `Explorar ▾ · Cómo funciona · Entrar` (la home se alcanza por el logo)
 - `Explorar ▾` = Exposiciones · Bounties · Galería
 

@@ -64,35 +64,17 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
         {/* Desktop Nav */}
         <nav className="hidden sm:flex flex-1 items-center justify-end gap-6 text-sm font-medium">
           {user && (
-            <>
-              <Link
-                href="/dashboard"
-                className={`transition-colors ${pathname === '/dashboard' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
-              >
-                Inicio
-              </Link>
-              <Link
-                href="/dashboard/vitrinas"
-                className={`transition-colors ${pathname === '/dashboard/vitrinas' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
-              >
-                Mis Vitrinas
-              </Link>
-              <Link
-                href="/dashboard/participaciones"
-                className={`transition-colors ${pathname === '/dashboard/participaciones' ? 'text-brand-yellow font-bold' : 'hover:text-brand-yellow'}`}
-              >
-                Mi Progreso
-              </Link>
-              <Link
-                href="/dashboard/insignias"
-                className={`transition-colors ${pathname === '/dashboard/insignias' ? 'text-brand-red font-bold' : 'hover:text-brand-red'}`}
-              >
-                Mis Insignias
-              </Link>
-            </>
+            <Link
+              href="/dashboard"
+              className={`transition-colors ${pathname === '/dashboard' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+            >
+              Inicio
+            </Link>
           )}
 
-          {/* Explorar: contenido público (exposiciones, bounties, galería) -- para logueados y no */}
+          {/* Explorar: contenido público (exposiciones, bounties, galería) -- para logueados y no.
+              Va justo tras "Inicio": el usuario consulta y explora la aplicación antes de entrar
+              en su propia información. */}
           <div className="relative group">
             <button
               type="button"
@@ -115,6 +97,29 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
               </div>
             </div>
           </div>
+
+          {user && (
+            <>
+              <Link
+                href="/dashboard/vitrinas"
+                className={`transition-colors ${pathname === '/dashboard/vitrinas' ? 'text-brand-blue font-bold' : 'hover:text-brand-blue'}`}
+              >
+                Mis Vitrinas
+              </Link>
+              <Link
+                href="/dashboard/participaciones"
+                className={`transition-colors ${pathname === '/dashboard/participaciones' ? 'text-brand-yellow font-bold' : 'hover:text-brand-yellow'}`}
+              >
+                Mi Progreso
+              </Link>
+              <Link
+                href="/dashboard/insignias"
+                className={`transition-colors ${pathname === '/dashboard/insignias' ? 'text-brand-red font-bold' : 'hover:text-brand-red'}`}
+              >
+                Mis Insignias
+              </Link>
+            </>
+          )}
 
           <Link
             href="/como-funciona"
@@ -202,14 +207,29 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
         <div className="sm:hidden absolute top-16 left-0 w-full bg-background border-b border-black/5 dark:border-white/5 shadow-lg max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="flex flex-col p-4 gap-4 text-base font-medium">
             {user && (
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`p-2 rounded-lg ${pathname === '/dashboard' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+              >
+                Inicio
+              </Link>
+            )}
+
+            <p className="px-2 pt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Explorar</p>
+            {EXPLORE_LINKS.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`p-2 rounded-lg ${pathname.startsWith(l.href) ? 'bg-black/5 dark:bg-white/5 text-brand-green font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+              >
+                {l.label}
+              </Link>
+            ))}
+
+            {user && (
               <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`p-2 rounded-lg ${pathname === '/dashboard' ? 'bg-black/5 dark:bg-white/5 text-brand-blue font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                >
-                  Inicio
-                </Link>
                 <Link
                   href="/dashboard/vitrinas"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -233,18 +253,6 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 </Link>
               </>
             )}
-
-            <p className="px-2 pt-2 text-xs font-black uppercase tracking-widest text-foreground/40">Explorar</p>
-            {EXPLORE_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`p-2 rounded-lg ${pathname.startsWith(l.href) ? 'bg-black/5 dark:bg-white/5 text-brand-green font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-              >
-                {l.label}
-              </Link>
-            ))}
 
             <Link
               href="/como-funciona"
