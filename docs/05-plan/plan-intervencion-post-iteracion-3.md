@@ -531,9 +531,89 @@ participar en una exposición archivada) está **aplicada y confirmada en `pg_po
 titular. El ranking congelado en `sets_insignias` no puede quedar obsoleto por votos
 posteriores al cierre. **Sin migraciones nuevas** en esta entrega (no se toca esquema ni RLS).
 
+> **Corrección (06/09/2026, ver §12):** esta afirmación era incorrecta. `20260819110000`
+> apuntaba a un nombre de política que no existía en producción (`"Anyone can insert a brick"`
+> en vez del real `"Anyone can insert a brick on public sets"`), así que el `alter policy` no dio
+> error pero tampoco cerró nada — el bloqueo de voto en exposición archivada **no estaba
+> vigente** en el momento en que se escribió este párrafo, pese a la verificación en
+> `pg_policies` que entonces pareció confirmarlo (columnas mal cruzadas en la consulta usada, ver
+> §12). Corregido de raíz por `20260901120000_bricks_exposicion_sets_rls_real.sql`.
+
 **Verificación:** `tsc` limpio · `npm run test:coverage` verde, 374 tests, 4 métricas ≥ 85%
 (S 95,35 / B 86,84 / F 92,85 / L 96,51) · `lint:ci` dentro del baseline (bajado de 168 a 165) ·
 `next build` verde, `/exposiciones` en la lista de rutas.
 
 **Pendiente del titular:** verificación visual autenticada contra el despliegue real (ver la
 fila 17 de `docs/00-proyecto/FASES_Y_MEJORAS.md` para la lista de comprobaciones).
+
+## 12. Actualización 08/09/2026 — S1 (validación Zod) y S4 (RLS real de bricks_recibidos/exposicion_sets) cerrados
+
+**Contexto:** por decisión explícita del titular, S1 y S4 se implementaron en esta sesión en
+paralelo a H5 (sesión paralela), para completar el mapa funcional antes de abordar T2 (E2E).
+
+**S1 — Validación de payload con Zod:** `bodySchema = z.object({ set_id: z.string().uuid() })`
+en `src/app/api/bricks/route.ts` y `bodySchema = z.object({ bountyId: z.string().uuid(), setId:
+z.string().uuid() })` en `src/app/api/bounties/claim/route.ts`. Antes, un id malformado dependía
+de que Postgres lo rechazara más adelante con un error genérico; ahora se rechaza en el borde
+con 400 y mensaje explícito. Tests actualizados con casos de UUID inválido.
+
+**S4 — Cuarta recurrencia del patrón de deriva de nombres de políticas RLS:** al preparar la
+consulta de verificación de S4, el titular detectó (pegando el resultado real de `pg_policy`)
+que **dos migraciones previas se habían dado por aplicadas sin estarlo**:
+
+1. `20260819110000_bloquear_votar_participar_exposicion_archivada.sql` apuntaba a
+   `"Anyone can insert a brick"` en `bricks_recibidos` — el nombre real es `"Anyone can insert a
+   brick on public sets"`. El `alter policy` no dio error pero tampoco modificó nada.
+2. La misma migración pretendía tocar la política de INSERT de `exposicion_sets`, pero existía
+   una **segunda política de INSERT sin rastrear en ningún fichero de migración**
+   (`"Users can submit their own sets"`) que se combina por OR con la que sí se intentó
+   modificar — cualquier arreglo sobre una sola de las dos habría quedado anulado por la otra.
+
+Ambos hallazgos se corrigieron en una única migración nueva (nunca se reescribe una migración ya
+aplicada — convención N3 del proyecto):
+[`supabase/migrations/20260901120000_bricks_exposicion_sets_rls_real.sql`](../../supabase/migrations/20260901120000_bricks_exposicion_sets_rls_real.sql).
+Contenido:
+
+- `bricks_recibidos` ("Anyone can insert a brick on public sets"): preserva la condición real
+  existente (vitrina publicada y pública) y añade (a) bloqueo real de voto en exposición
+  archivada — el que `20260819110000` pretendía y nunca entró en vigor — y (b) S4 propiamente
+  dicho: `hash_visitante = auth.uid()::text`, de forma que un usuario solo puede insertar un
+  brick como sí mismo.
+- `exposicion_sets` ("El dueño del set puede enviarlo a participar"): añade el filtro de
+  exposición activa.
+- `drop policy if exists "Users can submit their own sets"` — retira la política duplicada.
+
+**Conflicto arquitectónico resuelto:** `hash_visitante = auth.uid()` a rajatabla habría roto el
+reparto de recompensas de bounties (`api/bounties/claim/route.ts` inserta N filas con hashes
+sintéticos, no atribuibles a un único `auth.uid()`). Se resolvió moviendo esa inserción concreta
+a un cliente `service_role` (bypassa RLS) — mismo patrón ya establecido en
+`api/auth/delete-account/route.ts` y `api/sets/foto/route.ts` para operaciones ya validadas por
+lógica de aplicación. El registro del reclamo en `bounties_reclamados` sigue yendo por el
+cliente de sesión normal (respeta RLS).
+
+**Verificación real (titular, contra producción):**
+- Consulta `pg_policy`/`pg_class` repetida tras aplicar: `bricks_recibidos` INSERT con las tres
+  condiciones; `exposicion_sets` con una sola política de INSERT (la duplicada desapareció).
+- Prueba funcional: voto en exposición activa ✅, reclamo de bounty (bricks otorgados vía
+  `service_role`) ✅, bloqueo de voto/participación en exposición archivada ✅ — confirmado
+  "todo ok, y funcionando".
+
+**Verificación local (árbol combinado con H5):** `tsc --noEmit` limpio · `npm run test:coverage`
+389/389 tests, 4 métricas de cobertura por encima del 85% · `lint:ci` dentro del baseline (164,
+sin cambio) · `next build` verde, 42 rutas.
+
+**Commit:** `6f3bb46` — `fix(seguridad): RLS real de bricks_recibidos/exposicion_sets (S4)`.
+
+**Lección reforzada (cuarta ocurrencia del mismo patrón):** nunca dar una migración de RLS por
+aplicada solo porque se ejecutó sin error. `alter policy`/`drop policy if exists` sobre un
+nombre que no coincide con producción es un no-op silencioso. Verificar siempre con `pg_policy`
+(no `pg_policies` para evitar el error de columnas mezcladas ya visto dos veces en esta sesión:
+`pg_policy` usa `polname`/`polcmd`/`polwithcheck`, la vista `pg_policies` usa
+`policyname`/`cmd`/`with_check` — no son intercambiables en la misma consulta) antes y después de
+cualquier cambio de política.
+
+**Estado tras esta actualización:** H5 (parcial de la sesión paralela), S1 y S4 cerrados y
+verificados en producción. Pendiente antes de T2: revisar en detalle qué más entregó la sesión
+paralela más allá de H5 (rebranding Participaciones→Mi Progreso, galería pública de vitrinas,
+reordenación de navbar — commits `64d936a`, `d926083`, `6c67828`, `b22ac37`, `ac75e42`) y
+confirmar que no contradice ninguna decisión previa. H4 (capturas de README) sigue pendiente.
