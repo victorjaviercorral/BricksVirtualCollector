@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import { Target, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { MAX_REWARD_BRICKS, RECOMPENSA_POR_DEFECTO, recompensaEfectiva } from "@/lib/bounties";
 
 export default function AdminBounties() {
   const [bounties, setBounties] = useState<any[]>([]);
@@ -14,7 +15,7 @@ export default function AdminBounties() {
   // Form state
   const [nombreSet, setNombreSet] = useState("");
   const [tematica, setTematica] = useState("");
-  const [recompensa, setRecompensa] = useState(5000);
+  const [recompensa, setRecompensa] = useState(RECOMPENSA_POR_DEFECTO);
   const [saving, setSaving] = useState(false);
 
   const supabase = createClient();
@@ -111,7 +112,7 @@ export default function AdminBounties() {
             
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="font-mono font-black text-brand-red text-xl">+{bounty.recompensa} pts</div>
+                <div className="font-mono font-black text-brand-red text-xl">+{recompensaEfectiva(bounty.recompensa)} Bricks</div>
               </div>
               
               <button onClick={() => handleDelete(bounty.id)} className="w-10 h-10 rounded-xl bg-panel border-2 border-foreground flex items-center justify-center text-brand-red hover:bg-brand-red hover:text-white transition-colors">
@@ -144,8 +145,8 @@ export default function AdminBounties() {
                 <input id="bounty-tematica" required type="text" value={tematica} onChange={e => setTematica(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-medium" placeholder="Ej. Star Wars" />
               </div>
               <div>
-                <label htmlFor="bounty-recompensa" className="block text-sm font-black mb-2">Recompensa (Bricks)</label>
-                <input id="bounty-recompensa" required type="number" min="100" step="100" value={recompensa} onChange={e => setRecompensa(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-mono font-black text-xl text-brand-red" />
+                <label htmlFor="bounty-recompensa" className="block text-sm font-black mb-2">Recompensa (Bricks, máximo {MAX_REWARD_BRICKS})</label>
+                <input id="bounty-recompensa" required type="number" min="100" step="100" max={MAX_REWARD_BRICKS} value={recompensa} onChange={e => setRecompensa(Math.min(Number(e.target.value), MAX_REWARD_BRICKS))} className="w-full px-4 py-3 rounded-xl bg-background border-2 border-foreground outline-none focus:ring-2 focus:ring-brand-blue font-mono font-black text-xl text-brand-red" />
               </div>
               
               <div className="mt-4 flex gap-4">

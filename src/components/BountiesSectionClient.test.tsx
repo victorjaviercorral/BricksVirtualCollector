@@ -54,10 +54,19 @@ describe('BountiesSectionClient', () => {
     expect(screen.getByText('No hay bounties activos ahora mismo.')).toBeInTheDocument();
   });
 
+  it('anuncia la recompensa EFECTIVA, no la nominal: antes prometía 5.000 y se concedían 1.000', () => {
+    render(<BountiesSectionClient bounties={[{ id: 'b9', nombre_set: 'Reto Grande', recompensa: 5000 }]} />);
+
+    expect(screen.getByText('+1000 Bricks')).toBeInTheDocument();
+    expect(screen.queryByText('+5000 Bricks')).not.toBeInTheDocument();
+  });
+
   it('debería renderizar la lista de bounties', () => {
     render(<BountiesSectionClient bounties={mockBounties} />);
     expect(screen.getByText('Halcón Milenario')).toBeInTheDocument();
-    expect(screen.getByText('+50 pts')).toBeInTheDocument();
+    // La recompensa se concede en Bricks (filas de bricks_recibidos), no en una moneda de
+    // "puntos" que no existe en el esquema.
+    expect(screen.getByText('+50 Bricks')).toBeInTheDocument();
   });
 
   it('debería redirigir a login si intenta reclamar sin estar logueado', async () => {

@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { recompensaEfectiva } from "@/lib/bounties";
 
-// Límite defensivo sobre el número de bricks que se insertan como recompensa. `recompensa` la
-// fija un administrador desde /admin/bounties (no es un input directo del usuario que llama a
-// este endpoint), pero acotarlo es una salvaguarda barata contra un valor mal introducido que
-// generase un insert masivo desproporcionado.
-const MAX_REWARD_BRICKS = 1000;
+// El tope de bricks por reclamo vive en src/lib/bounties.ts. Estaba aquí dentro y nadie más lo
+// conocía: /admin/bounties creaba retos de 5.000 y la tarjeta los anunciaba enteros, mientras
+// esta ruta concedía como mucho 1.000. Ahora los cuatro puntos (conceder, crear, anunciar y
+// resumir) leen el mismo número.
 
 // Hallazgo S1 (auditoría original): sin validar la forma del payload, un bountyId/setId
 // malformado dependía de que Postgres lo rechazara más adelante con un error genérico. Zod lo
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     // llegan a la vez, una inserta con éxito y la otra recibe 23505 -- el mismo patrón que ya usan
     // bricks_recibidos (unique(set_id, hash_visitante)) y exposicion_sets (unique(exposicion_id,
     // set_id)).
-    const rewardBricks = Math.min(bounty.recompensa || 50, MAX_REWARD_BRICKS);
+    const rewardBricks = recompensaEfectiva(bounty.recompensa);
 
     const { data: reclamo, error: claimError } = await supabase
       .from('bounties_reclamados')

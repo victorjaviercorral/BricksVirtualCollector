@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Lock, Box, ArrowRight } from "lucide-react";
+import { recompensaEfectiva } from "@/lib/bounties";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -41,8 +42,9 @@ export default async function Home() {
     .eq('estado', 'pendiente')
     .limit(3);
 
-  // Calculate total bounty points
-  const totalBountyPts = bounties?.reduce((acc, curr) => acc + curr.recompensa, 0) || 0;
+  // Bricks en juego ahora mismo. Se suma la recompensa EFECTIVA, no la nominal: es lo que de
+  // verdad se concede al reclamar (ver src/lib/bounties.ts).
+  const totalBountyBricks = bounties?.reduce((acc, curr) => acc + recompensaEfectiva(curr.recompensa), 0) || 0;
 
   return (
     <div className="space-y-12 pb-12 overflow-x-hidden">
@@ -93,7 +95,7 @@ export default async function Home() {
           <h2 className="text-3xl font-display font-black text-black leading-tight">Bounties Comunitarios</h2>
           <p className="text-black/80 mt-2 font-bold text-base max-w-md">La comunidad necesita documentar estos sets. ¡Súbelos a tu vitrina y gana puntos masivos esta semana!</p>
           <div className="inline-block mt-4 text-4xl md:text-5xl font-display font-black text-foreground bg-panel px-6 py-3 rounded-xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] rotate-2">
-            {totalBountyPts.toLocaleString()} <span className="text-brand-red text-2xl">pts</span>
+            {totalBountyBricks.toLocaleString()} <span className="text-brand-red text-2xl">Bricks</span>
           </div>
         </div>
         
@@ -103,7 +105,7 @@ export default async function Home() {
               {bounties.map((b) => (
                 <div key={b.id} className="bg-panel rounded-2xl p-4 flex items-center justify-between gap-4 border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA]">
                   <p className="font-bold text-foreground leading-tight">{b.nombre_set}</p>
-                  <span className="shrink-0 font-mono text-xs font-black bg-brand-red text-white px-2 py-1 rounded">+{b.recompensa}</span>
+                  <span className="shrink-0 font-mono text-xs font-black bg-brand-red text-white px-2 py-1 rounded">+{recompensaEfectiva(b.recompensa)}</span>
                 </div>
               ))}
               <Link href="/bounties" className="mt-1 inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-5 py-3 rounded-xl font-black text-sm border-2 border-foreground shadow-[2px_2px_0px_0px_#0F172A] dark:shadow-[2px_2px_0px_0px_#F8F9FA] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_#0F172A] transition-all">

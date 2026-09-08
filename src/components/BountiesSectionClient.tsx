@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Package, Plus, CheckCircle2 } from "lucide-react";
+import { recompensaEfectiva } from "@/lib/bounties";
 
 export default function BountiesSectionClient({ bounties }: { bounties: any[] }) {
   const [selectedBounty, setSelectedBounty] = useState<any>(null);
@@ -72,7 +73,7 @@ export default function BountiesSectionClient({ bounties }: { bounties: any[] })
         {bounties.map(b => (
           <div key={b.id} className="bg-panel rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA]">
             <div className="text-left">
-              <div className="font-mono text-xs font-black bg-brand-red text-white px-2 py-1 rounded inline-block mb-2">+{b.recompensa} pts</div>
+              <div className="font-mono text-xs font-black bg-brand-red text-white px-2 py-1 rounded inline-block mb-2">+{recompensaEfectiva(b.recompensa)} Bricks</div>
               <p className="font-bold text-foreground leading-tight text-lg">{b.nombre_set}</p>
             </div>
             <button 
@@ -97,7 +98,7 @@ export default function BountiesSectionClient({ bounties }: { bounties: any[] })
               <div className="mb-6">
                 <p className="font-bold text-foreground/70 mb-1">Misión actual:</p>
                 <h4 className="font-display font-black text-2xl">{selectedBounty.nombre_set}</h4>
-                <div className="font-mono font-black text-brand-red mt-2">Recompensa: +{selectedBounty.recompensa} pts</div>
+                <div className="font-mono font-black text-brand-red mt-2">Recompensa: +{recompensaEfectiva(selectedBounty.recompensa)} Bricks</div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
