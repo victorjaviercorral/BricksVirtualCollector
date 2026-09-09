@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Lock, Box, ArrowRight } from "lucide-react";
 import { recompensaEfectiva } from "@/lib/bounties";
+import { EntrarComoInvitado } from "@/components/EntrarComoInvitado";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -74,9 +75,12 @@ export default async function Home() {
           <p className="text-lg text-foreground/80 max-w-lg">
             Digitaliza tus modelos físicos y móntalos en vitrinas para exhibirlos. Colecciona, comparte y recorre las colecciones de la comunidad.
           </p>
-          <Link href="/dashboard" className="inline-block bg-brand-blue text-white font-bold text-base px-6 py-3 rounded-xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0px_0px_0px_0px_#0F172A] dark:active:shadow-[0px_0px_0px_0px_#F8F9FA] transition-all w-full sm:w-auto text-center">
-            Empezar a Coleccionar
-          </Link>
+          <div className="flex flex-col gap-3 items-start">
+            <Link href="/registro" className="inline-block bg-brand-blue text-white font-bold text-base px-6 py-3 rounded-xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0px_0px_0px_0px_#0F172A] dark:active:shadow-[0px_0px_0px_0px_#F8F9FA] transition-all w-full sm:w-auto text-center">
+              Empezar a Coleccionar
+            </Link>
+            <EntrarComoInvitado variant="hero" />
+          </div>
         </div>
         <div className="order-1 lg:order-2 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 relative overflow-hidden aspect-square flex items-center justify-center">
           {/* Subtle dots pattern */}

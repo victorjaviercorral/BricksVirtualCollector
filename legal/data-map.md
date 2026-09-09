@@ -2,10 +2,16 @@
 
 Este documento contiene la auditoría de los tratamientos de datos realizados por BricksVirtualCollector, según el análisis del código fuente y su arquitectura técnica.
 
-> **Estado (10/08/2026):** conforme a ADR-009, el proyecto se publicará con el **registro de
-> usuarios cerrado** y una cuenta de demostración de solo lectura. Las filas de esta tabla
-> referidas a usuarios registrados y contenido subido describen el diseño de la plataforma, no
-> un tratamiento activo. 
+> **Estado (09/09/2026):** ADR-009 quedó **superado por ADR-011**. El proyecto se publica con el
+> **registro abierto** y un **modo invitado** (sesión anónima de Supabase, sin email, purgada a
+> las 48 h — ver la fila "Acceso de invitado" en la tabla del Art. 30). Las filas referidas a
+> usuarios registrados y contenido subido describen ya un tratamiento activo.
+>
+> ⚠️ Este documento conserva deriva pendiente de barrido (EXIF §4 describe la limpieza en
+> `<canvas>` cuando ADR-010 la movió a un Route Handler con `sharp`; `pg_cron` figura como
+> "implementada" cuando su activación real es de septiembre de 2026; el punto de despliegue de
+> Vercel sigue marcado como no verificable). Se corrige en la Fase 8 del plan de acceso de
+> invitado.
 
 ## Datos del titular y del sitio
 - **Titular / responsable del tratamiento**: Víctor Javier Corral (persona física, sin actividad económica asociada al sitio).
@@ -81,6 +87,7 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 | Finalidad | Categorías de Datos | Interesados | Base Jurídica (Art. 6) | Conservación | Destinatarios | Medidas Seguridad |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gestión de Cuentas y Acceso** | Email, contraseña cifrada, username, avatar, tokens sesión | Usuarios registrados | Ejecución de contrato / Términos | Hasta eliminación de cuenta | Supabase, Hosting | Autenticación segura, RLS, cifrado en tránsito. |
+| **Acceso de invitado (sesión anónima)** | Identificador de sesión anónimo (sin email), contenido creado durante la sesión (vitrinas, sets, imágenes sin EXIF, votos) | Invitados (early adopters de prueba) | Ejecución de la interacción solicitada al entrar (art. 6.1.b analógico); aceptación tácita de los Términos | **48 h** desde el último acceso — cascada a `auth.users`. La automatización de la purga (`pg_cron`) es la **Fase 3** del plan de acceso de invitado; el modo invitado **no se anuncia públicamente hasta que esté activa**. | Supabase | RLS por `auth.uid()`, `es_invitado` bloquea publicación, contenido nunca público. |
 | **Publicación de Colecciones** | Textos, imágenes (sin EXIF), visibilidad | Usuarios registrados | Ejecución de contrato (para publicarlo) y Consentimiento | Hasta eliminación o retirada | Supabase (Público si visibilidad=pública) | RLS por usuario, borrado de EXIF. |
 | **Gamificación (Bricks/Visitas)** | `hash_visitante`, contadores | Usuarios | Interés Legítimo (evitar votos múltiples) | Mientras exista el set votado (borrado en cascada) | Supabase | ⚠️ **Discrepancia detectada:** pese al nombre de la columna, `src/app/api/bricks/route.ts:26` almacena el **UUID del usuario en claro**, no un hash. Debe renombrarse la columna o aplicarse un hash real. |
 | **Moderación y Reportes** | Motivos del reporte, IDs de contenido | Usuarios reportantes | Interés Legítimo / Obligación Legal (DSA) | Hasta resolución + bloqueo legal | Supabase | Acceso solo a administradores. |

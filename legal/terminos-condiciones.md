@@ -1,20 +1,19 @@
 # Términos y Condiciones de Uso
 
-**Última actualización:** 10 de agosto de 2026
+**Última actualización:** 9 de septiembre de 2026
 
 > **Aviso de prototipo.** **BricksVirtualCollector** es un prototipo de demostración técnica con
-> fines de portfolio. No es un producto comercial y **el registro de nuevos usuarios está
-> cerrado**: el acceso se realiza mediante una cuenta de demostración de solo lectura, con
-> contenido ficticio. Las cláusulas relativas a cuentas de usuario, contenido subido y moderación
-> describen el funcionamiento previsto de la plataforma y quedarán plenamente operativas si el
-> proyecto abre el registro. Hasta entonces no resultan de aplicación práctica.
+> fines de portfolio, sin actividad comercial. El acceso tiene tres niveles: **visitante** (sin
+> sesión, solo navegación de contenido público), **invitado** (sesión anónima sin registro; ver
+> §1.4) y **cuenta registrada** (con correo electrónico).
 
-Al utilizar **BricksVirtualCollector** (en adelante, la "Plataforma"), aceptas someterte a estos Términos y Condiciones. Si no estás de acuerdo, no debes utilizar el servicio.
+Al utilizar **BricksVirtualCollector** (en adelante, la "Plataforma") en cualquiera de esos tres niveles, aceptas someterte a estos Términos y Condiciones. Si no estás de acuerdo, no debes utilizar el servicio.
 
-## 1. Naturaleza del Servicio y Cuentas de Usuario
+## 1. Naturaleza del Servicio y Formas de Acceso
 1.1. La Plataforma permite a coleccionistas adultos crear un inventario virtual y exponer fotos de sus construcciones de LEGO®. 
 1.2. **Edad mínima:** La Plataforma no está dirigida a menores de edad. Declaras ser mayor de 14 años (Art. 7 LOPDGDD). Nos reservamos el derecho de solicitar prueba de edad y bloquear cuentas en caso de duda razonable.
-1.3. Eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades que ocurran bajo tu cuenta.
+1.3. **Cuenta registrada:** eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades que ocurran bajo tu cuenta. Tu contenido, si eliges publicarlo, es visible para terceros y se conserva hasta que lo retires o elimines la cuenta.
+1.4. **Modo invitado:** puedes usar la Plataforma sin registrarte, mediante una sesión anónima. Al entrar como invitado aceptas estos Términos por el propio acto de acceder. El contenido que crees como invitado **no es público en ningún caso** y, junto con la sesión, **se elimina automáticamente a las 48 horas** del último acceso. No garantizamos la conservación de nada creado en este modo; si quieres conservarlo, crea una cuenta. Las normas de conducta de la §3 se aplican igualmente al contenido de invitado.
 
 ## 2. Contenido Generado por el Usuario y Licencias
 2.1. **Propiedad:** Conservas todos los derechos de propiedad intelectual sobre las fotografías (My Own Creation - MOC, u otros) y textos que subas a tu vitrina.

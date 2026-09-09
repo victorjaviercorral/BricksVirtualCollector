@@ -10,6 +10,7 @@ export default defineConfig({
     include: [
       'src/lib/supabase/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/login/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/registro/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/components/MesaTrabajoClient.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/mesa-de-trabajo/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/admin/**/*.{test,spec}.?(c|m)[jt]s?(x)',
@@ -56,6 +57,11 @@ export default defineConfig({
       include: [
         'src/lib/supabase/**',
         'src/app/login/**',
+        // Fase 2 acceso invitado (ADR-011): separación login/registro + entrada de invitado
+        'src/app/registro/**',
+        'src/components/EntrarComoInvitado.tsx',
+        'src/components/auth/**',
+        'src/lib/legal.ts',
         'src/app/mesa-de-trabajo/**',
         'src/components/MesaTrabajoClient.tsx',
         'src/app/admin/layout.tsx',
