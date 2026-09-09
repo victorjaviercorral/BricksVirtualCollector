@@ -23,12 +23,15 @@ describe('VitrinaClient', () => {
     vi.clearAllMocks();
     
     mockSupabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
+      },
       from: vi.fn().mockImplementation((table) => {
         if (table === 'vitrinas') {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ 
+            single: vi.fn().mockResolvedValue({
               data: { id: mockId, nombre: 'Castle', descripcion: 'Old sets', usuarios_perfil: { username: 'Knight' } },
               error: null
             })
@@ -38,13 +41,20 @@ describe('VitrinaClient', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            order: vi.fn().mockResolvedValue({ 
+            order: vi.fn().mockResolvedValue({
               data: [
                 { id: 'set1', nombre: 'Castle 1', tematica: 'castle', num_piezas: 100, bricks_recibidos: [{ count: 5 }], fotos: [{ url: 'img1.png' }] },
                 { id: 'set2', nombre: 'Castle 2', tematica: 'castle', num_piezas: 200, bricks_recibidos: null, fotos: null }
               ],
               error: null
             })
+          };
+        }
+        if (table === 'bricks_recibidos') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockResolvedValue({ data: [], error: null })
           };
         }
         return { select: vi.fn().mockReturnThis() };
@@ -111,6 +121,50 @@ describe('VitrinaClient', () => {
         body: JSON.stringify({ set_id: 'set1' })
       }));
     });
+  });
+
+  it('deshabilita el botón de un set al que el usuario ya dio un brick', async () => {
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'vitrinas') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: mockId, nombre: 'Castle', descripcion: 'Old sets', usuarios_perfil: { username: 'Knight' } },
+            error: null
+          })
+        };
+      }
+      if (table === 'sets') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockResolvedValue({
+            data: [
+              { id: 'set1', nombre: 'Castle 1', tematica: 'castle', num_piezas: 100, bricks_recibidos: [{ count: 5 }], fotos: [{ url: 'img1.png' }] },
+              { id: 'set2', nombre: 'Castle 2', tematica: 'castle', num_piezas: 200, bricks_recibidos: [{ count: 2 }], fotos: null }
+            ],
+            error: null
+          })
+        };
+      }
+      if (table === 'bricks_recibidos') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [{ set_id: 'set1' }], error: null })
+        };
+      }
+      return { select: vi.fn().mockReturnThis() };
+    });
+
+    render(<VitrinaClient id={mockId} />);
+
+    await waitFor(() => expect(screen.getByText('Castle 1')).toBeInTheDocument());
+
+    // set1 ya votado -> botón deshabilitado; set2 no -> habilitado
+    expect(screen.getByText('5 Bricks', { selector: 'button' })).toBeDisabled();
+    expect(screen.getByText('2 Bricks', { selector: 'button' })).not.toBeDisabled();
   });
 
   it('revierte el like si la llamada falla', async () => {

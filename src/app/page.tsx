@@ -213,7 +213,7 @@ export default async function Home() {
                   </div>
                   <div className="mt-4 flex items-center gap-2">
                      <span className="text-xs font-bold px-2 py-1 bg-foreground/5 dark:bg-foreground/10 rounded border border-foreground uppercase">
-                       {vitrina.sets?.length || 0} Sets
+                       {`${vitrina.sets?.length || 0} ${(vitrina.sets?.length || 0) === 1 ? 'Set' : 'Sets'}`}
                      </span>
                   </div>
                 </div>

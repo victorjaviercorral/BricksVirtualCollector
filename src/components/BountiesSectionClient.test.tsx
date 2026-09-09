@@ -149,10 +149,35 @@ describe('BountiesSectionClient', () => {
       }));
     });
     
-    expect(toast.success).toHaveBeenCalledWith('¡Bounty reclamado con éxito! Puntos añadidos.');
+    // Se concede en Bricks, no en "puntos" (vocabulario que la fila 19 retiró).
+    expect(toast.success).toHaveBeenCalledWith('¡Bounty reclamado! Los Bricks van directos a tu set.');
     expect(mockRefresh).toHaveBeenCalled();
     // Modal debería cerrarse
     expect(screen.queryByText('Reclamar Bounty')).not.toBeInTheDocument();
+    // La tarjeta ya no ofrece reclamarlo otra vez en esta sesión
+    expect(screen.queryByRole('button', { name: /Reclamar Misión/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Ya reclamado')).toBeInTheDocument();
+  });
+
+  it('marca como "Ya reclamado" los bounties que llegan en la prop reclamados', () => {
+    render(<BountiesSectionClient bounties={mockBounties} reclamados={['b1']} />);
+    expect(screen.getByText('Ya reclamado')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reclamar Misión/i })).not.toBeInTheDocument();
+  });
+
+  it('cierra el modal con la tecla Escape', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+    mockEq.mockResolvedValue({ data: [] });
+
+    render(<BountiesSectionClient bounties={mockBounties} />);
+    fireEvent.click(screen.getByRole('button', { name: /Reclamar Misión/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('debería mostrar error en toast si la api de claim falla', async () => {

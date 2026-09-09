@@ -78,6 +78,17 @@ describe('SincronizarInsignias', () => {
     await waitFor(() => expect(toast.success).not.toHaveBeenCalled());
   });
 
+  it('dos montajes casi simultáneos comparten una sola petición (StrictMode / Fast Refresh)', async () => {
+    const fetchMock = responderCon({ nuevas: [] });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<SincronizarInsignias />);
+    render(<SincronizarInsignias />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('no renderiza nada', () => {
     vi.stubGlobal('fetch', responderCon({ nuevas: [] }));
 

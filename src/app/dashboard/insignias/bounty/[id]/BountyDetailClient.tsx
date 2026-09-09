@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronLeft, Tag, Calendar, Package } from "lucide-react"
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatearNumero } from "@/components/badges/BadgeMedal";
 
 interface ParticipacionDetail {
   id: string;
@@ -50,11 +51,11 @@ export default function BountyDetailClient({ participacion }: { participacion: P
           </div>
         </div>
 
-        {/* Points Badge */}
+        {/* Bricks Badge */}
         <div className="shrink-0 flex flex-col justify-center items-center leading-tight bg-brand-blue text-white w-32 h-32 neo-brutalism"
              style={{ clipPath: 'polygon(50% 0%, 61% 9%, 76% 5%, 83% 19%, 98% 21%, 95% 36%, 100% 50%, 95% 64%, 98% 79%, 83% 81%, 76% 95%, 61% 91%, 50% 100%, 39% 91%, 24% 95%, 17% 81%, 2% 79%, 5% 64%, 0% 50%, 5% 36%, 2% 21%, 17% 19%, 24% 5%, 39% 9%)', borderRadius: 0, boxShadow: 'none', border: 'none' }}
         >
-          <span className="text-3xl font-black">{participacion.recompensa}</span>
+          <span className="text-3xl font-black">{formatearNumero(participacion.recompensa)}</span>
           <span className="text-xs font-bold uppercase tracking-widest mt-1">Bricks</span>
         </div>
       </article>
@@ -98,7 +99,7 @@ export default function BountyDetailClient({ participacion }: { participacion: P
           <div className="w-16 h-16 rounded-full bg-brand-green/10 text-brand-green flex items-center justify-center mb-4">
             <CheckCircle2 size={32} />
           </div>
-          <p className="text-2xl font-black mb-1">+{participacion.recompensa} Bricks</p>
+          <p className="text-2xl font-black mb-1">+{formatearNumero(participacion.recompensa)} Bricks</p>
           <p className="text-foreground/60 font-bold">concedidos a tu set al reclamar este bounty</p>
         </article>
       </div>

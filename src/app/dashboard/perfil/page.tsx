@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { User, Upload, Trash2, Camera, Palette } from "lucide-react";
+import { User, Trash2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -236,60 +236,6 @@ export default function PerfilPage() {
           </button>
         </div>
       </motion.div>
-      
-      <div className="grid grid-cols-1 gap-6 mt-8">
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass p-6 sm:p-8 rounded-3xl flex flex-col gap-6 shadow-sm"
-        >
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center">
-              <Palette size={24} className="text-black/60 dark:text-white/60" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Preferencias Visuales</h2>
-              <p className="text-sm text-black/50">Personaliza cómo ves el museo.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-xl">
-            <div>
-              <p className="font-bold">Modo Oscuro</p>
-              <p className="text-sm text-black/50">Cambia la interfaz a colores oscuros.</p>
-            </div>
-            <div className="w-12 h-6 bg-brand-blue rounded-full relative cursor-pointer">
-              <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-xl">
-            <div>
-              <p className="font-bold">Notificaciones</p>
-              <p className="text-sm text-black/50">Recibe alertas cuando un set sea destacado.</p>
-            </div>
-            <div className="w-12 h-6 bg-black/20 rounded-full relative cursor-pointer">
-              <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="p-6 sm:p-8 rounded-3xl border border-brand-red/20 bg-brand-red/5 flex flex-col gap-6"
-        >
-          <div>
-            <h2 className="text-xl font-bold text-brand-red mb-1">Zona Peligrosa</h2>
-            <p className="text-sm text-brand-red/70">Acciones destructivas para tu cuenta.</p>
-          </div>
-          <button className="w-fit px-6 py-3 rounded-xl bg-white dark:bg-black border border-brand-red text-brand-red font-bold flex items-center gap-2 hover:bg-brand-red hover:text-white transition-colors">
-            <Trash2 size={18} /> Eliminar Cuenta y Colección
-          </button>
-        </motion.section>
-      </div>
     </div>
   );
 }
