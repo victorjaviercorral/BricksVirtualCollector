@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fase 0 ✅ · Fase 1 ✅ · Fase 2 entregada, pendiente de verificación visual)
+estado: en ejecución (Fases 0-2 ✅ en main · Fases 3-4 entregadas, pendientes de aplicar migraciones)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -225,7 +225,20 @@ es requisito antes de cualquier exposición pública, y la Política de Privacid
 
 ---
 
-### Fase 3 — Purga automática (`pg_cron`) · ~2 h  · cierra también V4a
+### Fase 3 — Purga automática (`pg_cron`) · ~2 h · cierra también V4a · 🟡 ENTREGADA — PENDIENTE DE APLICAR (2026-09-09)
+
+> **Estado:** migración `supabase/migrations/20260909120000_purga_invitados.sql` escrita —
+> función `purgar_invitados_expirados(ventana interval)` + job `purga-invitados` (03:17 UTC) +
+> reprogramación de `purge-system-logs` (V4a). Cabecera con acción manual, bloque de verificación
+> y rollback.
+> **Decisión sobre Storage:** la función borra las filas de `storage.objects` del invitado (por
+> prefijo de carpeta `<uid>/`, porque las fotos se suben vía service_role y `owner` puede ser
+> null). Deja el blob físico huérfano — limitación conocida de Supabase; volumen acotado (tope de
+> fotos de invitado en Fase 6, que además puede bloquear la subida) y un GC real del blob queda
+> como follow-up. `bounties_reclamados` / `insignias_usuario` / `exposicion_sets` van en cascada
+> al borrar el `auth.users`; los bricks del invitado sobre sets **ajenos** se borran a mano.
+> **Acción manual del titular:** habilitar `pg_cron` (Supabase → Database → Extensions) y aplicar
+> la migración. Entregado en la rama `feat/acceso-invitado-fase-3-4` (PR).
 
 1. **Habilitar `pg_cron`:** Supabase → Database → Extensions → `pg_cron` (acción del titular).
 2. **Función `public.purgar_invitados_expirados()`** (`security definer`):
@@ -254,10 +267,25 @@ es requisito antes de cualquier exposición pública, y la Política de Privacid
 
 ---
 
-### Fase 4 — Upgrade invitado → cuenta real · ~medio día
+### Fase 4 — Upgrade invitado → cuenta real · ~medio día · 🟡 ENTREGADA — PENDIENTE DE APLICAR + VERIFICACIÓN (2026-09-09)
+
+> **Estado:** código en la rama `feat/acceso-invitado-fase-3-4` (mismo PR que la Fase 3).
+> - Migración `supabase/migrations/20260909130000_upgrade_invitado_cuenta.sql` — trigger
+>   `on_auth_user_upgraded` (`after update on auth.users`): cuando `is_anonymous` pasa true→false,
+>   pone `es_invitado=false`, cambia el `username` `Invitado_*` por `Coleccionista_*` (o el
+>   elegido) y fija `consentimiento_version`/`fecha` reales.
+> - `src/components/BannerInvitado.tsx` (montado en el **layout raíz** cuando `user.is_anonymous`
+>   — no hay `dashboard/layout.tsx`; así el invitado lo ve en toda la app) + `UpgradeCuentaModal`
+>   (`updateUser({ email, password, data: { terms_version } })`; maneja confirmación inmediata y
+>   pendiente de email).
+> - **Acción manual del titular:** aplicar `20260909130000_upgrade_invitado_cuenta.sql`.
+>
+> Verificación local: `tsc` limpio · suite 589 → **598** (75 ficheros) · cobertura
+> S 95,9 / B 88,5 / F 94,62 / L 96,98 (componentes nuevos 97,7 / 94,4 / 91,7 / 97,5) ·
+> `lint:ci` 154 (sin cambios) · `next build` verde.
 
 1. **Banner persistente de modo invitado** (`src/components/BannerInvitado.tsx`, montado en el
-   layout del dashboard cuando `is_anonymous`): "Estás en **modo demo** — tu colección se borra
+   layout raíz cuando `is_anonymous`): "Estás en **modo demo** — tu colección se borra
    en 48 h. **Guárdala creando una cuenta.**" con botón.
 2. **Flujo de upgrade:** un modal con email + contraseña + aceptación de términos →
    `supabase.auth.updateUser({ email, password })` y `updateUser({ data: { terms_version } })`.

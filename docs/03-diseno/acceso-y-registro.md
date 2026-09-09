@@ -51,6 +51,27 @@ Componentes: `src/components/auth/AuthCard.tsx` (shell compartido login/registro
 La migración `20260909110000_acceso_invitado.sql` (Fase 1) es la que marca `es_invitado`, da a
 los invitados `username = 'Invitado_<hex>'` y bloquea su publicación.
 
+## 3.1 Ciclo de vida del invitado
+
+**Caducidad (Fase 3).** `supabase/migrations/20260909120000_purga_invitados.sql`:
+`public.purgar_invitados_expirados(ventana interval default '48 hours')` borra los `auth.users`
+con `is_anonymous` sin actividad en la ventana (`coalesce(last_sign_in_at, created_at)`). Al
+borrar el usuario, la cascada de FK se lleva `usuarios_perfil`, `vitrinas`, `sets`, `fotos`,
+`insignias_usuario`, `bounties_reclamados`, `exposicion_sets` y los `bricks_recibidos` de sus
+propios sets. La función borra **a mano** dos cosas que no cascadan: los `bricks_recibidos` que
+el invitado emitió sobre sets ajenos (hash = su uid, o `exposicion-…-user-<uid>`) y sus filas de
+`storage.objects` (por prefijo de carpeta `<uid>/`). El blob físico de Storage queda huérfano
+(limitación de Supabase) — gap conocido y acotado. Job `pg_cron` `purga-invitados` diario a las
+03:17 UTC. La misma migración reactiva `purge-system-logs` (hallazgo V4a).
+
+**Upgrade a cuenta real (Fase 4).** El banner `BannerInvitado` (layout raíz, si
+`user.is_anonymous`) abre `UpgradeCuentaModal` → `supabase.auth.updateUser({ email, password,
+data: { terms_version } })`. Cuando Supabase marca `is_anonymous = false` (al confirmar el email,
+o de inmediato si la confirmación está desactivada), el trigger `on_auth_user_upgraded`
+(`20260909130000`) pone `es_invitado = false`, cambia el `username` `Invitado_*` por
+`Coleccionista_*` y fija `consentimiento_version`/`consentimiento_fecha` reales. **El `auth.uid()`
+no cambia**, así que todo el contenido creado como invitado se conserva y pasa a ser publicable.
+
 ## 4. Qué ajustar para un lanzamiento oficial
 
 Si el proyecto pasa de "prototipo de portfolio / early adopters" a producto con usuarios reales
