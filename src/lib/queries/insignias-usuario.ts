@@ -202,6 +202,11 @@ export const MAX_BLOQUES_MOSAICO = 120;
  * La política de SELECT de `insignias_usuario` es pública desde la migración inicial ("Insignias
  * are viewable by everyone"), y ese es justo el diseño que hace posible el mural: los logros son
  * públicos, el resto de datos del usuario no se toca.
+ *
+ * Aislamiento de invitados (ADR-011, Fase 5): `insignias_usuario` es la única superficie pública
+ * que la RLS NO filtra por `es_invitado` (su política es `using(true)`), así que un invitado que
+ * desbloquea una insignia aparecería en el mural. Se excluye aquí, en la consulta y en el total,
+ * con un join `!inner` a `usuarios_perfil`.
  */
 export async function getMosaicoComunitario(
   supabase: SupabaseClient,
@@ -210,10 +215,14 @@ export async function getMosaicoComunitario(
   const [recientes, totales] = await Promise.all([
     supabase
       .from("insignias_usuario")
-      .select("id, insignia, otorgado_en, usuario_id, usuarios_perfil ( username, avatar_url )")
+      .select("id, insignia, otorgado_en, usuario_id, usuarios_perfil!inner ( username, avatar_url, es_invitado )")
+      .eq("usuarios_perfil.es_invitado", false)
       .order("otorgado_en", { ascending: false })
       .limit(MAX_BLOQUES_MOSAICO),
-    supabase.from("insignias_usuario").select("*", { count: "exact", head: true }),
+    supabase
+      .from("insignias_usuario")
+      .select("usuarios_perfil!inner(es_invitado)", { count: "exact", head: true })
+      .eq("usuarios_perfil.es_invitado", false),
   ]);
 
   return {

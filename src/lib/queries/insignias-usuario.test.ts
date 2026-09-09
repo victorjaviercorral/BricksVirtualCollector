@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getAgregadosUsuario, type EntradaAgregados } from './insignias-usuario';
+import { getAgregadosUsuario, getMosaicoComunitario, type EntradaAgregados } from './insignias-usuario';
 
 /** Mock mínimo con la forma real de cada cadena de PostgREST que usa el módulo. */
 const buildSupabase = (over: Partial<Record<string, unknown>> = {}) => {
@@ -125,5 +125,38 @@ describe('getAgregadosUsuario', () => {
     const { cliente } = buildSupabase({ participaciones: null });
     const a = await getAgregadosUsuario(cliente, 'u1', entrada());
     expect(a.exposicionesAprobadas).toBe(0);
+  });
+});
+
+describe('getMosaicoComunitario — aislamiento de invitados (ADR-011, Fase 5)', () => {
+  it('excluye a los invitados en los hitos y en el total con un join !inner', async () => {
+    const selectStrings: string[] = [];
+    const eqCalls: [string, unknown][] = [];
+
+    // `.eq()` sirve a las dos consultas: la de hitos (sigue con .order().limit()) y la del total
+    // (se resuelve directa). Por eso el objeto que devuelve es a la vez encadenable y "thenable".
+    const eqReturn = {
+      order: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue({ data: [] }) }),
+      then: (resolve: (v: unknown) => unknown) => Promise.resolve({ count: 7 }).then(resolve),
+    };
+    const eq = vi.fn((col: string, val: unknown) => {
+      eqCalls.push([col, val]);
+      return eqReturn;
+    });
+    const select = vi.fn((s: string) => {
+      selectStrings.push(s);
+      return { eq };
+    });
+    const supabase = { from: vi.fn(() => ({ select })) } as unknown as SupabaseClient;
+
+    const { bloques, total } = await getMosaicoComunitario(supabase, 'me');
+
+    expect(selectStrings.every((s) => s.includes('usuarios_perfil!inner'))).toBe(true);
+    expect(eqCalls).toEqual([
+      ['usuarios_perfil.es_invitado', false],
+      ['usuarios_perfil.es_invitado', false],
+    ]);
+    expect(bloques).toEqual([]);
+    expect(total).toBe(7);
   });
 });

@@ -125,11 +125,15 @@ describe('MisInsigniasPage (SSR)', () => {
         return { select: () => ({ in: () => Promise.resolve({ count: data.fotosCount }) }) };
       }
       if (table === 'insignias_usuario') {
+        // getMosaicoComunitario filtra invitados con `.eq('usuarios_perfil.es_invitado', false)`
+        // en las dos consultas (hitos y total) — ADR-011, Fase 5.
         return {
-          select: (_cols: string, opts?: { head?: boolean }) =>
-            opts?.head
-              ? Promise.resolve({ count: data.totalHitos })
-              : { order: () => ({ limit: () => Promise.resolve({ data: data.hitos }) }) },
+          select: (_cols: string, opts?: { head?: boolean }) => ({
+            eq: () =>
+              opts?.head
+                ? Promise.resolve({ count: data.totalHitos })
+                : { order: () => ({ limit: () => Promise.resolve({ data: data.hitos }) }) },
+          }),
         };
       }
       if (table === 'exposicion_sets') {

@@ -88,6 +88,16 @@ describe('PerfilPublico Page (SSR)', () => {
     expect(notFound).toHaveBeenCalled();
   });
 
+  it('llama notFound() si el perfil es de un invitado (ADR-011, Fase 5)', async () => {
+    mockSupabase({
+      profile: { id: 'guest-1', username: 'Invitado_ab12cd34', alias: null, avatar_url: null, creado_en: null, es_invitado: true },
+      vitrinas: [],
+    });
+
+    await expect(PerfilPublico({ params: mockParams })).rejects.toThrow('notFound');
+    expect(notFound).toHaveBeenCalled();
+  });
+
   it('aplana los sets de todas las vitrinas públicas y publicadas del usuario', async () => {
     mockSupabase({
       profile: { id: 'user-real-123', username: 'ana', alias: 'Ana Builder', avatar_url: null, total_bricks_recibidos: 0, creado_en: null },

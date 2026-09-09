@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-2 ✅ en main · Fases 3-4 entregadas, pendientes de aplicar migraciones)
+estado: en ejecución (Fases 0-4 ✅ aplicadas · Fase 5 entregada, pendiente de verificación visual)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -306,7 +306,24 @@ es requisito antes de cualquier exposición pública, y la Política de Privacid
 
 ---
 
-### Fase 5 — Aislamiento de las superficies públicas (frontend + tests) · ~medio día
+### Fase 5 — Aislamiento de las superficies públicas (frontend + tests) · ~medio día · ✅ ENTREGADA — PENDIENTE DE VERIFICACIÓN VISUAL (2026-09-09)
+
+> **Estado:** código en la rama `feat/acceso-invitado-fase-5-aislamiento` (PR). Sin migración.
+> - **Mosaico** (`getMosaicoComunitario`): es la **única** superficie que la RLS no filtra
+>   (`insignias_usuario` tiene política `using(true)`) — filtro `!inner` + `es_invitado=false` en
+>   la consulta de hitos **y** en el `count` del total.
+> - **`/perfil/[id]`**: `notFound()` si `profile.es_invitado` (responde 404, no un perfil vacío).
+> - **Galería** (`getVitrinasPublicas`), **Home** (`page.tsx`), **Hub** (`dashboard/page.tsx`
+>   sets): filtro `!inner` + `es_invitado=false` como **defensa en profundidad** — la RLS ya lo
+>   cubre (un invitado no puede publicar, Fase 1) pero se repite explícito, mismo criterio que
+>   `/perfil/[id]`.
+> - **`/set/[id]` y `/vitrina/[id]` por URL directa**: ya cubierto por RLS (la vitrina de un
+>   invitado es `privada`; solo su dueño la lee) + el manejo de `null` existente (`set/[id]`
+>   `notFound()`, `VitrinaClient` estado "no encontrada"). Sin cambios.
+>
+> Tests: `getMosaicoComunitario` excluye invitados (hitos + total), `getVitrinasPublicas` con el
+> filtro, `/perfil/[id]` → 404 para invitado. Suite 598 → **601** (+3), cobertura
+> S 96,06 / B 88,58 / F 94,86 / L 97,16 · `lint:ci` 154 · `tsc` limpio · `next build` verde.
 
 Excluir `es_invitado` de todo lo que se muestra a terceros. En cada consulta, añadir el filtro
 por el flag (join a `usuarios_perfil` o `.eq`/`.not`).

@@ -8,11 +8,14 @@ export default async function PerfilPublico({ params }: { params: Promise<{ id: 
 
   const { data: profile } = await supabase
     .from("usuarios_perfil")
-    .select("id, username, alias, avatar_url, creado_en")
+    .select("id, username, alias, avatar_url, creado_en, es_invitado")
     .eq("id", id)
     .single();
 
-  if (!profile) {
+  // Aislamiento de invitados (ADR-011, Fase 5): el perfil de un invitado no es una superficie
+  // pública. `usuarios_perfil` tiene política de SELECT `using(true)`, así que hay que filtrarlo
+  // aquí. Se responde 404, no un perfil vacío, para no revelar que el id existe.
+  if (!profile || profile.es_invitado) {
     notFound();
   }
 
