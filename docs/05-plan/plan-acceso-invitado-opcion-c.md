@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fase 0 ✅ · Fase 1 entregada, pendiente de aplicar la migración)
+estado: en ejecución (Fase 0 ✅ · Fase 1 ✅ aplicada y verificada · Fase 2 siguiente)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -105,15 +105,30 @@ un tag de checkpoint al cerrar el plan (regla 4 de `AGENTS.md`).
 
 ---
 
-### Fase 1 — Cimientos de datos (migración SQL) · ~medio día · 🟡 ENTREGADA — PENDIENTE DE APLICAR (2026-09-09)
+### Fase 1 — Cimientos de datos (migración SQL) · ~medio día · ✅ COMPLETADA Y VERIFICADA (2026-09-09)
 
-> **Estado:** migración `supabase/migrations/20260909110000_acceso_invitado.sql` escrita (con la
-> consulta previa a `pg_policy` en la cabecera y bloque de verificación + rollback). Incluye los
-> puntos 1, 2, 3 y 4 (el 4 como defensa en profundidad). **No pasar a la Fase 2 hasta que el
-> titular la aplique contra Supabase real y confirme los criterios de aceptación.**
-> **Acción manual pendiente del titular:** (a) habilitar *Anonymous Sign-Ins* en Supabase →
-> Authentication → Providers; (b) aplicar la migración; (c) opcional: activar CAPTCHA.
-> Entregado en la rama `feat/acceso-invitado-fase-1-cimientos`.
+> **Estado:** migración `supabase/migrations/20260909110000_acceso_invitado.sql` aplicada por el
+> titular contra Supabase real, y *Anonymous Sign-Ins* habilitado. **Verificación funcional
+> end-to-end pasada** (script sobre el proyecto real, invitado de prueba creado y purgado):
+>
+> | Criterio | Resultado |
+> |---|---|
+> | `signInAnonymously()` → sesión con `is_anonymous: true` (user y claim JWT) | ✅ |
+> | Trigger crea perfil: `es_invitado=true`, `username='Invitado_<hex>'`, `consentimiento_version=null`, `consentimiento_fecha=null` | ✅ |
+> | `insert vitrinas … visibilidad='pública'` con sesión anónima → rechazado (42501) | ✅ |
+> | `insert vitrinas … visibilidad='privada'` con sesión anónima → OK | ✅ |
+> | `update` de vitrina propia a `visibilidad='pública'` → rechazado (42501) | ✅ |
+> | `insert sets` en vitrina propia (sandbox) → OK | ✅ |
+> | `update usuarios_perfil set role='sysadmin'` con sesión anónima → rechazado (42501) | ✅ |
+> | `deleteUser` del invitado → cascada limpia perfil/vitrina/set (0 filas restantes) | ✅ |
+>
+> **Incidencia resuelta durante la activación:** el titular activó también hCaptcha, lo que dejó
+> caído todo el login de producción (`captcha_failed: no captcha_token found` en
+> `signInWithPassword` y `signInAnonymously` — el front no monta widget de captcha). Se desactivó
+> el CAPTCHA; queda para la Fase 6 hacerlo bien (cuenta hCaptcha + widget). Supabase ya limita
+> por IP los `signInAnonymously`.
+>
+> Entregado en la rama `feat/acceso-invitado-fase-1-cimientos` (PR #4).
 
 Una única migración `supabase/migrations/AAAAMMDDHHMMSS_acceso_invitado.sql` (ejecutada por el
 titular contra Supabase real, con la consulta previa a `pg_policy` en la cabecera, patrón de las
