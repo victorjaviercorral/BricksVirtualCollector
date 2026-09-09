@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fase 0 ✅ · Fase 1 ✅ aplicada y verificada · Fase 2 siguiente)
+estado: en ejecución (Fase 0 ✅ · Fase 1 ✅ · Fase 2 entregada, pendiente de verificación visual)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -171,26 +171,57 @@ Providers → **habilitar "Anonymous Sign-Ins"**. Opcional pero recomendado: act
 
 ---
 
-### Fase 2 — Esqueleto: entrada de invitado (mínimo desplegable) · ~medio día
+### Fase 2 — Entrada de invitado + separación Login/Registro · ~1 día · 🟡 ENTREGADA — PENDIENTE DE VERIFICACIÓN VISUAL (2026-09-09)
 
-1. **Componente `EntrarComoInvitado`** (`src/components/EntrarComoInvitado.tsx`, client):
-   `await supabase.auth.signInAnonymously()` → si OK, `router.push('/dashboard')` (o
-   `window.location`). Manejo de error con `toast`.
-2. **Puntos de entrada:**
-   - `/login`: bajo el botón "Entrar / Registrarse", un separador y **"Probar sin registrarme"**.
-   - `/` (hero): junto a "Empezar a Coleccionar", un enlace secundario **"O prueba una demo →"**
-     que llama al mismo componente.
-3. **Retirar el auto-registro implícito de `/login`** (`login/page.tsx:44-58`): el registro pasa
-   a ser explícito (un email desconocido ya no crea cuenta en silencio). Ajustar el copy
-   ("Si no tienes cuenta, te la crearemos al instante" → "¿Nuevo? Crea una cuenta o prueba la
-   demo").
+> **Alcance ampliado tras el análisis del titular (2026-09-09).** Además de la entrada de
+> invitado, esta fase separa login y registro en dos rutas y alinea el mínimo legal. Tres
+> decisiones tomadas:
+>
+> | Decisión | Elegido |
+> |---|---|
+> | Consentimiento del invitado | **Tácito por acción** (sin checkbox); rastro en `raw_user_meta_data.guest_terms_version` |
+> | Estructura | **Rutas separadas** `/login` (solo entrar) y `/registro` (crear cuenta, con checkbox) |
+> | Legal | **Mínimo imprescindible en Fase 2**; barrido completo en Fase 8 |
+>
+> Detalle en `docs/03-diseno/acceso-y-registro.md` y ADR-011 §"Consentimiento y aceptación".
 
-**Aceptación (desplegado en producción):**
-- Desde `/login` o `/`, un clic entra al Hub con una sesión anónima (comprobar
-  `is_anonymous: true` en el JWT / `usuarios_perfil.es_invitado = true`).
-- El invitado puede completar el walkthrough: crear vitrina (privada), subir un set, votar en
-  contenido público, reclamar un bounty, ver una insignia desbloquearse.
-- Un email nuevo en el formulario ya **no** crea cuenta automáticamente.
+1. **`src/lib/legal.ts`** — constantes `TERMS_VERSION` / `GUEST_TERMS_VERSION` (retira el `'v1.0'`
+   hard-coded).
+2. **`src/components/auth/AuthCard.tsx`** — shell visual compartido por login y registro
+   (Zero-Duplication).
+3. **`src/components/EntrarComoInvitado.tsx`** (client) — `signInAnonymously({ options: { data:
+   { guest_terms_version } } })` → `window.location.href = '/dashboard'`; error con `toast`.
+   `variant` `panel` (cards de auth, con nota de aceptación tácita) / `hero` (home).
+4. **`/login` reescrito a "solo entrar"** — sin checkbox, sin auto-`signUp`; credenciales
+   inválidas → mensaje + enlace a `/registro`.
+5. **`/registro` nuevo** — email + password + checkbox obligatorio → `signUp` con
+   `terms_version: TERMS_VERSION`; maneja "confirma tu email".
+6. **CTAs** — hero `/` → `/registro` + botón invitado; Navbar móvil "Entrar" + "Crear cuenta";
+   `/v/[id]` → `/registro`.
+7. **Legal (mínimo)** — `politica-privacidad.md` (aviso de prototipo + sección "Modo invitado" +
+   tabla §2 + §4/§6), `terminos-condiciones.md` (aviso + §1.4 modo invitado), `data-map.md`
+   (banner + fila Art. 30).
+8. **Documentación** — ADR-011 §"Consentimiento y aceptación"; `docs/03-diseno/acceso-y-registro.md`
+   (nuevo, con el checklist "Qué ajustar para un lanzamiento oficial");
+   `docs/testing/fase2-login-registro.md` (por qué cambian las expectativas de `login/page.test.tsx`).
+
+**Verificación local (Quality Gate):** `tsc` limpio · suite 579 → **589** (73 ficheros) ·
+cobertura S 95,74 / B 88,28 / F 94,71 / L 96,84 (los 5 ficheros nuevos + `login` al 100×4) ·
+`lint:ci` 157 → **154** (baseline actualizado; la reescritura del test retira `any` preexistente) ·
+`next build` verde (`/registro` presente).
+
+**Aceptación (pendiente de verificación visual del titular en el preview de Vercel):**
+- Desde `/login`, `/registro` o `/`, un clic entra al Hub con sesión anónima
+  (`is_anonymous: true`, `usuarios_perfil.es_invitado = true`,
+  `raw_user_meta_data.guest_terms_version = 'invitado-v1'`).
+- El invitado completa el walkthrough: crear vitrina (privada), subir un set, votar en contenido
+  público, reclamar un bounty, ver una insignia desbloquearse.
+- Un email nuevo en `/login` ya **no** crea cuenta; deriva a `/registro`.
+- `/registro` sin checkbox → error; con checkbox y email nuevo → crea cuenta.
+
+**Nota:** Fase 2 se despliega para pruebas pero **no se anuncia** — la purga de invitados (Fase 3)
+es requisito antes de cualquier exposición pública, y la Política de Privacidad ya promete las
+48 h.
 
 ---
 

@@ -142,6 +142,33 @@ corregir" de ADR-009 ya no basta: hay que corregir de verdad.
 9. `spec-vjc-framework:preflight` contra el despliegue real → veredicto **GO** o
    **GO CON EXCEPCIONES** con las excepciones de "Iteración 8+" (S5, S3, S2) documentadas.
 
+## Consentimiento y aceptación
+
+*(Añadido en la Fase 2, 2026-09-09. Decisión del titular tras el análisis de esta sesión.)*
+
+Hay que separar dos figuras que se confunden:
+
+| | Consentimiento RGPD | Aceptación de los Términos (contrato) |
+|---|---|---|
+| Qué es | Una de las 6 bases del art. 6 RGPD; no debe pedirse cuando aplica otra base | Vínculo contractual: uso aceptable, marca LEGO®, límite de responsabilidad, DSA |
+| Se materializa en | Checkbox de Política de Privacidad + `usuarios_perfil.consentimiento_version` + fecha | Checkbox de Términos, o aceptación por acción |
+
+**Decisión por nivel:**
+
+| Nivel | Privacidad (consentimiento RGPD) | Términos (contrato) | Registro del hecho |
+|---|---|---|---|
+| **Visitante** | No aplica | Uso implícito del sitio | — |
+| **Invitado** | **No se pide** — no se recoge PII: identificador de sesión anónimo, cookie técnica (exenta art. 22.2 LSSI) e IP en logs (interés legítimo, ya declarado). El contenido creado es del propio invitado, nunca público, purgado a 48 h → "necesario para prestar la interacción solicitada". Un checkbox de consentimiento sin objeto sería *peor* legalmente. | **Aceptación tácita por acción**: una nota junto al botón ("Al continuar aceptas los Términos…") | `auth.users.raw_user_meta_data.guest_terms_version = 'invitado-v1'` (constante `GUEST_TERMS_VERSION`). `consentimiento_version` queda `null` a propósito (lo fija el trigger de Fase 1). |
+| **Coleccionista** | **Checkbox explícito** en `/registro` (email = PII, cuenta = contrato) — **no** en `/login` (ya aceptado al registrarse; re-pedirlo en cada entrada es incorrecto) | Mismo checkbox | `raw_user_meta_data.terms_version = TERMS_VERSION` → el trigger lo copia a `usuarios_perfil.consentimiento_version` + `consentimiento_fecha` |
+
+**Documentos legales:** la Política de Privacidad y los Términos se actualizaron en la Fase 2 con
+lo imprescindible (aviso de prototipo, sección "Modo invitado", ajuste de "registro cerrado",
+fila en `legal/data-map.md`). El barrido completo (README, tour, `navegacion-y-flujos`, deriva
+de `data-map.md` y `legal-architecture.md`) es la Fase 8.
+
+**Para un lanzamiento oficial**, ver el checklist en `docs/03-diseno/acceso-y-registro.md`
+§"Qué ajustar para un lanzamiento oficial".
+
 ## Acciones manuales del titular (no automatizables desde el repo)
 
 | Acción | Fase | Dónde |
