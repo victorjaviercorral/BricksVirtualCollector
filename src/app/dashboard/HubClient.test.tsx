@@ -32,8 +32,9 @@ describe('HubClient', () => {
     render(<HubClient {...baseProps} />);
 
     expect(screen.getByText('Explora el Museo')).toBeInTheDocument();
-    expect(screen.getByText('Próximamente...')).toBeInTheDocument();
-    expect(screen.getByText('Sin exposición activa')).toBeInTheDocument();
+    expect(screen.getByText('No hay ningún evento en curso')).toBeInTheDocument();
+    // La celda "Evento Activo" sin evento no deja un enlace muerto (href="#"): lleva al índice.
+    expect(screen.getByText('Sin exposición activa').closest('a')).toHaveAttribute('href', '/exposiciones');
     expect(screen.getByText('¡Participa para ganar!')).toBeInTheDocument();
     expect(screen.getByText('Explora el histórico')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay actividad.')).toBeInTheDocument();

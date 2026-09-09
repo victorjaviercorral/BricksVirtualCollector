@@ -95,16 +95,16 @@ export default function HubClient({
         <motion.div variants={item} className="bg-brand-red rounded-2xl p-5 text-white shadow-md flex flex-col col-span-1 md:col-span-1 md:row-span-2 group overflow-hidden relative">
           <div className="relative z-10 mb-4">
             <h2 className="font-display font-bold text-xl mb-1 flex items-center gap-2">
-              <Trophy size={20} /> Evento Activo
+              <Trophy size={20} /> {activeExpo ? 'Evento Activo' : 'Exposiciones'}
             </h2>
             {activeExpo ? (
               <p className="text-xs opacity-90 font-mono">¡Participa ahora!</p>
             ) : (
-              <p className="text-xs opacity-90">Próximamente...</p>
+              <p className="text-xs opacity-90">No hay ningún evento en curso</p>
             )}
           </div>
-          
-          <Link href={activeExpo ? `/exposicion/${activeExpo.id}` : '#'} className="flex-grow relative rounded-xl overflow-hidden bg-black/20 block hover:ring-2 hover:ring-white/50 transition-all">
+
+          <Link href={activeExpo ? `/exposicion/${activeExpo.id}` : '/exposiciones'} className="flex-grow relative rounded-xl overflow-hidden bg-black/20 block hover:ring-2 hover:ring-white/50 transition-all">
             {activeExpo?.imagen_url ? (
               <img src={activeExpo.imagen_url} alt={activeExpo.titulo} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             ) : (
@@ -112,13 +112,24 @@ export default function HubClient({
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 w-full p-4">
-              <p className="text-[10px] font-bold text-brand-yellow uppercase tracking-wider mb-1">
-                {activeExpo?.es_continua ? 'EXPO CONTINUA' : 'TIEMPO LIMITADO'}
-              </p>
-              <h3 className="font-bold text-lg leading-tight mb-2">{activeExpo?.titulo || 'Sin exposición activa'}</h3>
-              <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/30 transition-colors">
-                Ver detalles <ArrowRight size={12} />
-              </div>
+              {activeExpo ? (
+                <>
+                  <p className="text-[10px] font-bold text-brand-yellow uppercase tracking-wider mb-1">
+                    {activeExpo.es_continua ? 'EXPO CONTINUA' : 'TIEMPO LIMITADO'}
+                  </p>
+                  <h3 className="font-bold text-lg leading-tight mb-2">{activeExpo.titulo}</h3>
+                  <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/30 transition-colors">
+                    Ver detalles <ArrowRight size={12} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-bold text-lg leading-tight mb-2">Sin exposición activa</h3>
+                  <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/30 transition-colors">
+                    Ver exposiciones pasadas <ArrowRight size={12} />
+                  </div>
+                </>
+              )}
             </div>
           </Link>
         </motion.div>
@@ -247,7 +258,7 @@ export default function HubClient({
           <div className="mt-auto relative z-10">
             {bountiesActivos.length > 0 ? (
               <span className="inline-flex items-center gap-1 text-xs font-bold bg-black/20 px-3 py-1.5 rounded-full group-hover:bg-black/30 transition-colors">
-                {bountiesActivos.length} Retos activos <ArrowRight size={12} />
+                {bountiesActivos.length} {bountiesActivos.length === 1 ? 'Reto activo' : 'Retos activos'} <ArrowRight size={12} />
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-xs font-bold bg-black/20 px-3 py-1.5 rounded-full">
