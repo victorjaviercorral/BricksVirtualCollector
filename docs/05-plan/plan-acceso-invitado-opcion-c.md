@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-4 ✅ aplicadas · Fase 5 entregada, pendiente de verificación visual)
+estado: en ejecución (Fases 0-4 ✅ aplicadas · Fases 5-6 entregadas · S7 pendiente de aplicar)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -348,7 +348,25 @@ cobertura ≥ 85%.
 
 ---
 
-### Fase 6 — Contención de abuso · ~medio día
+### Fase 6 — Contención de abuso · ~medio día · 🟡 ENTREGADA — PENDIENTE DE APLICAR S7 + VERIFICACIÓN (2026-09-09)
+
+> **Estado:** código en la rama `feat/acceso-invitado-fase-6-abuso` (PR).
+> - **`/admin/*` cerrado** (`src/lib/supabase/middleware.ts`): el chequeo de rol se extiende a
+>   todo `/admin`. `/admin/system` mantiene `isSystemRole`; el resto admite además
+>   `admin_exposiciones` (`isModeratorRole`) — coherente con el gate propio de `/admin/moderacion`.
+>   Un invitado (`role='user'`, o sin perfil) → redirigido a `/dashboard`.
+> - **Fotos de invitado — tope reducido** (decisión del titular, 2026-09-09):
+>   `POST /api/sets/foto` aplica 3 MB (vs 10) y máx **6** fotos por invitado (`user.is_anonymous`),
+>   contando su carpeta `<uid>/` en el bucket. Mensajes que empujan al upgrade.
+> - **S7** — migración `supabase/migrations/20260909140000_storage_file_size_limits.sql`:
+>   `update storage.buckets set file_size_limit` para los 3 buckets (por si el proyecto real los
+>   tenía a null). **Acción manual del titular:** aplicar esta migración.
+> - **Rate-limit de anon sign-in:** Supabase ya limita por IP (~30/h por defecto). Documentado en
+>   `docs/03-diseno/acceso-y-registro.md`; CAPTCHA con widget sigue diferido a cuando el volumen
+>   lo justifique.
+>
+> Verificación local: `tsc` limpio · suite 601 → **609** (+8) · cobertura
+> S 96,03 / B 88,55 / F 94,86 / L 97,12 · `lint:ci` 154 · `next build` verde.
 
 1. **`/admin/*` cerrado a invitados y no-admins en el middleware** (`src/lib/supabase/middleware.ts`):
    extender el chequeo de rol de `/admin/system` a **todo** `/admin` (un invitado tiene

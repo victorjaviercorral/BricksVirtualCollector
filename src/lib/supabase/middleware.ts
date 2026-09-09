@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isSystemRole } from '@/lib/roles'
+import { isSystemRole, isModeratorRole } from '@/lib/roles'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -41,28 +41,35 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/admin') ||
     request.nextUrl.pathname.startsWith('/ajustes');
     
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isAdminSystemRoute = request.nextUrl.pathname.startsWith('/admin/system');
 
-  if (!user && (isProtectedRoute || isAdminSystemRoute)) {
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Si es una ruta de administración del sistema, verificar rol 'admin' o 'sysadmin'
-  // (isSystemRole, src/lib/roles.ts). 'admin' se añadió el 19/08/2026: el titular es la única
-  // persona que gestiona el proyecto y, por la misma decisión que D2, no mantiene una identidad
-  // de sysadmin separada -- un solo rol 'admin' debe dar acceso a todo el panel.
-  if (user && isAdminSystemRoute) {
+  // Chequeo de rol para TODO /admin (antes solo /admin/system). Motivo (ADR-011, Fase 6): con el
+  // acceso de invitado, cualquier sesión —incluida una anónima con role='user'— pasaba el
+  // `!user` y podía *ver* /admin/exposiciones y /admin/bounties, que no tenían gate de rol a
+  // nivel de página (dependían de la RLS solo para escritura). /admin/system mantiene el chequeo
+  // más estricto (isSystemRole); el resto del panel admite además a admin_exposiciones
+  // (isModeratorRole), coherente con el gate propio de /admin/moderacion.
+  if (user && isAdminRoute) {
     const { data: profile } = await supabase
       .from('usuarios_perfil')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!isSystemRole(profile?.role)) {
+    const permitido = isAdminSystemRoute
+      ? isSystemRole(profile?.role)
+      : isSystemRole(profile?.role) || isModeratorRole(profile?.role)
+
+    if (!permitido) {
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard' // o una página de 'Acceso Denegado'
+      url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
   }
