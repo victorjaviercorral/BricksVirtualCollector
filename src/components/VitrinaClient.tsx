@@ -47,8 +47,23 @@ export default function VitrinaClient({ id }: { id: string }) {
           ...s,
           bricks_count: s.bricks_recibidos?.[0]?.count || 0
         })));
+
+        // 3. ¿A qué sets de esta vitrina ya les ha dado un brick el usuario? Sin esto el botón
+        // se pinta habilitado y el primer clic choca contra el 400 "Ya has dado un Brick".
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && sData.length > 0) {
+          const { data: yaVotados } = await supabase
+            .from("bricks_recibidos")
+            .select("set_id")
+            .eq("hash_visitante", user.id)
+            .in("set_id", sData.map(s => s.id));
+
+          if (yaVotados && yaVotados.length > 0) {
+            setGivenBricks(Object.fromEntries(yaVotados.map(b => [b.set_id, true])));
+          }
+        }
       }
-      
+
       setLoading(false);
     }
     loadData();
@@ -155,7 +170,7 @@ export default function VitrinaClient({ id }: { id: string }) {
                   }`}
                 >
                   <Heart size={18} className={givenBricks[set.id] ? "fill-white" : ""} />
-                  {set.bricks_count || 0} Bricks
+                  {`${set.bricks_count || 0} ${(set.bricks_count || 0) === 1 ? "Brick" : "Bricks"}`}
                 </button>
               </div>
             </div>

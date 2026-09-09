@@ -84,6 +84,14 @@ describe("ExposicionClient", () => {
     expect(screen.getByText("Finalizada")).toBeInTheDocument();
   });
 
+  it("una exposición archivada continua muestra 'Finalizada', no 'Tiempo Restante / Exposición Continua'", () => {
+    render(<ExposicionClient {...baseProps} exposicion={{ ...expoArchivada, es_continua: true, fecha_fin: null }} modo="oficial" />);
+    expect(screen.getByText("Finalizada")).toBeInTheDocument();
+    expect(screen.queryByText("Exposición Continua")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tiempo Restante")).not.toBeInTheDocument();
+    expect(screen.getByText("Estado del evento")).toBeInTheDocument();
+  });
+
   it("exposición activa con fecha futura muestra la cuenta atrás", () => {
     render(<ExposicionClient {...baseProps} />);
     expect(screen.getByText(/\dd \d+h \d+m/)).toBeInTheDocument();

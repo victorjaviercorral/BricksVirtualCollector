@@ -33,6 +33,10 @@ export default function ExposicionClient({
   const supabase = createClient();
 
   useEffect(() => {
+    if (exposicion.estado === 'archivada') {
+      setTimeLeft("Finalizada");
+      return;
+    }
     if (exposicion.es_continua || !exposicion.fecha_fin) {
       setTimeLeft("Exposición Continua");
       return;
@@ -128,7 +132,9 @@ export default function ExposicionClient({
             <div className="bg-brand-yellow text-black px-6 py-3 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_#000] flex items-center gap-3">
               <Timer size={24} className={timeLeft !== 'Finalizada' && !exposicion.es_continua ? 'animate-pulse text-brand-red' : ''} />
               <div>
-                <div className="text-xs font-black uppercase opacity-80">Tiempo Restante</div>
+                <div className="text-xs font-black uppercase opacity-80">
+                  {exposicion.estado === 'archivada' ? 'Estado del evento' : 'Tiempo Restante'}
+                </div>
                 <div className="text-xl font-black font-mono">{timeLeft}</div>
               </div>
             </div>
