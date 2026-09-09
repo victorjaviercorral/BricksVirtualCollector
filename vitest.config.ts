@@ -62,6 +62,9 @@ export default defineConfig({
         'src/components/EntrarComoInvitado.tsx',
         'src/components/auth/**',
         'src/lib/legal.ts',
+        // Fase 4 acceso invitado (ADR-011): upgrade invitado → cuenta real
+        'src/components/BannerInvitado.tsx',
+        'src/components/UpgradeCuentaModal.tsx',
         'src/app/mesa-de-trabajo/**',
         'src/components/MesaTrabajoClient.tsx',
         'src/app/admin/layout.tsx',

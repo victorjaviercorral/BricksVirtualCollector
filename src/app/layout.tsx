@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { BannerInvitado } from "@/components/BannerInvitado";
 import { createClient } from "@/lib/supabase/server";
 import { Toaster } from "sonner";
 
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Navbar user={user} profile={profile} />
 
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+              {user?.is_anonymous && <BannerInvitado />}
               {children}
             </main>
             <Footer />
