@@ -19,6 +19,19 @@ export default async function BountiesPage() {
     .eq("estado", "pendiente")
     .order("creado_en", { ascending: false });
 
+  // Bounties que el usuario actual ya ha reclamado: la tarjeta los marca como "Ya reclamado"
+  // en vez de ofrecer "Reclamar Misión" otra vez (el segundo intento lo rechaza el servidor,
+  // pero es mejor no ofrecerlo).
+  const { data: { user } } = await supabase.auth.getUser();
+  let reclamados: string[] = [];
+  if (user) {
+    const { data: misReclamos } = await supabase
+      .from("bounties_reclamados")
+      .select("bounty_id")
+      .eq("usuario_id", user.id);
+    reclamados = misReclamos?.map((r) => r.bounty_id) ?? [];
+  }
+
   return (
     <div className="bg-background min-h-screen">
       <div className="max-w-5xl mx-auto px-6 py-12">
@@ -36,11 +49,11 @@ export default async function BountiesPage() {
           <h1 className="font-display font-black text-4xl md:text-5xl">Bounties Comunitarios</h1>
         </div>
         <p className="text-foreground/70 font-bold mb-10 max-w-2xl">
-          La comunidad busca estos sets. Recláma la recompensa en Bricks documentando el set: con
+          La comunidad busca estos sets. Reclama la recompensa en Bricks documentando el set: con
           uno que ya tengas en tu vitrina, o subiendo uno nuevo.
         </p>
 
-        <BountiesSectionClient bounties={bounties || []} />
+        <BountiesSectionClient bounties={bounties || []} reclamados={reclamados} />
       </div>
     </div>
   );
