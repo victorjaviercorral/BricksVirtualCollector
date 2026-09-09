@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: propuesto (pendiente de ejecutar en sesión nueva)
+estado: en ejecución (Fase 0 ✅ · Fase 1 entregada, pendiente de aplicar la migración)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -83,7 +83,11 @@ exactamente para "try before signing up". El invitado obtiene un `auth.uid()` re
 Cada fase termina con criterios de aceptación verificables. Convención de commits semánticos y
 un tag de checkpoint al cerrar el plan (regla 4 de `AGENTS.md`).
 
-### Fase 0 — ADR-011 (decisión registrada) · ~30 min
+### Fase 0 — ADR-011 (decisión registrada) · ~30 min · ✅ COMPLETADA (2026-09-09)
+
+> **Estado:** `docs/06-decisiones/ADR-011-acceso-invitado-tres-niveles.md` en `estado: aceptada`;
+> ADR-009 pasa a `estado: superada` con nota de superación en cabecera; fila nueva (ID 22) en
+> `docs/00-proyecto/FASES_Y_MEJORAS.md`. Entregado en la rama `feat/acceso-invitado-fase-1-cimientos`.
 
 - Crear `docs/06-decisiones/ADR-011-acceso-invitado-tres-niveles.md`:
   - Contexto: evaluación A/B/C, por qué C.
@@ -101,7 +105,15 @@ un tag de checkpoint al cerrar el plan (regla 4 de `AGENTS.md`).
 
 ---
 
-### Fase 1 — Cimientos de datos (migración SQL) · ~medio día
+### Fase 1 — Cimientos de datos (migración SQL) · ~medio día · 🟡 ENTREGADA — PENDIENTE DE APLICAR (2026-09-09)
+
+> **Estado:** migración `supabase/migrations/20260909110000_acceso_invitado.sql` escrita (con la
+> consulta previa a `pg_policy` en la cabecera y bloque de verificación + rollback). Incluye los
+> puntos 1, 2, 3 y 4 (el 4 como defensa en profundidad). **No pasar a la Fase 2 hasta que el
+> titular la aplique contra Supabase real y confirme los criterios de aceptación.**
+> **Acción manual pendiente del titular:** (a) habilitar *Anonymous Sign-Ins* en Supabase →
+> Authentication → Providers; (b) aplicar la migración; (c) opcional: activar CAPTCHA.
+> Entregado en la rama `feat/acceso-invitado-fase-1-cimientos`.
 
 Una única migración `supabase/migrations/AAAAMMDDHHMMSS_acceso_invitado.sql` (ejecutada por el
 titular contra Supabase real, con la consulta previa a `pg_policy` en la cabecera, patrón de las
