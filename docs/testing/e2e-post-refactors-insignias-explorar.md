@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: testing
 subtipo: e2e-walkthrough + bug-fixing
-estado: ejecutado (3 pasadas, 2026-09-08/09) · B-01 y B-09 resueltos y verificados · sin bloqueantes de go-live · pendiente solo Pasaporte
+estado: cerrado (4 pasadas, 2026-09-08/09) · los 12 hallazgos (B-01…B-12) resueltos · cobertura E2E completa · sin bloqueantes de go-live
 fecha: 2026-09-08
 alcance: E2E pendiente tras las refactors de "Mis Insignias" (FASES fila 19) y "Explorar" (FASES fila 18), con re-triaje go-live de secciones adyacentes
 entorno: localhost:3000 (npm run dev, Next 16 Turbopack) contra Supabase real de .env.local — misma BD que Vercel
@@ -31,7 +31,7 @@ lleva a la tabla de abajo, priorizado por impacto y esfuerzo, y se acomete en pa
 |---|---|
 | **Explorar (fila 18)** | ✅ **Listo salvo detalles menores.** Navbar, menú Explorar (desktop + móvil), `/galeria` + filtro por temática, `/bounties`, `/exposiciones`, `/exposicion/[id]`, celdas del Hub y bento de la home: todo enlaza a donde dice el doc de diseño. Solo pulido (B-03, B-04, B-08, B-10). |
 | **Mis Insignias (fila 19)** | 🟢 **Verificado end-to-end (3ª pasada).** `/api/insignias/sync` → **200**, insignias persistidas e **idempotentes** (recargar no duplica: contador estable). Mosaico poblado. **Recompensas verificado con un reclamo real de bounty**: "1.000 Bricks ganados", el reclamo con su set y fecha, y `+1.000` sumados a `bricks_recibidos` (confirma el circuito de diseño). `/dashboard/insignias/bounty/[reclamo]` renderiza; la redirección de la ruta vieja `/dashboard/participaciones/[reclamo]` también. **Solo queda Pasaporte** — requiere archivar una exposición con participación. |
-| **Secciones adyacentes** | 🟠 `/dashboard/perfil` arrastra controles muertos de andamiaje (B-02). Resto OK. |
+| **Secciones adyacentes** | ✅ `/dashboard/perfil` limpiado de andamiaje muerto (B-02). Resto OK. |
 | **Voto en exposición (B-09)** | ✅ **RESUELTO Y VERIFICADO (3ª pasada).** El titular aplicó la migración `20260909100000`. Votar en la exposición activa → toast **"¡Voto registrado!"**, contador +1. Doble voto → **"Ya has votado por este set en esta exposición"** (23505). El voto normal en `/set` y `/vitrina` sigue funcionando. |
 
 ---
@@ -43,42 +43,34 @@ Prioridad = impacto en el go-live. Esfuerzo = estimación de implementación (no
 | ID | Prio | Esfuerzo | Área | Hallazgo | Acción propuesta |
 |---|---|---|---|---|---|
 | **B-01** | ✅ **RESUELTO Y VERIFICADO** (2026-09-08) | 🟢 XS | Mis Insignias | `POST /api/insignias/sync` daba **500** en cada carga por RLS: `insignias_usuario` solo tenía política de SELECT y la migración `20260908120000` no estaba aplicada. **Corregido:** el titular aplicó los 3 pasos de la migración (política INSERT + índice `insignias_usuario_otorgado_en_idx`). **Verificado en vivo:** `sync` → **200**, insignias persistidas, Mosaico poblado, "En curso" con la participación real. **Idempotencia confirmada** (3ª pasada): recargar 3× → el contador del Mosaico se mantiene estable (no se duplican filas). |
-| **B-02** | 🟠 P1 | 🟢 S | Perfil *(fuera de las 2 refactors)* | `/dashboard/perfil` tiene 3 controles de andamiaje muertos: (1) 2ª sección **"Zona Peligrosa"** con botón **"Eliminar Cuenta y Colección"** sin `onClick` — no hace nada, y **duplica** el botón real "Eliminar Cuenta Permanentemente" de la sección "Zona de Peligro" de arriba; (2) toggle **"Modo Oscuro"** en "Preferencias Visuales" = `<div>` estático sin handler; (3) toggle **"Notificaciones"** igual. Mismo patrón que B2 de `guia-verificacion-iteracion-4` (botón sin handler en Server Component). | Retirar la sección "Zona Peligrosa" duplicada (Zero-Duplication: ya existe el punto único arriba). Decidir sobre "Preferencias Visuales": o se cablea (el toggle de tema ya existe en la navbar; "Notificaciones" no tiene backend) o se retira el bloque entero. Recomendado retirar. |
+| **B-02** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟢 S | Perfil | `/dashboard/perfil` tenía 3 controles de andamiaje muertos: 2ª sección "Zona Peligrosa" con botón "Eliminar Cuenta y Colección" sin `onClick` (duplicaba el botón real de arriba), y toggles "Modo Oscuro"/"Notificaciones" estáticos. **Corregido:** retirado el bloque `<div className="grid grid-cols-1 gap-6 mt-8">` entero (Preferencias Visuales + Zona Peligrosa duplicada) y los imports huérfanos. Queda solo "Zona de Peligro" con su botón funcional. **Verificado en vivo:** la página ya no contiene "Preferencias Visuales" ni "Zona Peligrosa", solo un botón de borrado. |
 | **B-09** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟢 XS | Exposiciones / bricks | **Reproducido en vivo (08/09):** votar un set en exposición activa → "Error al votar", porque la RLS de `bricks_recibidos` (`"Anyone can insert a brick on public sets"`, `20260901120000:44`) exige `hash_visitante = auth.uid()::text` pero `ExposicionClient.tsx:95` inserta `exposicion-<id>-user-<uid>`. **Corregido:** migración `20260909100000_bricks_recibidos_voto_exposicion.sql` (amplía el `with check` a los dos formatos), aplicada por el titular. **Verificado (09/09):** voto → "¡Voto registrado!" +1; doble voto → "Ya has votado por este set en esta exposición" (23505); voto normal en `/set` y `/vitrina` intacto. |
-| **B-03** | 🟡 P2 | 🟢 XS | Hub | Celda **"Evento Activo"** del Hub cuando **no hay exposición activa**: el enlace "Ver detalles" apunta a `href="#"` (link muerto) y la tarjeta muestra un estado vacío contradictorio ("Próximamente…" + "TIEMPO LIMITADO" + "Sin exposición activa"). | Si no hay exposición activa: enlazar a `/exposiciones` (o quitar el "Ver detalles") y dejar un único texto de estado vacío coherente. |
-| **B-04** | 🟡 P2 | 🟢 XS | Explorar / Exposiciones | `/exposicion/[id]` en modo **archivado** y continua ("La venganza de los Sith") pinta el chip del hero **"TIEMPO RESTANTE / Exposición Continua"** a la vez que el cuerpo dice "Evento Finalizado" y "ya no se puede votar". Contradictorio. (En una exposición **activa** continua — "Star Wars: Return of the Jedi" — ese chip **sí es correcto**.) | En el hero, si la exposición está archivada mostrar "Finalizada" / fecha de cierre en vez de "Tiempo restante — Exposición Continua". |
-| **B-05** | 🟡 P2 | 🟡 M | Vitrina / bricks | En `/vitrina/[id]` el botón "Dar Brick" de cada set **no refleja un voto ya emitido**: se pinta habilitado; al pulsarlo → `POST /api/bricks` **400 "Ya has dado un Brick a este set"**. (En `/set/[id]` el botón sí se autodeshabilita — la rejilla de la vitrina no hidrata `hasLiked`.) | Cargar en la vista de vitrina qué sets ya ha votado el usuario y pintar el botón como en `/set/[id]` (`disabled={hasLiked || submitting}`). |
-| **B-06** | 🟡 P2 | 🟡 M | Bounties / a11y | El modal **"Reclamar Bounty"** no es `role="dialog"`, no tiene focus-trap ni `aria-labelledby`. `Esc` y clic-fuera conviene revisarlos también. | Envolver en un componente de diálogo accesible (rol, focus-trap, cierre con `Esc`, foco de retorno). |
-| **B-07** | 🔵 P3 | 🟢 XS | Mis Insignias | `SincronizarInsignias` dispara `POST /api/insignias/sync` **2 veces por carga** (visto de forma consistente). Probablemente doble efecto de React StrictMode en dev. | Confirmar en `next build` que en producción se dispara una sola vez. Si no, añadir guard de "ya sincronizado" en el cliente. |
-| **B-08** | 🔵 P3 | 🟢 XS | Copy global | Pluralización/erratas: **"1 Bricks"** (vitrina), **"1 SETS"** (tarjetas de la home; en `/galeria` sí dice "1 SET"), **"1 Retos activos"** (Hub), **"Recláma"** → "Reclama" (`/bounties`), **"1000 BRICKS"** sin separador de miles en `/dashboard/insignias/bounty/[id]` (en Recompensas sí es "1.000 Bricks"). | Helper de pluralización + `formatearNumero()` en todos los contadores; pasada de copy. |
+| **B-03** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟢 XS | Hub | Celda "Evento Activo" sin exposición activa tenía `href="#"` (link muerto) y estado vacío contradictorio. **Corregido:** sin evento activo la celda enlaza a `/exposiciones`, la cabecera pasa a "Exposiciones", y el cuerpo dice "Sin exposición activa · Ver exposiciones pasadas" (sin "TIEMPO LIMITADO" ni "Ver detalles"). **Verificado:** `href="/exposiciones"`, cero `href="#"` en la página. |
+| **B-04** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟢 XS | Explorar / Exposiciones | `/exposicion/[id]` archivada mostraba el chip "TIEMPO RESTANTE / Exposición Continua" a la vez que "Evento Finalizado". **Corregido:** `ExposicionClient` — si `estado === 'archivada'` el `timeLeft` es "Finalizada" y la etiqueta del chip es "Estado del evento" (no "Tiempo Restante"). **Verificado en vivo** sobre "Star Wars: Return of the Jedi" archivada: sin "TIEMPO RESTANTE", muestra "Estado del evento". |
+| **B-05** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟡 M | Vitrina / bricks | En `/vitrina/[id]` el botón "Dar Brick" no reflejaba un voto ya emitido → clic → 400. **Corregido:** `VitrinaClient` consulta al montar los `bricks_recibidos` del usuario para esos sets y prellena `givenBricks`. **Verificado en vivo:** el set ya votado por @brick pinta el botón **deshabilitado** ("1 Brick"). |
+| **B-06** | ✅ **RESUELTO** (2026-09-09) | 🟡 M | Bounties / a11y | El modal "Reclamar Bounty" no era `role="dialog"`. **Corregido:** `role="dialog"` + `aria-modal` + `aria-labelledby`, cierre con **Esc** y con clic en el backdrop, foco inicial en el botón de cerrar y foco devuelto al disparador al cerrar; las filas de selección de set pasan de `<div onClick>` a `<button>` con `aria-pressed`. Cubierto por test (`getByRole('dialog')`, Esc). |
+| **B-07** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟢 XS | Mis Insignias | `SincronizarInsignias` disparaba `POST /api/insignias/sync` **2×/carga**. **Corregido:** dedup a nivel de módulo — mientras hay un POST en vuelo, los siguientes montajes se enganchan a esa misma promesa; se limpia al resolverse (una re-sincronización posterior legítima sí ocurre). **Verificado en vivo:** cada navegación a `/dashboard/insignias` = **1** POST. |
+| **B-08** | ✅ **RESUELTO** (2026-09-09) | 🟢 XS | Copy global | **Corregido:** "1 Brick"/"1 Set"/"1 Reto activo" con pluralización (`VitrinaClient`, home, `HubClient`); "Recláma" → "Reclama" (`/bounties`); `formatearNumero()` en `BountyDetailClient` (los "1000 BRICKS" pasan a "1.000"). **Verificado en vivo:** botón "1 Brick" en vitrina, "Reclama" en `/bounties`. |
 | **B-10** | ✅ **RESUELTO** (2026-09-09) | 🟢 XS | Home — imagen y copy | (a) **Imagen del hero:** era `<img src="https://lh3.googleusercontent.com/aida-public/…">` — hotlink externo a un render IA genérico ("Vibrant Playful", con marca de agua), frágil (puede 404) y sin relación con el producto → sustituida por `public/hero-vitrina.svg` (SVG autohospedado, on-brand, representa una vitrina con construcciones). (b) **Copy:** "vitrina **3D** interactiva" → "Digitaliza tus modelos físicos y móntalos en vitrinas para exhibirlos. Colecciona, comparte y recorre las colecciones de la comunidad." Coherente con `navegacion-y-flujos.md` §"Deuda" (la home dejó de prometer 3D). Comentario `{/* Feature 4: 3D View */}` también corregido. |
-| **B-11** | 🔵 P3 | 🟢 XS | Recompensas / vocabulario | Al reclamar un bounty el toast dice **"¡Bounty reclamado con éxito! Puntos añadidos."** — "Puntos" es justo el vocabulario que la fila 19 eliminó ("todo a Bricks; no existe moneda de puntos en el esquema, la interfaz no la nombra"). | Cambiar el toast a "…Bricks añadidos a tu set." |
-| **B-12** | 🔵 P3 | 🟡 M | Bounties / UX | Tras reclamar un bounty, su tarjeta en `/bounties` sigue mostrando **"Reclamar Misión"** sin marca de "ya reclamado". El usuario solo se entera al abrir el modal e intentarlo de nuevo (→ "Ya has reclamado este bounty", correcto server-side). Misma familia que B-05 (estado ya-hecho no reflejado en el control). | Marcar en la tarjeta los bounties ya reclamados por el usuario (badge "Reclamado" / botón secundario "Ver mi reclamo"). |
+| **B-11** | ✅ **RESUELTO** (2026-09-09) | 🟢 XS | Recompensas / vocabulario | El toast al reclamar decía "…Puntos añadidos." — vocabulario que la fila 19 eliminó. **Corregido:** "¡Bounty reclamado! Los Bricks van directos a tu set." |
+| **B-12** | ✅ **RESUELTO Y VERIFICADO** (2026-09-09) | 🟡 M | Bounties / UX | Tras reclamar un bounty, su tarjeta seguía ofreciendo "Reclamar Misión". **Corregido:** `/bounties/page.tsx` consulta los `bounties_reclamados` del usuario y los pasa a `BountiesSectionClient` (`reclamados`), que además recuerda los reclamos de la sesión actual; esas tarjetas muestran **"Ya reclamado"** (badge verde, sin botón). **Verificado en vivo:** "BD1 del Año 90" ya reclamado por @brick sale como "Ya reclamado". |
 
-### Vista impacto × esfuerzo (actualizada 3ª pasada)
+### Estado (actualizado 2026-09-09, 4ª pasada)
 
-```
-              ESFUERZO XS/S            ESFUERZO M+
-           ┌────────────────────────┬────────────────────────┐
-  PRIO     │ [B-01 ✅ resuelto]      │                        │
-  ALTA     │ [B-09 ✅ resuelto]      │                        │
-  (go-live)│ B-02  perfil andamiaje │                        │
-           ├────────────────────────┼────────────────────────┤
-  PRIO     │ B-03  hub link muerto  │ B-05  brick ya votado   │
-  MEDIA    │ B-04  chip archivada   │ B-06  modal a11y        │
-           │                        │ B-12  bounty ya reclam. │
-           ├────────────────────────┼────────────────────────┤
-  PRIO     │ B-07 doble sync        │                        │
-  BAJA     │ B-08 copy plural       │                        │
-           │ B-11 toast "puntos"    │                        │
-           │ [B-10 ✅ resuelto]      │                        │
-           └────────────────────────┴────────────────────────┘
-```
+**Los 12 hallazgos están resueltos.** B-01 → B-12, todos ✅ (B-06 cubierto por test; el resto
+verificado en vivo). Entregado en dos tandas:
 
-**Estado:** **B-01, B-09 y B-10 ✅ resueltos y verificados.** **No queda ningún bloqueante de
-go-live.** B-02 es el siguiente (andamiaje muerto en `/dashboard/perfil`), luego B-03/B-04 y el
-resto de pulido. Cobertura E2E **completa** — las 5 secciones de Mis Insignias verificadas
-(Pasaporte incluido, §3.2/§4).
+| Tanda | Hallazgos | Rama / tag |
+|---|---|---|
+| E2E + bloqueantes | B-01, B-09, B-10 | `v0.11.0-e2e-insignias-explorar` (merge PR #1) |
+| Prioridad alta + media + pulido | B-02, B-03, B-04, B-05, B-06, B-07, B-08, B-11, B-12 | `e2e-bugfixing-b02-b12` |
+
+**Cobertura E2E completa:** las 5 secciones de Mis Insignias (Insignias · En curso · Recompensas
+· Pasaporte · Mosaico) y todo "Explorar" verificados con datos reales. **No hay bloqueantes de
+go-live.**
+
+Verificación local de la 2ª tanda: `tsc` limpio, **579/579** tests (+6 nuevos), 4 métricas de
+cobertura ≥ 85% (S 95,63 / B 88,10 / F 94,61 / L 96,76), `lint:ci` dentro del baseline (157).
 
 ### SQL de corrección de B-09 (aplicado)
 
