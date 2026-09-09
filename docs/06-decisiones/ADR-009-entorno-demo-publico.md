@@ -1,21 +1,32 @@
 ---
 proyecto: lego-virtual-museum
 tipo: adr
-estado: aceptada
+estado: superada
 version: 1
 fecha: 2026-08-10
 decide: arquitectura del entorno de demostración pública
-relacionada_con: [auditoria-arquitectura, ADR-002-backend-supabase, ADR-003-rate-limiting]
+superada_por: ADR-011-acceso-invitado-tres-niveles
+relacionada_con: [auditoria-arquitectura, ADR-002-backend-supabase, ADR-003-rate-limiting, ADR-011-acceso-invitado-tres-niveles]
 tags: [spec-vjc, decision, seguridad, lanzamiento]
 ---
 
 # ADR-009 — Entorno de demostración pública: despliegue único con cuenta demo de solo lectura
 
-**Fecha:** 2026-08-10 · **Estado:** aceptada (pendiente de activación)
+**Fecha:** 2026-08-10 · **Estado:** ~~aceptada (pendiente de activación)~~ **superada por
+[ADR-011](ADR-011-acceso-invitado-tres-niveles.md) (2026-09-09)**
 
-> **Nota de activación:** esta decisión queda tomada pero **no ejecutada**. Se activa cuando se
-> decida abrir el proyecto al exterior. Hasta entonces el proyecto permanece sin despliegue
-> público.
+> **Superada por ADR-011.** Esta decisión nunca llegó a ejecutarse. Sus dos bloqueos originales
+> para la Opción C (A1 — migraciones incompletas; S1 — escalada de privilegios en RLS) se
+> cerraron en las Iteraciones 1 y 3, de modo que el sandbox aislado dejó de estar bloqueado. El
+> modelo de solo lectura de este ADR dejaba inertes el voto, el reclamo de bounties y las
+> insignias — el núcleo de la app —, así que se sustituye por el modelo de tres niveles con
+> acceso de invitado (sesión anónima de Supabase) de ADR-011. El texto se conserva sin cambios
+> como registro histórico; **sus controles concretos (`revoke ... from authenticated, anon`,
+> registro cerrado) no deben aplicarse**.
+
+> **Nota de activación (original, ya no vigente):** esta decisión queda tomada pero **no
+> ejecutada**. Se activa cuando se decida abrir el proyecto al exterior. Hasta entonces el
+> proyecto permanece sin despliegue público.
 
 ## Contexto
 
