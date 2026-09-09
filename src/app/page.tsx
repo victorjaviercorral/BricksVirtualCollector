@@ -14,7 +14,7 @@ export default async function Home() {
       id,
       nombre,
       descripcion,
-      usuarios_perfil (username),
+      usuarios_perfil!inner (username, es_invitado),
       sets (
         id,
         nombre,
@@ -25,6 +25,8 @@ export default async function Home() {
     `)
     .eq('estado', 'publicada')
     .eq('visibilidad', 'pública')
+    // Aislamiento de invitados (ADR-011, Fase 5) — defensa en profundidad sobre la RLS.
+    .eq('usuarios_perfil.es_invitado', false)
     .limit(4);
 
   // Fetch active Exposición Temporal

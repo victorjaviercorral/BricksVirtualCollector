@@ -50,9 +50,14 @@ export default async function DashboardHubPage() {
     .limit(3);
 
   // 4. Obtener Sets de la Comunidad (limit 4 para Build of the Day + 3 recientes)
+  // Aislamiento de invitados (ADR-011, Fase 5): un set de invitado no puede ser "destacado" ni
+  // salir en "comunidad". La RLS de `sets` ya lo impide para terceros (su vitrina nunca es
+  // pública), pero se filtra explícitamente para que un invitado tampoco vea su propio contenido
+  // presentado como comunitario.
   const { data: ultimosSets } = await supabase
     .from('sets')
-    .select('*, usuarios_perfil(username), fotos(url)')
+    .select('*, usuarios_perfil!inner(username, es_invitado), fotos(url)')
+    .eq('usuarios_perfil.es_invitado', false)
     .order('creado_en', { ascending: false })
     .limit(4);
 

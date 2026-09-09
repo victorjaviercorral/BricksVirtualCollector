@@ -31,12 +31,17 @@ export const getVitrinasPublicas = cache(async () => {
       nombre,
       descripcion,
       creado_en,
-      usuarios_perfil ( username, alias ),
+      usuarios_perfil!inner ( username, alias, es_invitado ),
       sets ( id, tematica, fotos ( url ) )
     `
     )
     .eq("estado", "publicada")
     .eq("visibilidad", "pública")
+    // Aislamiento de invitados (ADR-011, Fase 5). La RLS de `vitrinas` ya excluye a los invitados
+    // (no pueden publicar, y la política de lectura pública añade `not es_invitado`), pero se
+    // repite el filtro aquí — mismo criterio que /perfil/[id] — para no depender en silencio de
+    // la política vigente.
+    .eq("usuarios_perfil.es_invitado", false)
     .order("creado_en", { ascending: false });
 
   if (error) return [];
