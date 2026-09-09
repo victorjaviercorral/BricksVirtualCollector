@@ -89,6 +89,21 @@ El invitado nunca aparece ante terceros. Dos capas:
    - `getVitrinasPublicas`, `src/app/page.tsx`, `src/app/dashboard/page.tsx` — `!inner` +
      `es_invitado=false`, redundante con la RLS pero explícito.
 
+## 3.3 Contención de abuso (Fase 6)
+
+- **`/admin/*`**: el middleware (`src/lib/supabase/middleware.ts`) comprueba rol en **todo**
+  `/admin`, no solo `/admin/system`. `/admin/system` exige `isSystemRole` (`admin`/`sysadmin`);
+  el resto admite además `admin_exposiciones` (`isModeratorRole`). Un invitado (`role='user'`) o
+  una sesión sin perfil → redirigido a `/dashboard`.
+- **Fotos de invitado** (`POST /api/sets/foto`): un invitado (`user.is_anonymous`) sube con tope
+  **3 MB** (vs 10) y máximo **6 fotos** — se cuenta su carpeta `<uid>/` en `fotos_sets`. Un
+  invitado que necesita más crea una cuenta. La purga de 48 h se lleva los ficheros.
+- **`storage.buckets.file_size_limit`** (S7): migración `20260909140000` lo fija en los 3
+  buckets (2 / 10 / 5 MB) por si el proyecto real los tenía a null.
+- **Rate-limit de anon sign-in**: Supabase limita por IP (por defecto ~30/hora para
+  `signInAnonymously`). No hay almacén propio; si el volumen lo exige, subir el nivel es activar
+  CAPTCHA (punto 1 de §4) o mover el rate limiting a Upstash (S3, ADR-010).
+
 ## 4. Qué ajustar para un lanzamiento oficial
 
 Si el proyecto pasa de "prototipo de portfolio / early adopters" a producto con usuarios reales
@@ -107,8 +122,8 @@ declarados, revisar en este orden:
    documentar el elegido. Ligado a S3 (rate limiting compartido, ADR-010 — cuenta Upstash).
 5. **Aislamiento de superficies públicas** (Fase 5) verificado end-to-end: galería, mosaico,
    `/perfil/[id]`, home y Hub no muestran nada de invitados.
-6. **`/admin/*` cerrado a invitados y no-admin** (Fase 6): hoy `/admin/exposiciones` y
-   `/admin/bounties` no comprueban rol a nivel de página.
+6. **`/admin/*` cerrado a invitados y no-admin** — ✅ hecho en Fase 6 (middleware). Verificar en
+   vivo que un invitado no alcanza `/admin/exposiciones` ni `/admin/bounties`.
 7. **Términos §6** (notificación de cambios): hoy dice "con 15 días de antelación por email" —
    coherente para cuentas; para invitados no aplica (no hay email). Revisar redacción.
 8. **Barrido legal completo** (Fase 8): README, `src/components/tour/steps.ts:5` (menciona

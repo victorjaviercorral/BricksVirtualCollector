@@ -8,7 +8,8 @@ vi.mock('@/lib/supabase/server', () => ({
 
 const mockUpload = vi.fn();
 const mockGetPublicUrl = vi.fn();
-const mockAdminStorageFrom = vi.fn(() => ({ upload: mockUpload, getPublicUrl: mockGetPublicUrl }));
+const mockList = vi.fn();
+const mockAdminStorageFrom = vi.fn(() => ({ upload: mockUpload, getPublicUrl: mockGetPublicUrl, list: mockList }));
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({ storage: { from: mockAdminStorageFrom } })),
 }));
@@ -35,6 +36,7 @@ describe('POST /api/sets/foto (limpieza EXIF/GPS server-side, ADR-005/ADR-010)',
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
     mockToBuffer.mockResolvedValue(Buffer.from('imagen-limpia'));
     mockUpload.mockResolvedValue({ error: null });
+    mockList.mockResolvedValue({ data: [], error: null });
     mockGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://proyecto.supabase.co/storage/v1/object/public/fotos_sets/u1/123.jpg' } });
   });
 
@@ -148,6 +150,58 @@ describe('POST /api/sets/foto (limpieza EXIF/GPS server-side, ADR-005/ADR-010)',
       expect.any(Buffer),
       { contentType: 'image/jpeg', upsert: false }
     );
+  });
+
+  // --- Fase 6 (ADR-011): tope reducido para el modo invitado (user.is_anonymous).
+  const guestUser = { data: { user: { id: 'g1', is_anonymous: true } }, error: null };
+
+  it('invitado: 400 si la imagen supera los 3MB (tope reducido)', async () => {
+    mockGetUser.mockResolvedValue(guestUser);
+    const formData = new FormData();
+    formData.append('file', imageFile(4 * 1024 * 1024));
+
+    const res = await POST(buildRequest(formData));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/modo demo.*3MB/i);
+    expect(mockSharp).not.toHaveBeenCalled();
+  });
+
+  it('invitado: 400 si ya tiene 6 fotos subidas', async () => {
+    mockGetUser.mockResolvedValue(guestUser);
+    mockList.mockResolvedValue({ data: new Array(6).fill({ name: 'x.jpg' }), error: null });
+    const formData = new FormData();
+    formData.append('file', imageFile(1024));
+
+    const res = await POST(buildRequest(formData));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/hasta 6 fotos/i);
+    expect(mockList).toHaveBeenCalledWith('g1', expect.any(Object));
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it('invitado: 200 con una imagen de 2MB y 3 fotos previas', async () => {
+    mockGetUser.mockResolvedValue(guestUser);
+    mockList.mockResolvedValue({ data: new Array(3).fill({ name: 'x.jpg' }), error: null });
+    const formData = new FormData();
+    formData.append('file', imageFile(2 * 1024 * 1024));
+
+    const res = await POST(buildRequest(formData));
+    expect(res.status).toBe(200);
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/^g1\/\d+\.jpg$/),
+      expect.any(Buffer),
+      expect.any(Object)
+    );
+  });
+
+  it('cuenta real: el tope de invitado no aplica (4MB pasa)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1', is_anonymous: false } }, error: null });
+    const formData = new FormData();
+    formData.append('file', imageFile(4 * 1024 * 1024));
+
+    const res = await POST(buildRequest(formData));
+    expect(res.status).toBe(200);
+    expect(mockList).not.toHaveBeenCalled();
   });
 
   it('devuelve 500 si ocurre un error inesperado', async () => {

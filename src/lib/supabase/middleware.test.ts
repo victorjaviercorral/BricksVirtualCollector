@@ -133,6 +133,34 @@ describe('Supabase Middleware', () => {
     expect(NextResponse.redirect).toHaveBeenCalled();
   });
 
+  // --- Fase 6 (ADR-011): el chequeo de rol se extiende a TODO /admin, no solo /admin/system.
+  // Antes, /admin/exposiciones y /admin/bounties no tenían gate de rol a nivel de página, así
+  // que una sesión de invitado (role='user') podía verlas.
+
+  it('rechaza /admin/exposiciones con role="user" (un invitado tiene este rol)', async () => {
+    const req = mockRequestWithProfile('/admin/exposiciones', 'user');
+    await updateSession(req);
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
+  it('rechaza /admin/bounties sin perfil (sesión anónima recién creada)', async () => {
+    const req = mockRequestWithProfile('/admin/bounties', null);
+    await updateSession(req);
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
+  it('permite /admin/exposiciones con role="admin_exposiciones"', async () => {
+    const req = mockRequestWithProfile('/admin/exposiciones', 'admin_exposiciones');
+    await updateSession(req);
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+  });
+
+  it('permite /admin/moderacion con role="admin"', async () => {
+    const req = mockRequestWithProfile('/admin/moderacion', 'admin');
+    await updateSession(req);
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+  });
+
   it('debe probar setAll del middleware al configurar las cookies del response', async () => {
     const mockGetUser = vi.fn().mockResolvedValue({ data: { user: null } });
     vi.mocked(createServerClient).mockReturnValue({

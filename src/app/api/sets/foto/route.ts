@@ -21,6 +21,12 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB, coincide con el límite ya comu
 // (20260810150000_storage_buckets.sql) -- comprobado también aquí server-side: el límite del
 // cliente por sí solo no es una garantía (hallazgo relacionado con S1).
 
+// Tope reducido para el modo invitado (ADR-011, Fase 6 -- decisión del titular 2026-09-09):
+// el invitado sube fotos reales pero con menos margen de abuso; la purga de 48h se lleva los
+// ficheros. Un invitado que necesita más crea una cuenta.
+const MAX_FILE_SIZE_INVITADO = 3 * 1024 * 1024; // 3MB
+const MAX_FOTOS_INVITADO = 6;
+
 export async function POST(request: Request) {
   try {
     const supabaseServer = await createServerClient();
@@ -35,8 +41,18 @@ export async function POST(request: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Falta el fichero de imagen" }, { status: 400 });
     }
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "La imagen no debe superar los 10MB" }, { status: 400 });
+
+    const esInvitado = user.is_anonymous === true;
+    const maxSize = esInvitado ? MAX_FILE_SIZE_INVITADO : MAX_FILE_SIZE;
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        {
+          error: esInvitado
+            ? "En modo demo las imágenes no pueden superar los 3MB. Crea una cuenta para subir fotos más grandes."
+            : "La imagen no debe superar los 10MB",
+        },
+        { status: 400 }
+      );
     }
     if (!file.type.startsWith("image/")) {
       return NextResponse.json({ error: "El fichero debe ser una imagen" }, { status: 400 });
@@ -74,6 +90,22 @@ export async function POST(request: Request) {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    // Tope de nº de fotos para el modo invitado. Se cuenta la carpeta del invitado en el bucket
+    // (el path es siempre `<uid>/...`), que es exactamente lo que la purga de 48h borra.
+    if (esInvitado) {
+      const { data: existentes } = await supabaseAdmin.storage
+        .from("fotos_sets")
+        .list(user.id, { limit: MAX_FOTOS_INVITADO + 1 });
+      if ((existentes?.length || 0) >= MAX_FOTOS_INVITADO) {
+        return NextResponse.json(
+          {
+            error: `En modo demo puedes subir hasta ${MAX_FOTOS_INVITADO} fotos. Crea una cuenta para subir sin límite.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Mismo esquema de ruta que ya usaba el cliente (userData.user.id + timestamp) -- las
     // políticas de lectura pública de storage.objects para fotos_sets no cambian.
