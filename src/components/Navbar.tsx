@@ -278,13 +278,22 @@ export function Navbar({ user, profile }: { user: any, profile?: any }) {
                 </button>
               </>
             ) : (
-              <Link
-                href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full bg-foreground text-background px-4 py-3 rounded-lg font-bold text-center mt-2"
-              >
-                Entrar / Empezar a Coleccionar
-              </Link>
+              <div className="flex flex-col gap-2 mt-2">
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full border-2 border-foreground/20 px-4 py-3 rounded-lg font-bold text-center"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/registro"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full bg-foreground text-background px-4 py-3 rounded-lg font-bold text-center"
+                >
+                  Crear cuenta
+                </Link>
+              </div>
             )}
           </nav>
         </div>

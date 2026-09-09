@@ -152,7 +152,7 @@ export default async function PublicVitrinaPage({ params }: Props) {
           <p className="text-lg text-white/80 mb-10 leading-relaxed">
             Únete a nuestra comunidad global. Digitaliza tu colección, recibe recompensas y comparte tus mejores creaciones con el mundo.
           </p>
-          <Link href="/login" className="inline-flex items-center gap-2 bg-white text-black px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
+          <Link href="/registro" className="inline-flex items-center gap-2 bg-white text-black px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
             Crear mi Museo Gratis <ArrowRight size={20} />
           </Link>
         </div>

@@ -1,67 +1,56 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import Login from './page';
 import { createClient } from '@/lib/supabase/client';
 
-// Mocks
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: vi.fn(),
-}));
+// El auto-registro implícito y el checkbox de términos en el login se retiraron en la Fase 2 del
+// acceso de invitado (ADR-011): decisión de producto, no un test mal escrito. El registro real
+// vive ahora en /registro. Ver docs/testing/fase2-login-registro.md.
+vi.mock('@/lib/supabase/client', () => ({ createClient: vi.fn() }));
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
-describe('Página de Login', () => {
-  let mockSignInWithPassword: any;
-  let mockSignUp: any;
+describe('Página de Login (solo entrar)', () => {
+  let mockSignInWithPassword: Mock;
+  let mockSignInAnonymously: Mock;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    
     mockSignInWithPassword = vi.fn();
-    mockSignUp = vi.fn();
+    mockSignInAnonymously = vi.fn();
 
     vi.mocked(createClient).mockReturnValue({
       auth: {
         signInWithPassword: mockSignInWithPassword,
-        signUp: mockSignUp,
-      }
-    } as any);
+        signInAnonymously: mockSignInAnonymously,
+      },
+    } as unknown as ReturnType<typeof createClient>);
 
-    // Mock window.location.href
-    Object.defineProperty(window, 'location', {
-      value: { href: '' },
-      writable: true
-    });
+    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true });
   });
 
-  it('debe renderizar el formulario correctamente', () => {
+  it('renderiza el formulario de entrada sin checkbox de términos', () => {
     render(<Login />);
-    
-    expect(screen.getByText('Acceso Seguro')).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Acceso Seguro' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('coleccionista@ejemplo.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^entrar$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
-  it('debe mostrar error si no se aceptan los términos', () => {
+  it('ofrece crear cuenta y probar como invitado', () => {
     render(<Login />);
-    
-    fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'test@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
-    
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
-
-    expect(screen.getByText('Debes aceptar la Política de Privacidad y los Términos para continuar.')).toBeInTheDocument();
-    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: /crea una cuenta/i })).toHaveAttribute('href', '/registro');
+    expect(screen.getByRole('button', { name: /probar sin registrarme/i })).toBeInTheDocument();
   });
 
-  it('debe manejar el login exitoso y redirigir a dashboard', async () => {
+  it('login correcto redirige al dashboard', async () => {
     mockSignInWithPassword.mockResolvedValueOnce({ error: null });
-
     render(<Login />);
-    
+
     fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'test@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He leído y acepto/i }));
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     await waitFor(() => {
       expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: 'test@test.com', password: 'password123' });
@@ -69,68 +58,30 @@ describe('Página de Login', () => {
     });
   });
 
-  it('debe registrar al usuario si el login falla por credenciales inválidas y redirigir', async () => {
+  it('credenciales inválidas: muestra mensaje y enlace a /registro, sin crear cuenta', async () => {
     mockSignInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid login credentials' } });
-    mockSignUp.mockResolvedValueOnce({ data: { session: { user: 'test' } }, error: null });
-
     render(<Login />);
-    
-    fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'new@test.com' } });
+
+    fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'desconocido@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He leído y acepto/i }));
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalledWith({ email: 'new@test.com', password: 'password123', options: { data: { terms_version: 'v1.0' } } });
-      expect(window.location.href).toBe('/dashboard');
+      expect(screen.getByText(/correo o contraseña incorrectos/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /no tienes cuenta todavía/i })).toHaveAttribute('href', '/registro');
     });
+    expect(window.location.href).toBe('');
   });
 
-  it('debe mostrar mensaje si el registro se completó pero requiere confirmación', async () => {
-    mockSignInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid login credentials' } });
-    mockSignUp.mockResolvedValueOnce({ data: { session: null }, error: null });
-
-    render(<Login />);
-    
-    fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'new@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He leído y acepto/i }));
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/exige confirmación por email/i)).toBeInTheDocument();
-      expect(window.location.href).not.toBe('/dashboard');
-    });
-  });
-
-  it('debe mostrar mensaje de error si el registro falla', async () => {
-    mockSignInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid login credentials' } });
-    mockSignUp.mockResolvedValueOnce({ data: { session: null }, error: { message: 'Password is too weak' } });
-
-    render(<Login />);
-    
-    fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'new@test.com' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'weak' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He leído y acepto/i }));
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Password is too weak')).toBeInTheDocument();
-    });
-  });
-
-  it('debe mostrar mensaje de error del login original si el error no es por credenciales inválidas', async () => {
+  it('otros errores de login se muestran tal cual', async () => {
     mockSignInWithPassword.mockResolvedValueOnce({ error: { message: 'Rate limit exceeded' } });
-
     render(<Login />);
-    
+
     fireEvent.change(screen.getByPlaceholderText('coleccionista@ejemplo.com'), { target: { value: 'test@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He leído y acepto/i }));
-    fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     await waitFor(() => {
-      expect(mockSignUp).not.toHaveBeenCalled();
       expect(screen.getByText('Rate limit exceeded')).toBeInTheDocument();
     });
   });
