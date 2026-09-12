@@ -176,8 +176,20 @@ describe('BountiesSectionClient', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
+    // Flaky intermitente en CI (visto 12/09/2026, no reproducible en local tras 8 pasadas
+    // completas de la suite): al abrir el modal, handleOpenBounty todavía tiene en vuelo el
+    // fetch de userSets (la promesa de `.from('sets')...` sigue pendiente cuando el `waitFor` de
+    // arriba resuelve, porque solo espera al diálogo, no a esa segunda petición). La aserción
+    // original comprobaba el cierre justo después de fireEvent.keyDown sin esperar, asumiendo un
+    // re-render síncrono -- válido en local, pero bajo el scheduler más lento/contendido de un
+    // runner de CI el commit de React puede no haber ocurrido todavía en ese instante. La
+    // aserción era correcta en su expectativa (el modal SÍ se cierra); lo incorrecto era no
+    // esperar a que el cierre se reflejara en el DOM. Se corrige con waitFor, sin cambiar lo que
+    // se verifica.
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 
   it('debería mostrar error en toast si la api de claim falla', async () => {
