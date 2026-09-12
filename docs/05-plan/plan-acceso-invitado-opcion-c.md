@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-4 ✅ aplicadas · Fases 5-6 entregadas · S7 pendiente de aplicar)
+estado: en ejecución (Fases 0-6 ✅ · Fase 7 en curso por el titular · Fase 8 entregada, capturas pendientes · S7 pendiente de aplicar)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -406,7 +406,30 @@ Para que el invitado tenga con qué interactuar desde el primer segundo:
 
 ---
 
-### Fase 8 — Copy, legal y documentación · ~medio día
+### Fase 8 — Copy, legal y documentación · ~medio día · 🟡 ENTREGADA — PENDIENTE DE CAPTURAS (2026-09-12)
+
+> **Estado:** rama `feat/acceso-invitado-fase-8-docs` (PR). Sin código de producción ni
+> migraciones — solo `docs/`, `legal/`, `README.md` y un comentario en `steps.ts`.
+> 1. **Política de privacidad y Términos:** ya quedaron correctos en la Fase 2 (sección "Modo
+>    invitado" con las 48 h, sin email, sin datos de terceros); revisados de nuevo ahora que las
+>    Fases 3-6 están operativas — el texto sigue siendo exacto, sin cambios.
+> 2. **README:** el aviso de "prototipo" describía un registro cerrado y contenido ficticio —
+>    **falso** desde la Fase 2. Reescrito con los tres niveles de acceso y enlace a ADR-011.
+>    Recuento de ADRs corregido (9 → 12). **Capturas/GIF siguen pendientes** — necesitan una
+>    sesión real del titular con el flujo de invitado ya desplegado.
+> 3. **`tour/steps.ts`:** ya no menciona el entorno de solo lectura de ADR-009 (superado); explica
+>    que el modo invitado sí ejecuta los flujos del tour.
+> 4. **`navegacion-y-flujos.md`:** sección nueva "Los tres niveles de acceso" (tabla
+>    visitante/invitado/coleccionista + puntos de entrada), enlazada a
+>    [[03-diseno/acceso-y-registro]]; retirada la nota obsoleta sobre revertir `/exposiciones`
+>    público si ADR-009 cerraba el contenido.
+> 5. **`auditoria-arquitectura.md`:** nota en el resumen ejecutivo y en §3.10 — ADR-009 superado
+>    por ADR-011, el veredicto GO/NO-GO se re-emite en la Fase 9 (preflight), no en este
+>    documento histórico.
+> 6. **`FASES_Y_MEJORAS.md`:** fila 22 actualizada (no se "cierra": quedan las Fases 7 y 9).
+>
+> Verificación local: `tsc` limpio, `lint:ci` 154 (sin cambios — ningún fichero de `src/` toca
+> lógica, solo un comentario). Sin migraciones que aplicar.
 
 1. **Política de privacidad:** sección nueva sobre el modo invitado — no se pide email, qué se
    guarda (contenido creado en la sesión), cuánto (48 h), que se borra por completo, y que no

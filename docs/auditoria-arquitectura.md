@@ -7,7 +7,7 @@ exposicion: X2
 estado: emitida
 version: 1.2
 fecha: 2026-08-10
-actualizado: 2026-08-10 — Iteración 3: mock data, migraciones (sin aplicar) y autorización de servidor cerrados; ver nota en §3.10
+actualizado: 2026-09-09 — ADR-009 (§3.10) superada por ADR-011 (acceso de invitado); veredicto GO/NO-GO se re-emite en la Fase 9 de ese plan, no aquí. Nota previa (Iteración 3): mock data, migraciones (sin aplicar) y autorización de servidor cerrados; ver nota en §3.10
 alcance: repositorio completo (working tree)
 commit_base: 16b8908
 tags: [spec-vjc, auditoria, pre-lanzamiento]
@@ -65,6 +65,18 @@ esqueleto; lo que falla es el acabado y la coherencia entre lo documentado y lo 
 > (lista blanca de cobertura) sigue siendo cierto en esencia, aunque la lista ha crecido.
 > **Veredicto: sigue NO-GO** hasta completar la verificación positiva pendiente. Detalle completo
 > en `docs/05-plan/seguimiento-iteracion-3.md`.
+>
+> **Actualización (09/09/2026, ADR-011):** el modelo de entorno público de ADR-009 (§3.10) queda
+> **superado**. Sus dos bloqueos ("A1 migraciones incompletas" y "S1 escalada de privilegios")
+> se cerraron en las Iteraciones 1 y 3, así que en vez de un despliegue de solo lectura se
+> implementa **acceso de invitado con sandbox aislado** (tres niveles: visitante / invitado con
+> sesión anónima / cuenta registrada) — ver
+> [ADR-011](06-decisiones/ADR-011-acceso-invitado-tres-niveles.md) y el plan de 9 fases en
+> [[05-plan/plan-acceso-invitado-opcion-c]]. **Este documento no se reescribe** con el nuevo
+> modelo (es un diagnóstico de un momento dado, 10/08/2026); el veredicto GO/NO-GO para el
+> lanzamiento se **re-emite en la Fase 9** de ese plan mediante
+> `spec-vjc-framework:preflight` contra el despliegue real, que es la comprobación positiva que
+> corresponde, no una actualización más de este texto.
 
 ---
 
@@ -264,6 +276,13 @@ Ordenados por daño a la reputación profesional si un contacto de LinkedIn abre
 ---
 
 ## 3.10 Decisión de entorno de demostración (ADR-009) y su efecto sobre los hallazgos
+
+> **Superada (09/09/2026).** Esta sección describe una decisión (ADR-009) que nunca se activó y
+> que [ADR-011](06-decisiones/ADR-011-acceso-invitado-tres-niveles.md) sustituye por el modelo de
+> acceso de invitado. Se conserva sin reescribir como registro histórico del análisis de
+> hallazgos frente a "solo lectura"; el análisis equivalente frente al modelo vigente vive en
+> ADR-011 §Consecuencias (qué sigue obligatorio aunque haya invitados: S1, S5, S3, S2 — y qué
+> deja de serlo: moderación de terceros, coste de Storage sin techo, registro cerrado).
 
 **Actualización 2026-08-10.** Tras esta auditoría se ha tomado y documentado la decisión de
 arquitectura del entorno público: **despliegue único sobre la infraestructura existente, con una
