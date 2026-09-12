@@ -1,8 +1,10 @@
 // Definición declarativa del tour de onboarding.
 //
 // El tour es EXPLICATIVO, no interactivo: narra los flujos clave resaltando elementos reales de
-// la interfaz mientras navega entre rutas. No dispara ninguna escritura, por lo que funciona
-// también en el entorno de demostración de solo lectura (ADR-009).
+// la interfaz mientras navega entre rutas. No dispara ninguna escritura por sí mismo, así que
+// funciona igual con una cuenta registrada o con una sesión de invitado (ADR-011) — el modo
+// invitado SÍ puede ejecutar los flujos que el tour describe (crear vitrina, subir set, votar,
+// reclamar bounty), a diferencia del entorno de solo lectura de ADR-009, ya superado.
 //
 // Cada paso apunta a un elemento vía atributo `data-tour="<id>"`. Si ese elemento no existe en
 // el DOM (p. ej. una cuenta sin vitrinas todavía), el overlay degrada a un tooltip centrado con

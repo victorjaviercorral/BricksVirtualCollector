@@ -7,16 +7,23 @@ los metadatos EXIF de tus fotos eliminados antes de publicarlas.
 > ### ⚠️ Estado: prototipo
 >
 > Este es un **prototipo de demostración técnica con fines de portfolio**. No es un producto
-> comercial: no ofrece servicios de pago, no muestra publicidad y no admite el registro de nuevos
-> usuarios. El contenido visible es ficticio.
+> comercial: no ofrece servicios de pago ni muestra publicidad. Tres formas de entrar:
+>
+> - **Visitante** — sin sesión, navega todo el contenido público (`/galeria`, `/exposiciones`,
+>   `/bounties`, vitrinas públicas).
+> - **Probar sin registrarme** — sesión anónima de Supabase con un sandbox propio: puedes crear
+>   una vitrina, subir un set, votar y reclamar un bounty de verdad. Nunca es público y se borra
+>   por completo a las 48 h ([ADR-011](docs/06-decisiones/ADR-011-acceso-invitado-tres-niveles.md)).
+> - **Cuenta registrada** — con correo, para que tu colección sea permanente y pública.
 >
 > Su estado real —incluidos los defectos conocidos— está documentado sin maquillaje en
 > [`docs/auditoria-arquitectura.md`](docs/auditoria-arquitectura.md). Si vienes a mirar el código,
 > ese es el documento que da contexto.
 
 <!--
-  CAPTURAS: insertar aquí 2-3 imágenes o un GIF corto del recorrido
-  (landing → vitrina pública → mesa de trabajo). Guardar en `public/screenshots/`.
+  CAPTURAS: insertar aquí 2-3 imágenes o un GIF corto del recorrido de invitado
+  (landing → "Probar sin registrarme" → crear vitrina/subir set → vitrina pública de la galería).
+  Guardar en `public/screenshots/`. Pendiente (Fase 8, requiere sesión real del titular).
 -->
 
 ---
@@ -101,7 +108,7 @@ definición de la implementación y deja rastro de cada decisión.
 | [Auditoría de arquitectura](docs/auditoria-arquitectura.md) | Estado real del proyecto: hallazgos con evidencia, severidad y plan por fases |
 | [Historial de fases](docs/00-proyecto/FASES_Y_MEJORAS.md) | Registro de trazabilidad de todas las iniciativas |
 | [Especificación](docs/02-spec/spec.md) | Requisitos técnicos derivados del PRD |
-| [Decisiones (ADR)](docs/06-decisiones/) | 9 registros de decisión con alternativas descartadas |
+| [Decisiones (ADR)](docs/06-decisiones/) | 12 registros de decisión con alternativas descartadas |
 | [Guía de usuario](docs/09-guia-usuario/) | 12 secciones, servidas en `/como-funciona` |
 | [Estrategia de testing](docs/testing/) | Política de cobertura y diagnóstico |
 | [Textos legales](legal/) | Aviso legal, privacidad, cookies, términos y propiedad intelectual |

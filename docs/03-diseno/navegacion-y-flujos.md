@@ -5,7 +5,7 @@ subtipo: arquitectura-de-navegacion
 estado: implementado
 version: 1
 fecha: 2026-09-06
-relacionada_con: [exposiciones-y-logros-flujo, plan-intervencion-post-iteracion-3, ADR-009-entorno-demo-publico]
+relacionada_con: [exposiciones-y-logros-flujo, plan-intervencion-post-iteracion-3, ADR-011-acceso-invitado-tres-niveles, acceso-y-registro]
 tags: [spec-vjc, diseno, navegacion, zero-duplication, flujos-de-usuario]
 ---
 
@@ -14,6 +14,22 @@ tags: [spec-vjc, diseno, navegacion, zero-duplication, flujos-de-usuario]
 **Origen:** segunda batería de correcciones de flujo (06/09/2026). Tras H5 el titular detectó
 que seguía habiendo CTAs sin destino, secciones huérfanas (sin entrada en la navegación) y
 flujos duplicados. Este documento fija el modelo para que no vuelva a divergir.
+
+## Los tres niveles de acceso (ADR-011)
+
+Ortogonal a los dos contextos de abajo: quién está detrás de la sesión determina qué puede
+*hacer*, no qué puede *ver*. Detalle completo (consentimiento, upgrade, ciclo de vida) en
+[[acceso-y-registro]].
+
+| Nivel | Sesión | Puede | Puntos de entrada |
+|---|---|---|---|
+| **Visitante** | Ninguna | Navegar "Explorar" en solo lectura | — |
+| **Invitado** | Anónima (`is_anonymous`) | Todo lo de "Mi Museo" en un sandbox propio que expira a las 48 h; nunca publica de verdad (visibilidad pública bloqueada por RLS) ni aparece en superficies públicas | Botón "Probar sin registrarme" en `/login`, `/registro` y el hero de `/` (componente `EntrarComoInvitado`) |
+| **Coleccionista** | Cuenta real | Todo, y su contenido público sí es visible | `/registro` (alta explícita), o **upgrade** desde el modo invitado (banner `BannerInvitado` en el layout raíz) conservando lo creado |
+
+`/login` (solo entrar) y `/registro` (crear cuenta) están separados a propósito — antes un mismo
+formulario auto-registraba con cualquier email desconocido, lo que hacía imposible distinguir
+"probar" de "darse de alta". Cada uno enlaza al otro y a la entrada de invitado.
 
 ## Los dos contextos
 
@@ -102,5 +118,6 @@ sus sets delante en el momento de decidir con cuál apuntarse.
 - **No hay visor 3D real**: `/vitrina/[id]` es una rejilla 2D. La home ya no promete "gira,
   acerca" — dice "recorre las colecciones".
 - **`/exposicion` y `/exposiciones` pasan a ser públicas** en `middleware.ts`. Consistente con
-  `/bounties` y `/vitrina`. Si ADR-009 decide cerrar todo el contenido tras login, revertir
-  esa línea es suficiente.
+  `/bounties` y `/vitrina`. Con ADR-011 (acceso de invitado) vigente esto es la decisión
+  definitiva, no una reversión pendiente: cuanto más se puede explorar sin sesión, mejor
+  funciona el embudo visitante → invitado → cuenta.
