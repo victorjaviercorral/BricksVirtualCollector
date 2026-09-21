@@ -1,0 +1,37 @@
+name: E2E invitado
+
+# Fase 9 del plan de acceso de invitado (ADR-011). Corre contra un Supabase de PRUEBAS, nunca contra
+# producción. No es parte del Quality Gate: necesita secretos, tarda más y un fallo de infraestructura
+# no debe bloquear PRs. Nocturno + manual.
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  e2e-invitado:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Sembrar el Supabase de pruebas
+        run: npm run e2e:seed
+      - name: E2E de invitado
+        run: npm run test:e2e:invitado
+      - name: Informe de Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

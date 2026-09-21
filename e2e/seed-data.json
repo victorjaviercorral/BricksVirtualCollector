@@ -1,0 +1,11 @@
+{
+  "museo": { "email": "e2e-museo@example.com", "password": "E2e-Museo-Passw0rd!", "alias": "Museo E2E" },
+  "vitrinas": [
+    { "nombre": "E2E Galaxia", "tematica": "Star Wars", "sets": ["E2E Caza estelar", "E2E Destructor"] },
+    { "nombre": "E2E Ingeniería", "tematica": "Technic", "sets": ["E2E Grúa", "E2E Cohete"] },
+    { "nombre": "E2E Ciudad", "tematica": "Icons", "sets": ["E2E Café", "E2E Estación"] }
+  ],
+  "bounty": { "nombre_set": "E2E Reto del museo", "tematica": "Star Wars", "recompensa": 500 },
+  "exposicion": { "titulo": "E2E Exposición continua", "descripcion": "Exposición sembrada para el E2E de invitado", "setAprobado": "E2E Caza estelar" },
+  "invitado": { "vitrina": "E2E Vitrina de invitado", "set": "E2E Set de invitado", "piezas": 1200 }
+}

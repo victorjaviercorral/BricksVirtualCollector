@@ -6,6 +6,7 @@ import * as motion from "framer-motion/client";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useEsInvitado } from "@/lib/use-es-invitado";
 
 interface CrearVitrinaModalProps {
   isOpen: boolean;
@@ -15,11 +16,16 @@ interface CrearVitrinaModalProps {
 export function CrearVitrinaModal({ isOpen, onClose }: CrearVitrinaModalProps) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [visibilidad, setVisibilidad] = useState<"privada" | "pública" | "con_enlace">("pública");
+  const [visibilidadElegida, setVisibilidad] = useState<"privada" | "pública" | "con_enlace">("pública");
   const [loading, setLoading] = useState(false);
   
   const router = useRouter();
   const supabase = createClient();
+  const esInvitado = useEsInvitado();
+
+  // Un invitado no puede publicar (RLS, ADR-011): "pública" se degrada a "privada" en vez de
+  // ofrecérsela y terminar en un error de política de seguridad. Derivado, no un efecto.
+  const visibilidad = esInvitado && visibilidadElegida === "pública" ? "privada" : visibilidadElegida;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,8 +136,10 @@ export function CrearVitrinaModal({ isOpen, onClose }: CrearVitrinaModalProps) {
               {/* Opción Pública */}
               <button 
                 type="button"
+                disabled={esInvitado}
+                title={esInvitado ? "Crea una cuenta para publicar tus vitrinas" : undefined}
                 onClick={() => setVisibilidad("pública")}
-                className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                   visibilidad === 'pública' 
                     ? 'border-brand-blue bg-brand-blue text-white' 
                     : 'border-black/10 dark:border-white/10 text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5'
@@ -162,6 +170,7 @@ export function CrearVitrinaModal({ isOpen, onClose }: CrearVitrinaModalProps) {
               {visibilidad === 'privada' && "Solo tú podrás ver esta vitrina y sus sets. Perfecto para inventario personal."}
               {visibilidad === 'pública' && "La vitrina será visible en el museo para todos. Ideal para exhibir tu colección."}
               {visibilidad === 'con_enlace' && "Solo tú y las personas con el enlace podrán ver esta vitrina y sus sets. Perfecto para compartir en privado."}
+              {esInvitado && " En modo demo tus vitrinas son privadas; crea una cuenta para publicarlas."}
             </p>
           </div>
 

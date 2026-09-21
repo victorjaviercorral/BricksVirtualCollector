@@ -35,6 +35,7 @@ describe('EditVitrinaModal', () => {
     (useRouter as any).mockReturnValue({ refresh: mockRefresh });
     
     mockSupabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1', is_anonymous: false } } }) },
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ error: null })
@@ -89,5 +90,23 @@ describe('EditVitrinaModal', () => {
       expect(toast.error).toHaveBeenCalledWith('Error al actualizar la vitrina');
       expect(mockRefresh).not.toHaveBeenCalled();
     });
+  });
+
+  it('invitado: "Pública" queda deshabilitada y se explica por qué (ADR-011)', async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'g1', is_anonymous: true } } });
+    render(<EditVitrinaModal vitrina={{ ...mockVitrina, visibilidad: 'privada' }} />);
+    fireEvent.click(screen.getByText('Editar Vitrina', { selector: 'button' }));
+
+    const publica = screen.getByText('Pública', { selector: 'strong' }).closest('button');
+    await waitFor(() => expect(publica).toBeDisabled());
+    expect(screen.getByText('Crea una cuenta para publicar')).toBeInTheDocument();
+  });
+
+  it('cuenta real: "Pública" sigue habilitada', async () => {
+    render(<EditVitrinaModal vitrina={mockVitrina} />);
+    fireEvent.click(screen.getByText('Editar Vitrina', { selector: 'button' }));
+    const publica = screen.getByText('Pública', { selector: 'strong' }).closest('button');
+    await waitFor(() => expect(mockSupabase.auth.getUser).toHaveBeenCalled());
+    expect(publica).not.toBeDisabled();
   });
 });

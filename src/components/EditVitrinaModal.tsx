@@ -5,6 +5,7 @@ import { X, Edit3 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useEsInvitado } from "@/lib/use-es-invitado";
 
 export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const esInvitado = useEsInvitado();
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,11 +94,13 @@ export default function EditVitrinaModal({ vitrina }: { vitrina: any }) {
                   </button>
                   <button
                     type="button"
+                    disabled={esInvitado}
+                    title={esInvitado ? "Crea una cuenta para publicar tus vitrinas" : undefined}
                     onClick={() => setVisibilidad("pública")}
-                    className={`p-4 rounded-xl border text-left transition-all ${visibilidad === 'pública' ? 'border-brand-blue bg-brand-blue/5' : 'border-black/10 dark:border-white/10 opacity-60'}`}
+                    className={`p-4 rounded-xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${visibilidad === 'pública' ? 'border-brand-blue bg-brand-blue/5' : 'border-black/10 dark:border-white/10 opacity-60'}`}
                   >
                     <strong className="block mb-1">Pública</strong>
-                    <span className="text-xs">Visible en el museo y perfil</span>
+                    <span className="text-xs">{esInvitado ? "Crea una cuenta para publicar" : "Visible en el museo y perfil"}</span>
                   </button>
                 </div>
               </div>
