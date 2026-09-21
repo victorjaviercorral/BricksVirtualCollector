@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-8 ✅ · S7 aplicada · pendiente solo la Fase 9 y las capturas del README)
+estado: en ejecución (Fases 0-8 ✅ · Fase 9 entregada, pendiente de ejecutar el E2E y del preflight · capturas del README pendientes)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -470,7 +470,17 @@ el comportamiento real (solo lectura, "puntos", retención de logs no cumplida).
 
 ---
 
-### Fase 9 — E2E automatizado + preflight · ~1 día
+### Fase 9 — E2E automatizado + preflight · ~1 día · 🟡 E2E ENTREGADO, SIN EJECUTAR (2026-09-21)
+
+> **Estado:** rama `feat/acceso-invitado-fase-9-e2e`. **Entregado:** `e2e/invitado.spec.ts` (10 pasos,
+> incluye S2: foto con GPS real sin EXIF en el fichero servido), `playwright.invitado.config.ts`
+> (con salvaguardas contra producción), `scripts/e2e-seed.mjs` (siembra reproducible),
+> workflow nocturno `e2e-invitado.yml`, guía `docs/testing/e2e-invitado.md`, y arreglado
+> `e2e/auth.spec.ts` (llevaba roto desde la Fase 2: buscaba el botón "Entrar / Registrarse").
+> **Hallazgo real al escribirlo:** el modal "Crear vitrina" ofrecía "Pública" por defecto y a un
+> invitado la RLS se lo rechazaba → corregido (`useEsInvitado`, `CrearVitrinaModal`, `EditVitrinaModal`).
+> **Sin ejecutar:** necesita el proyecto Supabase de pruebas (decisión D2, acción del titular).
+> **Pendiente:** ejecutar el E2E, `preflight`, veredicto y tag `v1.0.0-acceso-invitado`.
 
 1. **Spec de Playwright** `e2e/invitado.spec.ts` contra un Supabase de pruebas (no producción):
    entrar como invitado → crear vitrina → subir set → votar → reclamar bounty → ver insignia →

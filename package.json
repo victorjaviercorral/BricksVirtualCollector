@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:invitado": "playwright test -c playwright.invitado.config.ts",
+    "e2e:seed": "node scripts/e2e-seed.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

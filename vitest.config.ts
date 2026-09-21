@@ -29,6 +29,7 @@ export default defineConfig({
       'src/app/api/auth/delete-account/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/use-es-invitado.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/insignias.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/insignias-usuario.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/bounties.{test,spec}.?(c|m)[jt]s?(x)',
@@ -63,6 +64,8 @@ export default defineConfig({
         'src/components/auth/**',
         'src/lib/legal.ts',
         // Fase 4 acceso invitado (ADR-011): upgrade invitado → cuenta real
+        'src/lib/use-es-invitado.ts',
+        'src/components/CrearVitrinaModal.tsx',
         'src/components/BannerInvitado.tsx',
         'src/components/UpgradeCuentaModal.tsx',
         'src/app/mesa-de-trabajo/**',

@@ -10,17 +10,21 @@ test.describe('Flujo de Autenticación E2E', () => {
     await expect(page.getByPlaceholder('••••••••')).toBeVisible();
     
     // Verificar que el botón de login está
-    const loginButton = page.getByRole('button', { name: /Entrar \/ Registrarse/i });
+    const loginButton = page.getByRole('button', { name: /^Entrar$/ });
     await expect(loginButton).toBeVisible();
     
     // Verificar mensaje de anonimato
     await expect(page.getByText(/100% Anónimo/i)).toBeVisible();
+
+    // Fase 2 (ADR-011): login y registro están separados y hay entrada de invitado.
+    await expect(page.getByRole('button', { name: /Probar sin registrarme/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /crea una cuenta|regístrate/i }).first()).toBeVisible();
   });
 
   test('debe mostrar error de validación nativo si se intenta enviar el formulario vacío', async ({ page }) => {
     await page.goto('/login');
     
-    const loginButton = page.getByRole('button', { name: /Entrar \/ Registrarse/i });
+    const loginButton = page.getByRole('button', { name: /^Entrar$/ });
     await loginButton.click();
 
     // Como los inputs tienen el atributo required, el navegador bloquea el submit.
