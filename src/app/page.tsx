@@ -99,7 +99,7 @@ export default async function Home() {
       <section className="bg-brand-yellow rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-6 lg:p-10 flex flex-col lg:flex-row justify-between items-center gap-8 text-center lg:text-left">
         <div className="flex-1">
           <h2 className="text-3xl font-display font-black text-black leading-tight">Bounties Comunitarios</h2>
-          <p className="text-black/80 mt-2 font-bold text-base max-w-md">La comunidad necesita documentar estos sets. ¡Súbelos a tu vitrina y gana puntos masivos esta semana!</p>
+          <p className="text-black/80 mt-2 font-bold text-base max-w-md">La comunidad necesita documentar estos sets. ¡Súbelos a tu vitrina y gana Bricks esta semana!</p>
           <div className="inline-block mt-4 text-4xl md:text-5xl font-display font-black text-foreground bg-panel px-6 py-3 rounded-xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] rotate-2">
             {totalBountyBricks.toLocaleString()} <span className="text-brand-red text-2xl">Bricks</span>
           </div>
@@ -161,7 +161,7 @@ export default async function Home() {
         <Link href="/dashboard/insignias" className="md:col-span-5 bg-brand-red rounded-3xl border-2 border-foreground shadow-[4px_4px_0px_0px_#0F172A] dark:shadow-[4px_4px_0px_0px_#F8F9FA] p-8 flex flex-col justify-between min-h-[200px] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0F172A] dark:hover:shadow-[6px_6px_0px_0px_#F8F9FA] transition-all">
           <div className="space-y-3">
             <h3 className="text-2xl font-display font-bold text-white">Tu Progreso e Insignias</h3>
-            <p className="text-white/90 text-sm">Tus insignias, tus bricks recibidos, tu puesto en cada exposición y lo ganado en retos.</p>
+            <p className="text-white text-sm">Tus insignias, tus bricks recibidos, tu puesto en cada exposición y lo ganado en retos.</p>
             <span className="inline-flex items-center gap-1 text-white font-bold text-sm">Ver Mis Insignias <ArrowRight size={16} /></span>
           </div>
           <div className="mt-6">

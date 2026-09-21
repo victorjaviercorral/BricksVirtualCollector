@@ -80,7 +80,7 @@ export default function GaleriaClient({ vitrinas, temas }: { vitrinas: VitrinaCr
                     <span className="px-2 py-1 bg-foreground/5 dark:bg-foreground/10 rounded border border-foreground uppercase">
                       {v.numSets} {v.numSets === 1 ? "set" : "sets"}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-brand-blue group-hover:gap-2 transition-all">
+                    <span className="inline-flex items-center gap-1 text-brand-blue dark:text-sky-300 group-hover:gap-2 transition-all">
                       Ver vitrina <ArrowRight size={14} />
                     </span>
                   </div>
