@@ -480,7 +480,7 @@ el comportamiento real (solo lectura, "puntos", retención de logs no cumplida).
 > **Hallazgo real al escribirlo:** el modal "Crear vitrina" ofrecía "Pública" por defecto y a un
 > invitado la RLS se lo rechazaba → corregido (`useEsInvitado`, `CrearVitrinaModal`, `EditVitrinaModal`).
 > **Sin ejecutar:** necesita el proyecto Supabase de pruebas (decisión D2, acción del titular).
-> **Pendiente:** ejecutar el E2E, `preflight`, veredicto y tag `v1.0.0-acceso-invitado`.
+> **Preflight ejecutado el 21/09/2026: NO-GO** (bloqueante: sin copia de seguridad restaurada; ver `docs/09-lanzamiento/preflight-2026-09-21.md`). **Pendiente:** resolver el bloqueante, mergear las PR #12/#13 y repetir la verificación para llegar a GO CON EXCEPCIONES; ejecutar el E2E (opcional, ver decisión D2) y el tag `v1.0.0-acceso-invitado`.
 
 1. **Spec de Playwright** `e2e/invitado.spec.ts` contra un Supabase de pruebas (no producción):
    entrar como invitado → crear vitrina → subir set → votar → reclamar bounty → ver insignia →
