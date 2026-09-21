@@ -115,7 +115,10 @@ corregir" de ADR-009 ya no basta: hay que corregir de verdad.
 - Publicar `supabase/migrations/` expone el modelo RLS: es aceptable porque la seguridad de este
   proyecto está en las políticas, no en el secreto del esquema (ADR-009 §Contexto, punto 3),
   y S1 está cerrada.
-- La cuenta semilla ("museo", Fase 7) es contenido real permanente: se documenta como tal para
+- **Contenido semilla (Fase 7, completada 21/09/2026):** 8 vitrinas públicas de cuentas reales
+  (la cuenta "museo" y las de pruebas renombradas), 1 bounty y 1 exposición activa continua. Es
+  contenido real permanente, no se purga y **no debe borrarse** sin sustituirlo (un invitado nuevo
+  depende de él para tener con qué interactuar). La cuenta semilla ("museo", Fase 7) es contenido real permanente: se documenta como tal para
   que la purga no la toque (`es_invitado = false`).
 
 ## Criterio de verificación de la activación

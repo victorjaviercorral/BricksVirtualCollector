@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-6 ✅ · Fase 7 en curso por el titular · Fase 8 entregada, capturas pendientes · S7 pendiente de aplicar)
+estado: en ejecución (Fases 0-8 ✅ · S7 aplicada · pendiente solo la Fase 9 y las capturas del README)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -388,7 +388,28 @@ cobertura ≥ 85%.
 
 ---
 
-### Fase 7 — Contenido semilla · ~medio día
+### Fase 7 — Contenido semilla · ~medio día · ✅ COMPLETADA Y VERIFICADA (2026-09-21)
+
+> **Estado:** semilla montada por el titular en producción y comprobada con una **sesión de
+> invitado nueva** (anónima, con RLS, igual que la galería; el invitado de prueba se borró al
+> terminar): **8 vitrinas públicas** con **3 temáticas** (Star Wars, Icons, Technic), **8/8 con
+> portada real** y 0 sets sin foto, **1 bounty** pendiente ("BD1 del Año 90") y **1 exposición
+> activa continua** ("Star Wars: Return of the Jedi") con 1 set aprobado donde votar.
+>
+> **Decisión D1 (titular): opción (b) adaptada.** Cuenta "museo" nueva (alias "Sr Bricket": vitrinas
+> Technic, Icons y Galaxia StarWars, 4 sets con foto) **y** las vitrinas de pruebas anteriores
+> **renombradas** —no ocultadas ni borradas— con nombres y alias presentables
+> (`Star Wars: colección de exhibición`, `Star Wars: los imprescindibles`,
+> `El Imperio contraataca (Episodio V)`, `Colección Star Wars años 90`). Se eliminó a mano un set
+> sin foto ("La estrella de la muerte") que no se podía completar sin acceso a su cuenta.
+> **Es contenido real permanente**: sus dueños son cuentas registradas (`es_invitado = false`), así
+> que la purga de 48 h no lo toca.
+>
+> **Matices conocidos (no bloquean):** 6 de las 8 vitrinas son Star Wars (el filtro por temática
+> funciona pero con poca variedad — una vitrina más de otra temática lo mejoraría) y la exposición
+> depende de un único set aprobado, de la cuenta `brick`.
+> **Hecho de paso:** migración S7 `20260909140000` aplicada y verificada (los 3 buckets con
+> `file_size_limit`: 2 / 10 / 5 MB).
 
 Para que el invitado tenga con qué interactuar desde el primer segundo:
 
