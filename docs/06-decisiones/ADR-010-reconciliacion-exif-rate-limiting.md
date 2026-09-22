@@ -51,10 +51,19 @@ leía: era una promesa sin implementar, hallazgo S9). Ahora sí se lee, con cach
 para no convertir cada petición en una consulta a Supabase. Esto cierra la mitad de S9: el panel
 de administración ahora tiene efecto real.
 
-**Lo que sigue sin resolver:** el almacén sigue siendo un `Map` en memoria, no compartido entre
-instancias (S8 sigue abierto). Migrar a Upstash requiere que el titular cree una cuenta y
-provisione las variables de entorno correspondientes — es una decisión externa fuera del alcance
-de esta iteración de código. Queda como tarea pendiente explícita.
+**Lo que sigue sin resolver (en 2026-08-10):** el almacén sigue siendo un `Map` en memoria, no
+compartido entre instancias (S8 sigue abierto). Migrar a Upstash requiere que el titular cree una
+cuenta y provisione las variables de entorno correspondientes — es una decisión externa fuera del
+alcance de esta iteración de código. Queda como tarea pendiente explícita.
+
+**S8 cerrado el 22/09/2026.** El titular creó la cuenta y la base de datos Upstash Redis (tier
+gratuito); `src/lib/rate-limit.ts` usa ahora `@upstash/redis` (contador `INCR` + `EXPIRE` de
+ventana fija, compartido entre instancias) cuando `UPSTASH_REDIS_REST_URL` y
+`UPSTASH_REDIS_REST_TOKEN` están presentes en el entorno. Sin esas variables (local sin
+configurar) o si Upstash no responde, degrada al `Map` en memoria de siempre — nunca bloquea
+tráfico por un fallo del proveedor. Verificado con `INCR`/`EXPIRE`/`DEL` contra la API REST real
+de Upstash, no solo con mocks. Detalle en ADR-003 §Implementada y en
+`docs/09-lanzamiento/preflight-2026-09-21.md` (E2).
 
 ### EXIF (ADR-005): mantenida en su forma, con plan de migración concreto pendiente de ejecutar
 
@@ -113,8 +122,9 @@ solo la tabla del terminal).
    flujo completo -- limpieza server-side + bloqueo de la subida directa -- funciona de extremo a
    extremo contra infraestructura real, no solo contra mocks.
 
-**S2 queda cerrado.** Lo único que sigue abierto de este ADR es el rate limiting compartido
-(bloqueado por la cuenta de Upstash) y el test E2E no mockeado con GPS real (T2, ver más abajo).
+**S2 queda cerrado.** El rate limiting compartido (S8) se cerró después, el 22/09/2026 (ver
+§Rate limiting arriba). Lo único que sigue abierto de este ADR es el test E2E no mockeado con
+GPS real (T2, ver más abajo).
 
 ## Alternativas descartadas
 
@@ -129,11 +139,13 @@ solo la tabla del terminal).
 - ADR-003 y ADR-005 **permanecen `aceptada`** sin reescribirse — sus decisiones originales siguen
   siendo las correctas — pero ambas quedan enlazadas a este documento, que es la fuente de verdad
   sobre su estado de implementación real.
-- Queda un backlog explícito de dos tareas de infraestructura, cada una con su bloqueo declarado:
+- Quedaba un backlog explícito de dos tareas de infraestructura, cada una con su bloqueo
+  declarado; ambas están cerradas ahora:
   1. **Rate limiting → Upstash**: bloqueado por decisión externa del titular (crear cuenta).
+     **Cerrado 22/09/2026.**
   2. **EXIF → Route Handler server-side**: bloqueado por necesitar verificación contra Supabase
      real; no bloqueado por ninguna decisión pendiente del titular, es trabajo de código que debe
-     hacerse con acceso de prueba a la infraestructura.
+     hacerse con acceso de prueba a la infraestructura. **Cerrado 19/08/2026.**
 - Mientras el punto 2 no se resuelva, el copy de la aplicación que promete anonimato
   ("100% Anónimo" en `/login`, "Metadatos (EXIF) se eliminarán" en Mesa de Trabajo) sigue siendo
   cierto en su efecto para el usuario (los metadatos SÍ se eliminan antes de guardar), pero la
@@ -143,8 +155,8 @@ solo la tabla del terminal).
 ## Criterio de cierre de este ADR
 
 Este documento deja de ser necesario (puede marcarse `estado: resuelta`) cuando:
-1. `src/lib/rate-limit.ts` usa un almacén compartido entre instancias -- **sigue sin cumplirse**,
-   bloqueado por la cuenta de Upstash (decisión externa del titular).
+1. `src/lib/rate-limit.ts` usa un almacén compartido entre instancias -- **cumplido el
+   22/09/2026** (Upstash Redis, ver §Rate limiting arriba).
 2. Existe un test automatizado que sube una imagen con GPS y verifica su ausencia en el fichero
    servido -- **cumplido parcialmente**. Los tests de `src/app/api/sets/foto/route.test.ts`
    verifican que la ruta invoca `sharp` sin `.withMetadata()` (que es la limpieza en sí) y que

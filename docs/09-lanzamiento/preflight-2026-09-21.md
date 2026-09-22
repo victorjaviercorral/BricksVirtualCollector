@@ -8,7 +8,7 @@ fecha: 2026-09-21
 despliegue: https://bricks-virtual-collector.vercel.app
 commit_desplegado: 162f41c (main tras la PR #9) — verificado ANTES de las PR #12 y #13
 veredicto: GO CON EXCEPCIONES
-actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto (ver §Veredicto)
+actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto, quick wins (E3/E5/E6/E8/E9) y E2 (Upstash) resueltos (ver §Veredicto)
 relacionada_con: [ADR-011-acceso-invitado-tres-niveles, plan-acceso-invitado-opcion-c]
 tags: [spec-vjc, preflight, lanzamiento]
 ---
@@ -39,7 +39,7 @@ borrado de cuenta ejecutado de principio a fin con una cuenta desechable. Notas 
 | TLS válido y http→https | **OK** | TLS 1.3, cert `*.vercel.app` (Google Trust Services) hasta 27/11/2026; `http://` → **308** a `https://` |
 | Ningún secreto en el bundle servido | **OK** | 14 chunks descargados y revisados: ningún JWT con `role=service_role` ni valor de clave. Solo aparecen **referencias** a `process.env.SUPABASE_SERVICE_ROLE_KEY` (sin valor; en cliente es `undefined`). Observación: código de servidor arrastrado a chunks de cliente por un módulo compartido |
 | Ningún secreto en el repo público | **OK** | `.env.local` no está versionado (solo `.env.example`); búsqueda de JWT y `sb_secret_` en **todo el historial** sin coincidencias |
-| Rate limiting con ráfaga real | **OK con matiz** | 160 peticiones a `/api/health`: 91×`200` y 69×`429`. **Matiz (S3):** el almacén es un `Map` en memoria por instancia, no compartido |
+| Rate limiting con ráfaga real | **OK con matiz → resuelto en E2 (22/09/2026)** | 160 peticiones a `/api/health`: 91×`200` y 69×`429` (medido antes de E2). **Matiz original (S3):** el almacén era un `Map` en memoria por instancia, no compartido. Corregido: `src/lib/rate-limit.ts` usa Upstash Redis compartido cuando la variable de entorno está presente |
 | RLS: acceso a dato ajeno denegado | **OK** | Con la anon key: vitrinas no públicas → 0 filas · `PATCH usuarios_perfil.role='sysadmin'` → 42501 · `INSERT` de vitrina ajena → denegado |
 | Errores sin trazas ni rutas internas | **OK** | 404 en `/api/no-existe`, `/set/x`, `/perfil/<uuid>`; `POST /api/bricks` malformado → `401` con JSON; sin stack ni rutas en ningún cuerpo. Observación: `/vitrina/<no-uuid>` devuelve `200` (soft-404) |
 | `npm audit` sin altas/críticas | **FALLO → corregido en PR #12** | En el despliegue: **1 crítica** (`next` 16.0–16.3.2: RCE en la API de optimización de imágenes/AVIF y en servidores Windows), **2 altas** (`sharp <0.35.4`, libheif, procesa las fotos subidas; `nanoid`). PR #12 → `next 16.3.5`, `sharp 0.35.4`: `npm audit` = **0** |
@@ -159,6 +159,14 @@ Verificación local del PR de quick wins: `tsc` limpio, **625/625** tests (+13),
 S 95,67 / B 88,29 / F 94,11 / L 96,78, `lint:ci` 154, `next build` verde (`/robots.txt` y
 `/sitemap.xml` presentes en el árbol de rutas).
 
+**Resuelta el 22/09/2026, tras crear el titular la cuenta externa que la bloqueaba:**
+- **E2:** el titular creó una cuenta y base de datos Upstash Redis (tier gratuito) y provisionó
+  `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`. `src/lib/rate-limit.ts` usa ese almacén
+  compartido (`INCR` + `EXPIRE`, ventana fija) cuando las variables están presentes, y degrada al
+  `Map` en memoria de siempre si no lo están o si Upstash no responde (falla abierto: un
+  proveedor caído no bloquea tráfico). Verificado con `INCR`/`EXPIRE`/`DEL` contra la API REST
+  real de Upstash, no solo mocks. Detalle en ADR-003 §Implementada y ADR-010 §Rate limiting.
+
 **Deliberadamente no resueltas ahora** (evaluadas y descartadas por coste/riesgo, no por olvido):
 - **E10** — la exposición es a nivel de fila (RLS `using(true)`), no de columna; un `REVOKE` de
   columna sobre `role`/`consentimiento_*` rompería el propio chequeo de rol de
@@ -170,14 +178,14 @@ S 95,67 / B 88,29 / F 94,11 / L 96,78, `lint:ci` 154, `next build` verde (`/robo
   o una decisión de producto (E7 además contradice hoy la Política de Privacidad, que declara
   "no se realiza analítica web"); no son solo código.
 
-### Excepciones que siguen abiertas (E1, E2, E4, E7, E10, E11 + los restos parciales de E3/E5)
+### Excepciones que siguen abiertas (E1, E4, E7, E10, E11 + los restos parciales de E3/E5)
 
 Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no como bloqueante.
+**E2 se cerró el 22/09/2026** (ver arriba) y sale de esta tabla.
 
 | # | Fallo | Riesgo aceptado | Responsable | Fecha de corrección |
 |---|---|---|---|---|
 | E1 | Sin CSP (S5) | XSS sin segunda barrera; mitigado por el escapado de React y por no renderizar HTML de usuario | Claude / autor | _a fijar_ |
-| E2 | Rate limiting en memoria por instancia (S3) | Límite eludible repartiendo peticiones entre instancias | autor (cuenta Upstash) | _a fijar_ |
 | E3 | Resto: fotos ya subidas sin redimensionar; sin `next/image` en galería | Carga algo más lenta en vitrinas antiguas | Claude, si el Lighthouse tras el redimensionado en subida sigue por debajo de 90 | _a fijar_ |
 | E4 | Sin seguimiento de errores, alertas ni monitor de disponibilidad | Caídas o errores no detectados hasta que alguien avise | autor | _a fijar_ |
 | E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
