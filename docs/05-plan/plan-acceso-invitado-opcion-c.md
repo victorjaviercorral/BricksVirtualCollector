@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: completado (Fases 0-9 ✅ · preflight GO CON EXCEPCIONES 22/09/2026 · E2E automatizado y capturas del README quedan como mejora futura, no bloquean)
+estado: completado y cerrado definitivamente (Fases 0-9 ✅ · preflight GO CON EXCEPCIONES 22/09/2026 · excepciones de coste/beneficio bajo resueltas (E2/E3/E5/E6/E8/E9) · E10, E5-simulacro y E11-b cerrados como riesgo aceptado por el titular, con motivo documentado · quedan abiertas sin fecha E1/E4/E7 por depender de cuenta externa o decisión de producto · E2E automatizado y capturas del README quedan como mejora futura, no bloquean · tag v1.1.0)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -487,6 +487,20 @@ el comportamiento real (solo lectura, "puntos", retención de logs no cumplida).
 > temporal, datos verificados. PR #12 (dependencias) y #13 (accesibilidad) mergeadas. Las 11
 > excepciones restantes (E1-E11) quedan aceptadas por el titular como deuda conocida.
 > **Fase 9 completada.** Tag `v1.0.0-acceso-invitado` al cierre del plan.
+>
+> **Cierre definitivo (22/09/2026), tag `v1.1.0`:** ronda de resolución de excepciones por
+> coste/beneficio (PR #15: E3 parcial, E5, E6, E8, E9; PR #16: E2 vía Upstash Redis, cierra
+> también **S3** de la sección 4 de abajo) y ronda de verificación + decisiones explícitas del
+> titular sobre las restantes (PRs #17-#20): alerta de facturación verificada, región de Vercel
+> confirmada y corregida a Frankfurt (misma región que Supabase, sin transferencia internacional),
+> DPA de Supabase y Vercel revisados, y **tres riesgos aceptados explícitamente por el titular**
+> con su motivo documentado — E10 (perfiles públicos exponen metadatos vía la anon key: solo hay
+> una cuenta admin, la suya, sin operación real), E5-simulacro (rollback es función nativa de
+> Vercel con historial 100% verde, sin monetización) y E11-b (pasada manual de teclado: se acepta
+> el resultado de axe-core como evidencia suficiente). Detalle completo en
+> `docs/09-lanzamiento/preflight-2026-09-21.md` y filas 24-25 de `FASES_Y_MEJORAS.md`. Quedan
+> abiertas, sin fecha, solo E1 (CSP), E4 (monitorización) y E7 (analítica) — dependen de una
+> cuenta externa o una decisión de producto, no de trabajo pendiente de código.
 
 1. **Spec de Playwright** `e2e/invitado.spec.ts` contra un Supabase de pruebas (no producción):
    entrar como invitado → crear vitrina → subir set → votar → reclamar bounty → ver insignia →
@@ -507,13 +521,19 @@ documentadas; tag publicado.
 Estos siguen siendo obligatorios antes de **anunciar** el enlace, porque los invitados y las
 cuentas reales escriben datos reales:
 
-- **S1** — verificar en producción que la escalada de privilegios en RLS está cerrada (el repo
-  ya es público).
-- **S5** — cabecera `Content-Security-Policy` (hoy solo X-Frame/HSTS/nosniff).
-- **S3** — rate limiting con almacén compartido (requiere cuenta Upstash — decisión del titular).
-- **S2** — test extremo a extremo de la limpieza EXIF con una foto con GPS real.
+- **S1** — ✅ **verificado.** La comprobación funcional de la Fase 1 contra Supabase real ya
+  probó `role='sysadmin'` rechazado (42501) para un invitado; el preflight (§1 Seguridad) repitió
+  la prueba con la anon key sobre cuentas reales: mismo resultado.
+- **S5** — abierto (E1 del preflight, cabecera `Content-Security-Policy`). Sin fecha, requiere
+  una sesión dedicada de prueba (ver explicación en la conversación de cierre del preflight).
+- **S3** — ✅ **resuelto el 22/09/2026** (E2 del preflight). El titular creó la cuenta Upstash
+  Redis; `src/lib/rate-limit.ts` usa ese almacén compartido. Detalle en ADR-003 §Implementada.
+- **S2** — escrito pero sin ejecutar. `e2e/invitado.spec.ts` incluye el paso (foto con GPS real →
+  sin EXIF en el fichero servido), pero el E2E automatizado sigue sin correr por decisión D2 del
+  titular (sin proyecto Supabase de pruebas dedicado). No bloquea el lanzamiento.
 
-El preflight de la Fase 9 debe listarlos explícitamente como excepciones si no se abordan antes.
+El preflight de la Fase 9 los listó explícitamente como excepciones (E1-E11); ver su cierre
+definitivo en la nota de la Fase 9 más arriba.
 
 ---
 
