@@ -1,15 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
+import { Redis } from "@upstash/redis";
 
-// Cache en memoria para almacenar IPs temporalmente en el Vercel Edge.
-// Nota: Esta caché se limpia en cada "arranque en frío" (cold boot) del Edge function.
-// Es un Rate Limit "Middle-Ground", no 100% estricto como Redis, pero suficientemente bueno
-// para proteger contra ataques abusivos sin añadir dependencias externas.
-//
-// LIMITACIÓN CONOCIDA (hallazgo S8 de docs/auditoria-arquitectura.md): este almacén es un Map en
-// memoria del proceso. En un despliegue serverless/edge con múltiples instancias, cada una tiene
-// su propio contador -- no es un límite estrictamente compartido. La spec y ADR-003 decidieron
-// Upstash Redis como almacén compartido; ese cambio requiere una cuenta de Upstash (decisión
-// externa del titular) y queda fuera de esta iteración. Documentado en ADR-010.
+// S8/ADR-010 cerrado (22/09/2026): almacén compartido vía Upstash Redis (ADR-003) cuando las
+// variables de entorno UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN están presentes (Vercel
+// producción y preview). Sin ellas -- local sin `.env.local` configurado, o la suite de tests --
+// degrada al `Map` en memoria de siempre: sigue sirviendo de mitigación, solo que no compartida
+// entre instancias. Un fallo de red hacia Upstash tampoco debe tumbar la petición: se falla
+// abierto (se permite) igual que la lectura de `system_config` de abajo.
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const redis = upstashUrl && upstashToken ? new Redis({ url: upstashUrl, token: upstashToken }) : null;
+
+// Cache en memoria: fallback cuando no hay Upstash configurado (ver arriba).
+// Nota: esta caché se limpia en cada "arranque en frío" (cold boot) del Edge function.
 
 type RateLimitRecord = {
   count: number;
@@ -69,9 +72,33 @@ async function getRateLimitConfig(): Promise<RateLimitConfig> {
   }
 }
 
-export async function checkRateLimit(ip: string): Promise<{ success: boolean; limit: number; remaining: number }> {
+async function checkRateLimitRedis(
+  ip: string,
+  limit: number,
+  windowSec: number
+): Promise<{ success: boolean; limit: number; remaining: number }> {
+  try {
+    // Contador de ventana fija: INCR crea la clave a 1 si no existía; solo se le pone TTL la
+    // primera vez (si no, cada petición alargaría la ventana y esta nunca cerraría).
+    const count = await redis!.incr(`ratelimit:${ip}`);
+    if (count === 1) {
+      await redis!.expire(`ratelimit:${ip}`, windowSec);
+    }
+    const remaining = Math.max(0, limit - count);
+    return { success: count <= limit, limit, remaining };
+  } catch {
+    // Upstash caído o inalcanzable: fallar abierto, igual que la lectura de system_config.
+    // Un proveedor de rate limiting caído nunca debe traducirse en un 429 para todo el tráfico.
+    return { success: true, limit, remaining: limit - 1 };
+  }
+}
+
+function checkRateLimitMemory(
+  ip: string,
+  limit: number,
+  windowSec: number
+): { success: boolean; limit: number; remaining: number } {
   const now = Date.now();
-  const { limit, windowSec } = await getRateLimitConfig();
 
   // Limpiar caché vieja aleatoriamente (10% de las veces) para evitar memory leaks en el Edge
   if (Math.random() < 0.1) {
@@ -109,4 +136,13 @@ export async function checkRateLimit(ip: string): Promise<{ success: boolean; li
   }
 
   return { success: true, limit, remaining };
+}
+
+export async function checkRateLimit(ip: string): Promise<{ success: boolean; limit: number; remaining: number }> {
+  const { limit, windowSec } = await getRateLimitConfig();
+
+  if (redis) {
+    return checkRateLimitRedis(ip, limit, windowSec);
+  }
+  return checkRateLimitMemory(ip, limit, windowSec);
 }
