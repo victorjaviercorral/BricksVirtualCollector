@@ -76,9 +76,13 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
   - **Qué hace**: Gestiona la base de datos PostgreSQL, la autenticación y el almacenamiento de imágenes (Storage).
   - **Datos que ve**: Todos los datos de usuario, emails, hashes de contraseñas, imágenes subidas.
   - **Ubicación**: **Frankfurt (Alemania, UE)**. No hay transferencias internacionales fuera del EEE, por lo que no procede invocar el Data Privacy Framework.
+  - **DPA (Art. 28 RGPD)**: [supabase.com/dashboard/org/.../documents](https://supabase.com/dashboard/org/ejzrdgacrtmiqentvmsd/documents) — revisado por el titular el 22/09/2026. Sin botón de aceptación explícita en el tier gratuito: se aplica automáticamente al usar el servicio bajo sus Términos.
 - **Hosting de la Web (Next.js)**: 
   - **Vercel**. Recibe tráfico de red e IPs de visitantes. Región de ejecución confirmada:
     Frankfurt (Alemania, `eu-central-1`, `fra1`) — misma región que Supabase, dentro de la UE.
+  - **DPA (Art. 28 RGPD)**: [vercel.com/legal/dpa](https://vercel.com/legal/dpa) — revisado por el
+    titular el 22/09/2026. Se incorpora automáticamente a los Términos de Servicio, sin acción de
+    aceptación separada en el tier gratuito.
 - **Google Fonts (`next/font/google`)**:
   - 🟢 **Auditoría Positiva**: El proyecto utiliza `next/font` de Next.js. Esta herramienta descarga las fuentes durante el proceso de *build* y las auto-aloja. **No se envían peticiones a los servidores de Google durante la navegación del usuario**. No hay fuga de IPs hacia Google por este motivo.
 

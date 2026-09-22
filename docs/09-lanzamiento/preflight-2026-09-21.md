@@ -57,7 +57,7 @@ columnas de la lectura pública.
 | Ningún script no esencial antes del consentimiento | **OK** | Carga limpia de `/`, `/login`, `/galeria`: solo 2 hosts (el propio y Storage de Supabase), **0 cookies, 0 `localStorage`** |
 | Borrado de cuenta ejecutado de principio a fin | **OK** | Cuenta desechable con vitrina + set → login → *Eliminar cuenta* en `/dashboard/perfil`: `auth.users`, `usuarios_perfil`, `vitrinas` y `sets` pasan de 1/1/1/1 a **0/0/0/0**; `/dashboard` redirige a `/login` |
 | Exportación de datos | **FALLO menor** | No existe exportación self-service; el derecho de portabilidad se atiende por el canal manual (GitHub/LinkedIn) que declara la política |
-| Procesadores con DPA y región anotada | **Región OK (22/09/2026) / DPA sigue PENDIENTE (autor)** | Supabase: Frankfurt (UE). Vercel: región confirmada — Frankfurt (`eu-central-1`, `fra1`), la misma que Supabase (venía por defecto en Norteamérica; el titular la corrigió al verificarla, antes de desplegar nada con esa configuración). Sin transferencia internacional fuera del EEE. Queda pendiente que el titular revise y acepte formalmente el DPA de cada proveedor (Art. 28 RGPD) — no verificable por mí |
+| Procesadores con DPA y región anotada | **OK (22/09/2026)** | Supabase: Frankfurt (UE). Vercel: región confirmada — Frankfurt (`eu-central-1`, `fra1`), la misma que Supabase (venía por defecto en Norteamérica; el titular la corrigió al verificarla, antes de desplegar nada con esa configuración). Sin transferencia internacional fuera del EEE. DPA de ambos proveedores localizado y revisado por el titular (enlaces en `legal/data-map.md` §3); ninguno de los dos pide una aceptación explícita en el tier gratuito, se incorporan automáticamente a sus Términos de Servicio |
 | Logs sin datos personales | **OK** | `system_logs`: 0 filas (nada que contenga PII) |
 
 ## 3 · Accesibilidad
@@ -173,7 +173,12 @@ S 95,67 / B 88,29 / F 94,11 / L 96,78, `lint:ci` 154, `next build` verde (`/robo
   `src/lib/supabase/middleware.ts` y de `/admin/layout.tsx`, que leen esas columnas como el
   usuario autenticado. Arreglarlo de verdad exige una vista pública con solo las columnas seguras
   y redirigir ahí las lecturas públicas (`galeria.ts`, `/perfil/[id]`) — cambio estructural, no un
-  quick win. Queda como excepción.
+  quick win, estimado en una sesión de trabajo completa (migración RLS + vista + reescritura de 3
+  puntos de lectura + sus tests). **Decisión explícita del titular (22/09/2026): no se aborda.**
+  Motivo del titular: solo existe una cuenta admin (la suya propia) y ninguna operación real
+  detrás del sitio — el escenario de riesgo que justificaría el esfuerzo (identificar qué cuentas
+  son admin para atacarlas) no existe con esa exposición. Se revisará si el proyecto gana un
+  segundo admin o usuarios reales.
 - **E1 (CSP), E2 (Upstash), E4 (monitorización), E7 (analítica)** — necesitan una cuenta externa
   o una decisión de producto (E7 además contradice hoy la Política de Privacidad, que declara
   "no se realiza analítica web"); no son solo código.
@@ -190,8 +195,8 @@ Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no 
 | E4 | Sin seguimiento de errores, alertas ni monitor de disponibilidad | Caídas o errores no detectados hasta que alguien avise | autor | _a fijar_ |
 | E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
 | E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión, y contradice la Política de Privacidad actual) | _a fijar_ |
-| E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email); requiere una vista pública, cambio estructural | Claude | _a fijar_ |
-| E11 | (a) Pendiente del autor: revisar y aceptar formalmente el DPA de Supabase y Vercel (Art. 28 RGPD). (b) **Decisión del autor (22/09/2026): no se hará la pasada manual de teclado por el flujo completo** (crear vitrina, subir set, votar, reclamar bounty) — el resultado positivo de axe-core en 9 vistas × claro/oscuro (§3) se da por representativo | (a) sin evidencia de aceptación formal, aunque ambos son procesadores estándar del mercado con DPA público. (b) axe-core solo comprueba reglas WCAG estáticas (nombres accesibles, contraste, `role`, `label`), no el orden real del foco ni si algún control queda inalcanzable con Tab — un control roto para teclado pasaría el scan igual. Riesgo aceptado explícitamente, no verificado | autor | _a fijar_ |
+| E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga de metadatos (sin email ni contraseña); revela qué cuentas son admin. **Riesgo aceptado explícitamente por el titular (22/09/2026):** solo hay una cuenta admin, la suya, y ninguna operación real detrás del sitio — no hay a quién atacar con ese dato todavía | titular (decisión) | _revisar si hay 2º admin o usuarios reales_ |
+| E11 | **(a) resuelto 22/09/2026:** DPA de Supabase y Vercel localizados y revisados por el titular (enlaces en `legal/data-map.md` §3). (b) **Decisión del autor (22/09/2026): no se hará la pasada manual de teclado por el flujo completo** (crear vitrina, subir set, votar, reclamar bounty) — el resultado positivo de axe-core en 9 vistas × claro/oscuro (§3) se da por representativo | (b) axe-core solo comprueba reglas WCAG estáticas (nombres accesibles, contraste, `role`, `label`), no el orden real del foco ni si algún control queda inalcanzable con Tab — un control roto para teclado pasaría el scan igual. Riesgo aceptado explícitamente, no verificado | autor | (a) cerrado · (b) _a fijar_ |
 
 **Aceptación del autor:** Víctor Javier Corral, 22/09/2026 — confirmada en la sesión de trabajo tras
 resolver el bloqueante de copia de seguridad; ninguna de las 11 excepciones se objetó.
