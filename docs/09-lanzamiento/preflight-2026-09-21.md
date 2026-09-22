@@ -92,7 +92,7 @@ Causa común: las fotos se guardan a calidad 90 sin **redimensionar** en `api/se
 | Comprobación de disponibilidad activa | **FALLO** | Existe `/api/health` (responde `200`) pero ningún monitor externo lo consulta |
 | **Copia de seguridad restaurada al menos una vez** | **OK (resuelto 22/09/2026)** | El plan gratuito de Supabase no incluye copias automáticas. El titular ejecutó `pg_dump --schema=public` sobre producción desde Google Cloud Shell y restauró el volcado con `psql` en un proyecto Supabase temporal, sin errores; `select count(*) from public.vitrinas` devolvió **5** filas reales. Proyecto temporal eliminado tras la comprobación. Queda como procedimiento manual, no automatizado — ver E5 |
 | Reversión escrita y ejecutada en < 10 min [X2+] | **FALLO** | No hay procedimiento escrito ni ejecutado (Vercel permite *instant rollback*, pero no se ha probado) |
-| Alerta de facturación | **PENDIENTE (autor)** | No verificable desde fuera |
+| Alerta de facturación | **OK (verificado 22/09/2026)** | Vercel: plan Hobby, sin tarjeta añadida ("No payment methods added") — sin tarjeta no hay cobro posible, un exceso de cuota pausa el despliegue y avisa por email. Supabase: plan Free, "Spend cap is enabled" y sin método de pago — mismo efecto (modo solo lectura, nunca factura). Nada que configurar en ninguno de los dos |
 
 ## 6 · Contenido
 
@@ -191,7 +191,7 @@ Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no 
 | E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
 | E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión, y contradice la Política de Privacidad actual) | _a fijar_ |
 | E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email); requiere una vista pública, cambio estructural | Claude | _a fijar_ |
-| E11 | Pendientes del autor: teclado en el flujo completo, DPA y región de Vercel, alerta de facturación | Sin evidencia | autor | _a fijar_ |
+| E11 | Pendientes del autor: teclado en el flujo completo, DPA y región de Vercel | Sin evidencia | autor | _a fijar_ |
 
 **Aceptación del autor:** Víctor Javier Corral, 22/09/2026 — confirmada en la sesión de trabajo tras
 resolver el bloqueante de copia de seguridad; ninguna de las 11 excepciones se objetó.
