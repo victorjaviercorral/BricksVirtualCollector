@@ -2,7 +2,7 @@
 proyecto: bricks-virtual-collector
 tipo: plan
 subtipo: implementacion
-estado: en ejecución (Fases 0-8 ✅ · Fase 9 entregada, pendiente de ejecutar el E2E y del preflight · capturas del README pendientes)
+estado: completado (Fases 0-9 ✅ · preflight GO CON EXCEPCIONES 22/09/2026 · E2E automatizado y capturas del README quedan como mejora futura, no bloquean)
 fecha: 2026-09-09
 decide_sobre: modelo de acceso público antes del go-live (evaluación A/B/C previa en la conversación)
 reemplaza_a: ADR-009 (queda superado por el ADR-011 de la Fase 0)
@@ -479,8 +479,14 @@ el comportamiento real (solo lectura, "puntos", retención de logs no cumplida).
 > `e2e/auth.spec.ts` (llevaba roto desde la Fase 2: buscaba el botón "Entrar / Registrarse").
 > **Hallazgo real al escribirlo:** el modal "Crear vitrina" ofrecía "Pública" por defecto y a un
 > invitado la RLS se lo rechazaba → corregido (`useEsInvitado`, `CrearVitrinaModal`, `EditVitrinaModal`).
-> **Sin ejecutar:** necesita el proyecto Supabase de pruebas (decisión D2, acción del titular).
-> **Pendiente:** ejecutar el E2E, `preflight`, veredicto y tag `v1.0.0-acceso-invitado`.
+> **Sin ejecutar:** el E2E automatizado (decisión D2 del titular — sin proyecto Supabase de
+> pruebas dedicado; se puede activar más adelante, no bloquea el lanzamiento).
+> **Preflight ejecutado el 21/09/2026, cerrado el 22/09/2026: GO CON EXCEPCIONES** (ver
+> `docs/09-lanzamiento/preflight-2026-09-21.md`). El único bloqueante (copia de seguridad sin
+> restaurar) se resolvió: `pg_dump` real de producción restaurado en un proyecto Supabase
+> temporal, datos verificados. PR #12 (dependencias) y #13 (accesibilidad) mergeadas. Las 11
+> excepciones restantes (E1-E11) quedan aceptadas por el titular como deuda conocida.
+> **Fase 9 completada.** Tag `v1.0.0-acceso-invitado` al cierre del plan.
 
 1. **Spec de Playwright** `e2e/invitado.spec.ts` contra un Supabase de pruebas (no producción):
    entrar como invitado → crear vitrina → subir set → votar → reclamar bounty → ver insignia →
