@@ -19,7 +19,8 @@ vi.mock('@supabase/supabase-js', () => ({
 // sus fallos, no el propio procesamiento de imagen.
 const mockToBuffer = vi.fn();
 const mockJpeg = vi.fn(() => ({ toBuffer: mockToBuffer }));
-const mockRotate = vi.fn(() => ({ jpeg: mockJpeg }));
+const mockResize = vi.fn(() => ({ jpeg: mockJpeg }));
+const mockRotate = vi.fn(() => ({ resize: mockResize }));
 const mockSharp = vi.fn((_input: unknown) => ({ rotate: mockRotate }));
 vi.mock('sharp', () => ({ default: (input: unknown) => mockSharp(input) }));
 
@@ -141,7 +142,9 @@ describe('POST /api/sets/foto (limpieza EXIF/GPS server-side, ADR-005/ADR-010)',
     // rotate() aplica la orientación EXIF a los píxeles antes de descartar el propio EXIF.
     expect(mockSharp).toHaveBeenCalled();
     expect(mockRotate).toHaveBeenCalled();
-    expect(mockJpeg).toHaveBeenCalledWith({ quality: 90 });
+    // E3 (preflight): se redimensiona antes de reencodificar, tope 1600px sin ampliar.
+    expect(mockResize).toHaveBeenCalledWith(1600, 1600, { fit: 'inside', withoutEnlargement: true });
+    expect(mockJpeg).toHaveBeenCalledWith({ quality: 82 });
 
     // Sube con el cliente admin (service_role), no con la sesión del usuario -- el bucket ya no
     // acepta INSERT directo (migración 20260901100000).

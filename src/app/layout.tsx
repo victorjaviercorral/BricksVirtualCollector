@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BannerInvitado } from "@/components/BannerInvitado";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/site";
 import { Toaster } from "sonner";
 
 const inter = Inter({
@@ -26,9 +27,31 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
 });
 
+// Hallazgo E8 del preflight (docs/09-lanzamiento/preflight-2026-09-21.md): sin metadataBase,
+// Open Graph ni Twitter Card. Sin esto, compartir un enlace en LinkedIn/Twitter/Slack no muestra
+// ni imagen ni descripción -- justo la audiencia a la que apunta este prototipo de portfolio.
+const TITULO = "BricksVirtualCollector";
+const DESCRIPCION = "Museo virtual para coleccionistas de LEGO®. Exhibición anónima y segura de colecciones. Proyecto independiente, no afiliado a The LEGO Group.";
+
 export const metadata: Metadata = {
-  title: "BricksVirtualCollector",
-  description: "Museo virtual para coleccionistas de LEGO®. Exhibición anónima y segura de colecciones. Proyecto independiente, no afiliado a The LEGO Group.",
+  metadataBase: new URL(SITE_URL),
+  title: TITULO,
+  description: DESCRIPCION,
+  openGraph: {
+    title: TITULO,
+    description: DESCRIPCION,
+    url: SITE_URL,
+    siteName: TITULO,
+    locale: "es_ES",
+    type: "website",
+    images: [{ url: "/logo.jpg", width: 1376, height: 768, alt: TITULO }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITULO,
+    description: DESCRIPCION,
+    images: ["/logo.jpg"],
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

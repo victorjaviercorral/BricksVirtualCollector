@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { User, Trash2, Camera } from "lucide-react";
+import { User, Trash2, Camera, Download } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -11,7 +11,30 @@ export default function PerfilPage() {
   const [alias, setAlias] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const supabase = createClient();
+
+  // Derecho de portabilidad (Política de Privacidad §5, hallazgo E6 del preflight): descarga un
+  // JSON con los datos propios del usuario. No usa service_role: el endpoint lee con la sesión
+  // del propio usuario, así que la RLS de cada tabla decide qué sale.
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/auth/export-data");
+      if (!res.ok) throw new Error("Error al exportar los datos");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "bricksvirtualcollector-mis-datos.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("No se pudieron exportar tus datos. Inténtalo de nuevo.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -208,6 +231,21 @@ export default function PerfilPage() {
             </button>
           </div>
         </form>
+
+        <div className="mt-8 pt-8 border-t border-black/10 dark:border-white/10">
+          <h2 className="text-xl font-bold mb-2">Tus datos</h2>
+          <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+            Descarga una copia de tus datos personales (perfil, vitrinas, sets, votos, retos reclamados e insignias) en formato JSON.
+          </p>
+          <button
+            onClick={handleExportData}
+            disabled={exporting}
+            className="px-4 py-2 bg-black/5 dark:bg-white/5 font-bold rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            <Download size={16} />
+            {exporting ? "Preparando descarga..." : "Descargar mis datos"}
+          </button>
+        </div>
 
         <div className="mt-8 pt-8">
           <h2 className="text-xl font-bold text-brand-red mb-2">Zona de Peligro</h2>

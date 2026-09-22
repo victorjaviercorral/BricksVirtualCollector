@@ -27,6 +27,7 @@ export default defineConfig({
       'src/app/api/bricks/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/api/sets/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/api/auth/delete-account/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/api/auth/export-data/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/set/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/roles.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/use-es-invitado.{test,spec}.?(c|m)[jt]s?(x)',
@@ -40,6 +41,9 @@ export default defineConfig({
       'src/app/exposicion/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/exposiciones/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/galeria/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/robots.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/app/sitemap.{test,spec}.?(c|m)[jt]s?(x)',
+      'src/lib/site.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -93,6 +97,10 @@ export default defineConfig({
         'src/app/api/bricks/**',
         'src/app/api/sets/**',
         'src/app/api/auth/delete-account/**',
+        'src/app/api/auth/export-data/**',
+        'src/app/robots.ts',
+        'src/app/sitemap.ts',
+        'src/lib/site.ts',
         // Iteración 3 (Bloque A): retirada de mock data
         'src/app/set/**',
         // Iteración 4 (D2/N7): fuente única de verdad para el rol de moderador

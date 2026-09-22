@@ -135,7 +135,42 @@ quedan como excepción aceptada (abajo) o ya se corrigieron durante el propio pr
 - PR **#13** — accesibilidad nivel A (`link-name`), contraste AA y copy obsoleto.
 - Bloqueante de operación (copia de seguridad) — resuelto manualmente el 22/09/2026 (ver bloque 5).
 
-### Excepciones aceptadas (E1-E11)
+**Resueltos el 22/09/2026, tras el cierre del bloqueante (criterio coste/beneficio: rápidos y de
+impacto real, sin necesitar cuenta ni decisión externa) — PR de "quick wins":**
+- **E3 (parcial):** `POST /api/sets/foto` redimensiona a 1600px de lado antes de reencodificar
+  (antes solo limpiaba EXIF). Reduce el peso de cada foto nueva; no reprocesa las ya subidas ni
+  añade `next/image` en las vistas de galería — eso queda como mejora futura si el presupuesto de
+  performance sigue sin cumplirse tras esto.
+- **E5 (parcial):** procedimiento de reversión escrito
+  (`docs/09-lanzamiento/runbook-reversion.md`, vía Vercel "Promote to Production", <10 min).
+  **Sin ejecutar todavía como simulacro** — requiere acceso al dashboard de Vercel del titular.
+- **E6:** exportación de datos self-service — `GET /api/auth/export-data` (descarga JSON con
+  perfil, vitrinas, sets, bricks dados, bounties reclamados e insignias) y botón "Descargar mis
+  datos" en `/dashboard/perfil`. Usa la sesión del propio usuario (RLS), sin `service_role`.
+- **E8:** `src/app/layout.tsx` con `metadataBase`, Open Graph y Twitter Card;
+  `src/app/robots.ts` (excluye `/dashboard`, `/mesa-de-trabajo`, `/admin`, `/ajustes`, `/api`);
+  `src/app/sitemap.ts` (rutas públicas + una entrada por vitrina pública real, reutilizando
+  `getVitrinasPublicas()`).
+- **E9:** `legal/data-map.md` y `legal/legal-architecture.md` §2.3 actualizados — EXIF ya describe
+  el Route Handler con `sharp` (no el `<canvas>` del navegador), `pg_cron` y el despliegue de
+  Vercel dejan de describirse como pendientes.
+
+Verificación local del PR de quick wins: `tsc` limpio, **625/625** tests (+13), cobertura
+S 95,67 / B 88,29 / F 94,11 / L 96,78, `lint:ci` 154, `next build` verde (`/robots.txt` y
+`/sitemap.xml` presentes en el árbol de rutas).
+
+**Deliberadamente no resueltas ahora** (evaluadas y descartadas por coste/riesgo, no por olvido):
+- **E10** — la exposición es a nivel de fila (RLS `using(true)`), no de columna; un `REVOKE` de
+  columna sobre `role`/`consentimiento_*` rompería el propio chequeo de rol de
+  `src/lib/supabase/middleware.ts` y de `/admin/layout.tsx`, que leen esas columnas como el
+  usuario autenticado. Arreglarlo de verdad exige una vista pública con solo las columnas seguras
+  y redirigir ahí las lecturas públicas (`galeria.ts`, `/perfil/[id]`) — cambio estructural, no un
+  quick win. Queda como excepción.
+- **E1 (CSP), E2 (Upstash), E4 (monitorización), E7 (analítica)** — necesitan una cuenta externa
+  o una decisión de producto (E7 además contradice hoy la Política de Privacidad, que declara
+  "no se realiza analítica web"); no son solo código.
+
+### Excepciones que siguen abiertas (E1, E2, E4, E7, E10, E11 + los restos parciales de E3/E5)
 
 Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no como bloqueante.
 
@@ -143,14 +178,11 @@ Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no 
 |---|---|---|---|---|
 | E1 | Sin CSP (S5) | XSS sin segunda barrera; mitigado por el escapado de React y por no renderizar HTML de usuario | Claude / autor | _a fijar_ |
 | E2 | Rate limiting en memoria por instancia (S3) | Límite eludible repartiendo peticiones entre instancias | autor (cuenta Upstash) | _a fijar_ |
-| E3 | Performance: Lighthouse 77-86, LCP 3,7-5,4 s, vitrina y home > 1 MB | Carga lenta en móvil; sin efecto de seguridad | Claude (redimensionar en la subida + `next/image`) | _a fijar_ |
+| E3 | Resto: fotos ya subidas sin redimensionar; sin `next/image` en galería | Carga algo más lenta en vitrinas antiguas | Claude, si el Lighthouse tras el redimensionado en subida sigue por debajo de 90 | _a fijar_ |
 | E4 | Sin seguimiento de errores, alertas ni monitor de disponibilidad | Caídas o errores no detectados hasta que alguien avise | autor | _a fijar_ |
-| E5 | Sin procedimiento de reversión probado | Recuperación lenta ante un despliegue malo | autor | _a fijar_ |
-| E6 | Sin exportación de datos self-service | Portabilidad atendida a mano | autor | _a fijar_ |
-| E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión) | _a fijar_ |
-| E8 | Sin OG/Twitter Cards, `robots.txt` ni `sitemap.xml` | Peor presentación al compartir; SEO | Claude | _a fijar_ |
-| E9 | `legal/data-map.md` desactualizado | Registro Art. 30 impreciso (la política pública sí es correcta) | Claude | _a fijar_ |
-| E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email) | Claude | _a fijar_ |
+| E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
+| E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión, y contradice la Política de Privacidad actual) | _a fijar_ |
+| E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email); requiere una vista pública, cambio estructural | Claude | _a fijar_ |
 | E11 | Pendientes del autor: teclado en el flujo completo, DPA y región de Vercel, alerta de facturación | Sin evidencia | autor | _a fijar_ |
 
 **Aceptación del autor:** Víctor Javier Corral, 22/09/2026 — confirmada en la sesión de trabajo tras

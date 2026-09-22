@@ -39,7 +39,11 @@ El sistema está diseñado siguiendo el principio de **Privacidad desde el Dise�
 
 1. **Minimización de Datos:** No se recopilan nombres reales, solo emails (y se ocultan tras un *alias* aleatorio).
 2. **Consentimiento Verificable:** Se almacena la versión de los términos aceptada y la fecha exacta en la base de datos (`usuarios_perfil.consentimiento_version`).
-3. **Limpieza de Metadatos (EXIF):** Las imágenes subidas por el usuario pasan por un `<canvas>` en el navegador para ser convertidas a WebP/JPEG, lo que destruye automáticamente la geolocalización (GPS) y datos de cámara antes de subir a los servidores.
+3. **Limpieza de Metadatos (EXIF):** las imágenes subidas se reencodifican **server-side** en
+   `POST /api/sets/foto` (Route Handler, `sharp`), no en un `<canvas>` del navegador — ver ADR-010
+   y `legal/data-map.md` §4. La reencodificación destruye la geolocalización (GPS) y los datos de
+   cámara antes de guardarse en Storage; el bucket no acepta subida directa del cliente, así que
+   un cliente modificado no puede saltarse esta limpieza.
 4. **Derecho al Olvido Automatizado:** Si un usuario elimina su cuenta, un API Route seguro invoca al Admin de Supabase para borrar el usuario central. Las reglas `ON DELETE CASCADE` de PostgreSQL se encargan de destruir sus vitrinas, sets, votos y fotos instantáneamente.
 
 ### Diagrama del Flujo de Datos
