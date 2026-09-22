@@ -7,11 +7,11 @@ Este documento contiene la auditoría de los tratamientos de datos realizados po
 > las 48 h — ver la fila "Acceso de invitado" en la tabla del Art. 30). Las filas referidas a
 > usuarios registrados y contenido subido describen ya un tratamiento activo.
 >
-> ⚠️ Este documento conserva deriva pendiente de barrido (EXIF §4 describe la limpieza en
-> `<canvas>` cuando ADR-010 la movió a un Route Handler con `sharp`; `pg_cron` figura como
-> "implementada" cuando su activación real es de septiembre de 2026; el punto de despliegue de
-> Vercel sigue marcado como no verificable). Se corrige en la Fase 8 del plan de acceso de
-> invitado.
+> **Actualizado 22/09/2026** (E9 del preflight, `docs/09-lanzamiento/preflight-2026-09-21.md`): se
+> corrigen las tres derivas señaladas más abajo — EXIF ya describe el Route Handler con `sharp`
+> (ADR-010), `pg_cron` está realmente activo (dos jobs: purga de invitados y de `system_logs`,
+> verificado el 22/09/2026) y el proyecto está desplegado en
+> `bricks-virtual-collector.vercel.app`.
 
 ## Datos del titular y del sitio
 - **Titular / responsable del tratamiento**: Víctor Javier Corral (persona física, sin actividad económica asociada al sitio).
@@ -21,11 +21,11 @@ Este documento contiene la auditoría de los tratamientos de datos realizados po
   - Base de datos y Auth (Supabase): **Frankfurt (Alemania, UE)**.
   - Hosting Web (Next.js): **Vercel**, servidores en la Unión Europea.
 - **¿Hay cuentas de usuario, subida de contenido, newsletter, venta o donaciones?**: 
-  - Cuentas de usuario: solo la cuenta de demostración. Registro público cerrado (ADR-009).
-  - Subida de contenido: deshabilitada de facto (escritura revocada a nivel de BBDD, ADR-009).
+  - Cuentas de usuario: registro real abierto (ADR-011) más el modo invitado (sesión anónima, sin email — fila "Acceso de invitado" del Art. 30).
+  - Subida de contenido: activa, vía `POST /api/sets/foto` (limpieza EXIF server-side, tope 10 MB en cuenta real / 3 MB e invitado).
   - Moderación/Reportes: la tabla `reportes` se retiró (19/08/2026, hallazgo S6) -- sin consumidor en el código, era una idea inicial sin desarrollar. La moderación real (aprobar/rechazar participaciones en exposiciones) sí es operativa vía `exposicion_sets`.
   - Newsletter / Ventas / Donaciones: **no existen ni están previstos**. Es lo que sostiene el encuadre de no-actividad-económica.
-- **¿El público objetivo incluye menores de edad?**: no. Público adulto coleccionista. Sin registro abierto, no se recogen datos de ninguna persona.
+- **¿El público objetivo incluye menores de edad?**: no. Público adulto coleccionista. Para registrarse se declara ser mayor de 14 años (art. 7 LOPDGDD, `legal/terminos-condiciones.md` §1.2); el modo invitado no recoge ningún dato personal.
 - **Idiomas del sitio**: español únicamente (`lang="es"` en `src/app/layout.tsx`).
 
 ---
@@ -48,17 +48,18 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 
 - **Sesión de Usuario**: Tokens de autenticación de Supabase (JWT) almacenados vía cookies / localStorage para mantener la sesión abierta.
 - **Gamificación / Sistema de "Bricks" (`bricks_recibidos`)**: Se recoge un `hash_visitante` para evitar que un usuario dé bricks ilimitados a un mismo set. Esto implica tratar identificadores únicos (probablemente un hash de la IP o token de sesión).
-- **Logs del Servidor / Hosting**: Vercel registra IP, User-Agent y metadatos de petición.
-  🔵 **Diferido a la fecha de despliegue (no verificable hoy).** El proyecto no está desplegado en
-  Vercel todavía, así que no hay proyecto en cuyo panel comprobar la retención. **Acción cuando se
-  despliegue:** entrar en Vercel → Project Settings → Log Drains / Data Retention, anotar aquí el
-  plazo exacto y trasladarlo a `politica-privacidad.md` §3 si difiere de "según política del
-  proveedor". No tratar este punto como resuelto hasta ese momento.
+- **Logs del Servidor / Hosting**: Vercel registra IP, User-Agent y metadatos de petición del
+  proyecto desplegado en `bricks-virtual-collector.vercel.app`.
+  🔵 **Pendiente (E11 del preflight):** confirmar en Vercel → Project Settings → Log Drains / Data
+  Retention el plazo exacto de retención y trasladarlo a `politica-privacidad.md` §3 si difiere de
+  "según política del proveedor".
 - **Logs propios (`system_logs`)**: la aplicación escribe nivel, mensaje, endpoint, `user_id` y
-  contexto vía `src/lib/logger.ts`. Purga a 30 días **implementada** en
-  `supabase/migrations/20260810130000_system_logs_purge.sql` mediante `pg_cron` (job diario que
-  elimina registros con más de 30 días). Ver esa migración para instrucciones de verificación y
-  activación en Supabase.
+  contexto vía `src/lib/logger.ts`. Purga a 30 días vía `pg_cron`
+  (`supabase/migrations/20260810130000_system_logs_purge.sql`, job `purge-system-logs`) —
+  **confirmada activa por el titular el 09/09/2026** (2 jobs en `cron.job`), junto con el job
+  `purga-invitados` (48 h, Fase 3 del acceso de invitado, migración `20260909120000`) que la
+  misma reprogramó de paso (hallazgo V4a: el job de logs nunca llegó a crearse hasta entonces
+  porque `pg_cron` estaba deshabilitado).
 
 ---
 
@@ -77,8 +78,17 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 
 ## 4. Metadatos de Imágenes (EXIF)
 
-- 🟢 **Auditoría Positiva**: En el componente `MesaTrabajoClient.tsx`, el proyecto cuenta con la función `processImageToStripExif` que pinta la imagen en un `<canvas>` y la exporta a WebP/JPEG antes de subirla. 
-- **Conclusión**: Se eliminan de manera efectiva los metadatos EXIF (incluyendo geolocalización o modelo de cámara) en el cliente antes de enviar el archivo al servidor. Excelente medida de Privacidad desde el Diseño (Art. 25 RGPD).
+- 🟢 **Auditoría positiva (server-side, ADR-010).** `POST /api/sets/foto` (Route Handler, runtime
+  Node.js) recibe la foto en crudo y la reencodifica con `sharp` — `.rotate()` aplica la
+  orientación EXIF a los píxeles y la propia reencodificación a JPEG descarta EXIF/GPS/ICC/XMP
+  (no se llama a `.withMetadata()`). El bucket `fotos_sets` no acepta subida directa del cliente
+  desde `20260901100000`, así que este Route Handler es el único camino posible: un cliente
+  modificado no puede saltarse la limpieza.
+- **Conclusión**: se eliminan de manera efectiva los metadatos EXIF (incluida la geolocalización)
+  **antes** de que el fichero llegue a Storage, no en el navegador — la garantía que exigía
+  ADR-005 y que la versión anterior de este documento (limpieza en `<canvas>`) todavía no
+  cumplía. También redimensiona a un máximo de 1600px de lado (hallazgo E3 del preflight,
+  rendimiento) sin efecto sobre esta garantía.
 
 ---
 
@@ -91,4 +101,4 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
 | **Publicación de Colecciones** | Textos, imágenes (sin EXIF), visibilidad | Usuarios registrados | Ejecución de contrato (para publicarlo) y Consentimiento | Hasta eliminación o retirada | Supabase (Público si visibilidad=pública) | RLS por usuario, borrado de EXIF. |
 | **Gamificación (Bricks/Visitas)** | `hash_visitante`, contadores | Usuarios | Interés Legítimo (evitar votos múltiples) | Mientras exista el set votado (borrado en cascada) | Supabase | ⚠️ **Discrepancia detectada:** pese al nombre de la columna, `src/app/api/bricks/route.ts:26` almacena el **UUID del usuario en claro**, no un hash. Debe renombrarse la columna o aplicarse un hash real. |
 | **Moderación y Reportes** | Motivos del reporte, IDs de contenido | Usuarios reportantes | Interés Legítimo / Obligación Legal (DSA) | Hasta resolución + bloqueo legal | Supabase | Acceso solo a administradores. |
-| **Mantenimiento y Seguridad** | IPs, User-Agents, logs de error | Visitantes de la web | Interés Legítimo (seguridad de la red) | Vercel: diferido a fecha de despliegue (🔵 sin proyecto desplegado, no verificable hoy). `system_logs`: 30 días, purga automática vía `pg_cron` | Vercel, Supabase | Acceso a `system_logs` restringido a rol sysadmin por RLS. Purga automática programada. |
+| **Mantenimiento y Seguridad** | IPs, User-Agents, logs de error | Visitantes de la web | Interés Legítimo (seguridad de la red) | Vercel: 🔵 pendiente confirmar el plazo exacto (E11 del preflight). `system_logs`: 30 días, purga automática vía `pg_cron` (confirmada activa) | Vercel, Supabase | Acceso a `system_logs` restringido a rol sysadmin por RLS. Purga automática programada. |

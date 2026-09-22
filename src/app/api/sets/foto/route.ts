@@ -67,7 +67,17 @@ export async function POST(request: Request) {
       // orientación EXIF a los píxeles antes de descartar el propio EXIF, para que la foto no
       // salga girada al perder esa etiqueta. Se reencodifica siempre a JPEG, mismo criterio que
       // ya usaba processImageToStripExif en el cliente.
-      cleanedBuffer = await sharp(inputBuffer).rotate().jpeg({ quality: 90 }).toBuffer();
+      //
+      // .resize() (hallazgo E3 del preflight, docs/09-lanzamiento/preflight-2026-09-21.md): las
+      // fotos de móvil llegan a 3000px+ de lado y se servían tal cual -- 0,9 y 2,5 MB por imagen
+      // en /galeria, muy por encima del presupuesto de PERF-04 (<1MB) y responsables de la mayor
+      // parte del LCP en el informe. Se limita el lado mayor a 1600px (de sobra para cualquier
+      // tarjeta o vista de detalle de la app) sin ampliar fotos ya pequeñas.
+      cleanedBuffer = await sharp(inputBuffer)
+        .rotate()
+        .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 82 })
+        .toBuffer();
     } catch (sharpError) {
       console.error("Error al procesar la imagen con sharp:", sharpError);
       return NextResponse.json({ error: "El fichero no es una imagen válida" }, { status: 400 });

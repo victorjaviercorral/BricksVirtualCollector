@@ -139,6 +139,39 @@ describe('PerfilPage (Client)', () => {
     expect(toast.error).toHaveBeenCalledWith('La imagen no puede pesar más de 2MB');
   });
 
+  it('permite descargar los propios datos (derecho de portabilidad, E6)', async () => {
+    const blob = new Blob(['{}'], { type: 'application/json' });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, blob: () => Promise.resolve(blob) });
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    render(<PerfilPage />);
+    await waitFor(() => expect(screen.getByText('MasterBuilder')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Descargar mis datos'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/auth/export-data');
+      expect(createObjectURL).toHaveBeenCalledWith(blob);
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    });
+  });
+
+  it('muestra un error si la exportación de datos falla', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false });
+
+    render(<PerfilPage />);
+    await waitFor(() => expect(screen.getByText('MasterBuilder')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Descargar mis datos'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('No se pudieron exportar tus datos. Inténtalo de nuevo.');
+    });
+  });
+
   it('permite eliminar cuenta permanentemente', async () => {
     render(<PerfilPage />);
     await waitFor(() => expect(screen.getByText('MasterBuilder')).toBeInTheDocument());
