@@ -8,7 +8,7 @@ fecha: 2026-09-21
 despliegue: https://bricks-virtual-collector.vercel.app
 commit_desplegado: 162f41c (main tras la PR #9) — verificado ANTES de las PR #12 y #13
 veredicto: GO CON EXCEPCIONES
-actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto, quick wins (E3/E5/E6/E8/E9) y E2 (Upstash) resueltos (ver §Veredicto)
+actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto, quick wins (E3/E5/E6/E8/E9) y E2 (Upstash) resueltos, alerta de facturación y región de Vercel verificadas, teclado (E11) aceptado como riesgo por el autor (ver §Veredicto)
 relacionada_con: [ADR-011-acceso-invitado-tres-niveles, plan-acceso-invitado-opcion-c]
 tags: [spec-vjc, preflight, lanzamiento]
 ---
@@ -57,7 +57,7 @@ columnas de la lectura pública.
 | Ningún script no esencial antes del consentimiento | **OK** | Carga limpia de `/`, `/login`, `/galeria`: solo 2 hosts (el propio y Storage de Supabase), **0 cookies, 0 `localStorage`** |
 | Borrado de cuenta ejecutado de principio a fin | **OK** | Cuenta desechable con vitrina + set → login → *Eliminar cuenta* en `/dashboard/perfil`: `auth.users`, `usuarios_perfil`, `vitrinas` y `sets` pasan de 1/1/1/1 a **0/0/0/0**; `/dashboard` redirige a `/login` |
 | Exportación de datos | **FALLO menor** | No existe exportación self-service; el derecho de portabilidad se atiende por el canal manual (GitHub/LinkedIn) que declara la política |
-| Procesadores con DPA y región anotada | **PENDIENTE (autor)** | Supabase Frankfurt (UE) documentado; región de Vercel sin confirmar (`project.md` la marca `[PENDIENTE]`); aceptación de DPA no verificable por mí |
+| Procesadores con DPA y región anotada | **Región OK (22/09/2026) / DPA sigue PENDIENTE (autor)** | Supabase: Frankfurt (UE). Vercel: región confirmada — Frankfurt (`eu-central-1`, `fra1`), la misma que Supabase (venía por defecto en Norteamérica; el titular la corrigió al verificarla, antes de desplegar nada con esa configuración). Sin transferencia internacional fuera del EEE. Queda pendiente que el titular revise y acepte formalmente el DPA de cada proveedor (Art. 28 RGPD) — no verificable por mí |
 | Logs sin datos personales | **OK** | `system_logs`: 0 filas (nada que contenga PII) |
 
 ## 3 · Accesibilidad
@@ -65,7 +65,7 @@ columnas de la lectura pública.
 | Ítem | Resultado | Evidencia |
 |---|---|---|
 | Scan axe (WCAG 2.0/2.1 A y AA), 9 vistas × claro/oscuro | **FALLO → corregido en PR #13** | **Nivel A:** `link-name` en `/vitrina/[id]` (enlace de volver, solo icono, sin nombre). **AA:** `color-contrast` en pie (2,55:1), hero de la home (4,05:1), fechas de `/exposiciones` (3,98:1) y enlaces `text-brand-blue` en tarjetas oscuras (2,65:1) |
-| Flujo principal solo con teclado | **PENDIENTE (autor)** | Verificado solo `/login`: 12 tabulaciones con foco visible en todas. El flujo completo (crear vitrina, subir set, votar) no se puede dar por bueno sin una pasada manual |
+| Flujo principal solo con teclado | **PENDIENTE (autor) → aceptado como riesgo el 22/09/2026, sin ejecutar** | Verificado solo `/login`: 12 tabulaciones con foco visible en todas. El titular decidió no hacer la pasada manual del flujo completo (crear vitrina, subir set, votar, reclamar bounty) por falta de tiempo, y acepta el resultado positivo de axe-core (§3, arriba) como evidencia suficiente — ver E11(b) en el veredicto para el matiz de qué SÍ y qué NO cubre axe-core |
 | Contraste en estados reales | **PARCIAL** | axe cubre el estado normal en claro y oscuro; hover y foco no verificados |
 | Zoom 200 % sin pérdida | **OK** | Viewport 640 px (equivale a 1280 px al 200 %): sin desbordamiento horizontal en `/`, `/login`, `/galeria`, `/bounties`, `/como-funciona` |
 | Formularios con etiqueta programática | **OK** | axe sin violaciones de `label` |
@@ -191,7 +191,7 @@ Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no 
 | E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
 | E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión, y contradice la Política de Privacidad actual) | _a fijar_ |
 | E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email); requiere una vista pública, cambio estructural | Claude | _a fijar_ |
-| E11 | Pendientes del autor: teclado en el flujo completo, DPA y región de Vercel | Sin evidencia | autor | _a fijar_ |
+| E11 | (a) Pendiente del autor: revisar y aceptar formalmente el DPA de Supabase y Vercel (Art. 28 RGPD). (b) **Decisión del autor (22/09/2026): no se hará la pasada manual de teclado por el flujo completo** (crear vitrina, subir set, votar, reclamar bounty) — el resultado positivo de axe-core en 9 vistas × claro/oscuro (§3) se da por representativo | (a) sin evidencia de aceptación formal, aunque ambos son procesadores estándar del mercado con DPA público. (b) axe-core solo comprueba reglas WCAG estáticas (nombres accesibles, contraste, `role`, `label`), no el orden real del foco ni si algún control queda inalcanzable con Tab — un control roto para teclado pasaría el scan igual. Riesgo aceptado explícitamente, no verificado | autor | _a fijar_ |
 
 **Aceptación del autor:** Víctor Javier Corral, 22/09/2026 — confirmada en la sesión de trabajo tras
 resolver el bloqueante de copia de seguridad; ninguna de las 11 excepciones se objetó.
