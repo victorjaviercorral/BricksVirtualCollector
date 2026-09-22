@@ -53,7 +53,7 @@ Máximo **8 preguntas** en todo el flujo de definición. Agotado el cupo, lo pen
 | | |
 |---|---|
 | Desarrollo | Windows (confirmado por el autor) · runtime Node.js `[PENDIENTE: fijar versión exacta en /plan]` |
-| Despliegue | Vercel (ADR-001) · región por defecto de Vercel `[PENDIENTE: confirmar región concreta al configurar el proyecto]` |
+| Despliegue | Vercel (ADR-001) · región confirmada por el titular el 22/09/2026: **Frankfurt, Alemania (`eu-central-1`, `fra1`)** — misma región que Supabase, dentro de la UE. El plan Hobby limita a una sola región; venía por defecto en Norteamérica y el titular la corrigió en el dashboard al verificarla |
 | Dominio | Sin dominio propio en esta etapa: subdominio gratuito `*.vercel.app` (ADR-007). Consolidación bajo `victorjaviercorral.com` diferida a una eventual decisión de `/go-live`, independiente de esta. |
 
 ## Stack previsto

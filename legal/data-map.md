@@ -12,6 +12,12 @@ Este documento contiene la auditoría de los tratamientos de datos realizados po
 > (ADR-010), `pg_cron` está realmente activo (dos jobs: purga de invitados y de `system_logs`,
 > verificado el 22/09/2026) y el proyecto está desplegado en
 > `bricks-virtual-collector.vercel.app`.
+>
+> **Segunda actualización, mismo día (E11 del preflight):** el titular confirmó la región real de
+> Vercel — **Frankfurt (`eu-central-1`, `fra1`)**, la misma que Supabase. (La región por defecto de
+> Vercel al crear el proyecto había quedado en Norteamérica sin que nadie la fijara
+> explícitamente; el titular la corrigió a Frankfurt en el propio dashboard al hacer esta
+> verificación, antes de que llegara a documentarse ninguna afirmación incorrecta.)
 
 ## Datos del titular y del sitio
 - **Titular / responsable del tratamiento**: Víctor Javier Corral (persona física, sin actividad económica asociada al sitio).
@@ -19,7 +25,8 @@ Este documento contiene la auditoría de los tratamientos de datos realizados po
 - **Canal de contacto para privacidad y ejercicio de derechos**: incidencias del repositorio de GitHub o perfil de LinkedIn del titular (decisión DEC-4). No se publica dirección de correo.
 - **Hosting y ubicación de servidores**: 
   - Base de datos y Auth (Supabase): **Frankfurt (Alemania, UE)**.
-  - Hosting Web (Next.js): **Vercel**, servidores en la Unión Europea.
+  - Hosting Web (Next.js): **Vercel**, región confirmada el 22/09/2026: **Frankfurt (Alemania,
+    `eu-central-1`, `fra1`)** — misma región que Supabase.
 - **¿Hay cuentas de usuario, subida de contenido, newsletter, venta o donaciones?**: 
   - Cuentas de usuario: registro real abierto (ADR-011) más el modo invitado (sesión anónima, sin email — fila "Acceso de invitado" del Art. 30).
   - Subida de contenido: activa, vía `POST /api/sets/foto` (limpieza EXIF server-side, tope 10 MB en cuenta real / 3 MB e invitado).
@@ -70,7 +77,8 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
   - **Datos que ve**: Todos los datos de usuario, emails, hashes de contraseñas, imágenes subidas.
   - **Ubicación**: **Frankfurt (Alemania, UE)**. No hay transferencias internacionales fuera del EEE, por lo que no procede invocar el Data Privacy Framework.
 - **Hosting de la Web (Next.js)**: 
-  - **Vercel**. Recibe tráfico de red e IPs de visitantes. Servidores en la UE.
+  - **Vercel**. Recibe tráfico de red e IPs de visitantes. Región de ejecución confirmada:
+    Frankfurt (Alemania, `eu-central-1`, `fra1`) — misma región que Supabase, dentro de la UE.
 - **Google Fonts (`next/font/google`)**:
   - 🟢 **Auditoría Positiva**: El proyecto utiliza `next/font` de Next.js. Esta herramienta descarga las fuentes durante el proceso de *build* y las auto-aloja. **No se envían peticiones a los servidores de Google durante la navegación del usuario**. No hay fuga de IPs hacia Google por este motivo.
 

@@ -64,7 +64,8 @@ requiera.
 
 - **Base de datos y autenticación:** Supabase. Proyecto alojado en **Frankfurt (Alemania, Unión
   Europea)**.
-- **Alojamiento web:** Vercel. Servidores en la Unión Europea.
+- **Alojamiento web:** Vercel. Región de ejecución confirmada el 22/09/2026: **Frankfurt
+  (Alemania, `eu-central-1`, `fra1`)** — misma región que Supabase.
 
 **No se realizan transferencias internacionales de datos fuera del Espacio Económico Europeo.**
 
