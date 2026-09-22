@@ -8,7 +8,7 @@ fecha: 2026-09-21
 despliegue: https://bricks-virtual-collector.vercel.app
 commit_desplegado: 162f41c (main tras la PR #9) — verificado ANTES de las PR #12 y #13
 veredicto: GO CON EXCEPCIONES
-actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto, quick wins (E3/E5/E6/E8/E9) y E2 (Upstash) resueltos, alerta de facturación y región de Vercel verificadas, teclado (E11) aceptado como riesgo por el autor (ver §Veredicto)
+actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto, quick wins (E3/E5/E6/E8/E9) y E2 (Upstash) resueltos, alerta de facturación/región de Vercel/DPA verificados, E10/E5-simulacro/teclado (E11-b) cerrados como riesgo aceptado por el autor (ver §Veredicto)
 relacionada_con: [ADR-011-acceso-invitado-tres-niveles, plan-acceso-invitado-opcion-c]
 tags: [spec-vjc, preflight, lanzamiento]
 ---
@@ -141,9 +141,15 @@ impacto real, sin necesitar cuenta ni decisión externa) — PR de "quick wins":
   (antes solo limpiaba EXIF). Reduce el peso de cada foto nueva; no reprocesa las ya subidas ni
   añade `next/image` en las vistas de galería — eso queda como mejora futura si el presupuesto de
   performance sigue sin cumplirse tras esto.
-- **E5 (parcial):** procedimiento de reversión escrito
-  (`docs/09-lanzamiento/runbook-reversion.md`, vía Vercel "Promote to Production", <10 min).
-  **Sin ejecutar todavía como simulacro** — requiere acceso al dashboard de Vercel del titular.
+- **E5:** procedimiento de reversión escrito (`docs/09-lanzamiento/runbook-reversion.md`, vía
+  Vercel "Promote to Production", <10 min). **Decisión del autor (22/09/2026): no se ejecuta como
+  simulacro.** El mecanismo es una función nativa de Vercel (no código propio que se pueda haber
+  roto) y el historial de despliegues está en verde al 100 %; un simulacro comprobaría memoria
+  muscular para un momento de estrés, no si el botón funciona. Sin monetización, sin usuarios que
+  dependan de la disponibilidad y con capacidad de intervenir a mano, el coste de una caída
+  temporal es asumible. Matiz que sigue en pie (ya estaba en el runbook, no es nuevo): el rollback
+  de Vercel revierte código, no revierte una migración de base de datos mal aplicada — eso exige
+  deshacerla a mano en Supabase.
 - **E6:** exportación de datos self-service — `GET /api/auth/export-data` (descarga JSON con
   perfil, vitrinas, sets, bricks dados, bounties reclamados e insignias) y botón "Descargar mis
   datos" en `/dashboard/perfil`. Usa la sesión del propio usuario (RLS), sin `service_role`.
@@ -183,7 +189,10 @@ S 95,67 / B 88,29 / F 94,11 / L 96,78, `lint:ci` 154, `next build` verde (`/robo
   o una decisión de producto (E7 además contradice hoy la Política de Privacidad, que declara
   "no se realiza analítica web"); no son solo código.
 
-### Excepciones que siguen abiertas (E1, E4, E7, E10, E11 + los restos parciales de E3/E5)
+### Excepciones que siguen abiertas (E1, E4, E7, E10, E11-b + el resto de E3)
+
+E5 y E10 están en esta tabla pero **cerradas por decisión explícita del titular**, no pendientes
+de nadie — se listan igualmente por transparencia, con el motivo de cada una.
 
 Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no como bloqueante.
 **E2 se cerró el 22/09/2026** (ver arriba) y sale de esta tabla.
@@ -193,7 +202,7 @@ Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no 
 | E1 | Sin CSP (S5) | XSS sin segunda barrera; mitigado por el escapado de React y por no renderizar HTML de usuario | Claude / autor | _a fijar_ |
 | E3 | Resto: fotos ya subidas sin redimensionar; sin `next/image` en galería | Carga algo más lenta en vitrinas antiguas | Claude, si el Lighthouse tras el redimensionado en subida sigue por debajo de 90 | _a fijar_ |
 | E4 | Sin seguimiento de errores, alertas ni monitor de disponibilidad | Caídas o errores no detectados hasta que alguien avise | autor | _a fijar_ |
-| E5 | Resto: procedimiento escrito pero sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación | autor (acceso a Vercel) | _a fijar_ |
+| E5 | Procedimiento escrito, sin ejecutar como simulacro | Sin verificar el tiempo real de recuperación. **Riesgo aceptado explícitamente por el titular (22/09/2026):** mecanismo nativo de Vercel con historial 100% verde, sin monetización ni usuarios dependientes; matiz ya conocido de que no cubre una migración de BD mal aplicada | titular (decisión) | _revisar si el proyecto gana usuarios reales o SLA_ |
 | E7 | Sin analítica de visitas ni eventos de enlaces (Go/No-Go) | La revisión a 3 meses sin datos de visitas | autor (decisión, y contradice la Política de Privacidad actual) | _a fijar_ |
 | E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga de metadatos (sin email ni contraseña); revela qué cuentas son admin. **Riesgo aceptado explícitamente por el titular (22/09/2026):** solo hay una cuenta admin, la suya, y ninguna operación real detrás del sitio — no hay a quién atacar con ese dato todavía | titular (decisión) | _revisar si hay 2º admin o usuarios reales_ |
 | E11 | **(a) resuelto 22/09/2026:** DPA de Supabase y Vercel localizados y revisados por el titular (enlaces en `legal/data-map.md` §3). (b) **Decisión del autor (22/09/2026): no se hará la pasada manual de teclado por el flujo completo** (crear vitrina, subir set, votar, reclamar bounty) — el resultado positivo de axe-core en 9 vistas × claro/oscuro (§3) se da por representativo | (b) axe-core solo comprueba reglas WCAG estáticas (nombres accesibles, contraste, `role`, `label`), no el orden real del foco ni si algún control queda inalcanzable con Tab — un control roto para teclado pasaría el scan igual. Riesgo aceptado explícitamente, no verificado | autor | (a) cerrado · (b) _a fijar_ |
