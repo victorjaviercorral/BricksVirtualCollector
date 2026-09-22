@@ -7,15 +7,19 @@ exposicion: X2
 fecha: 2026-09-21
 despliegue: https://bricks-virtual-collector.vercel.app
 commit_desplegado: 162f41c (main tras la PR #9) — verificado ANTES de las PR #12 y #13
-veredicto: NO-GO
+veredicto: GO CON EXCEPCIONES
+actualizado: 2026-09-22 — bloqueante de copia de seguridad resuelto (ver §Veredicto)
 relacionada_con: [ADR-011-acceso-invitado-tres-niveles, plan-acceso-invitado-opcion-c]
 tags: [spec-vjc, preflight, lanzamiento]
 ---
 
 # Preflight — 21/09/2026
 
-**Veredicto: NO-GO.** Hay **un bloqueante** (ver §Veredicto). Todo lo demás es corregible o aceptable como
-excepción, y dos de los fallos encontrados ya tienen corrección en PR.
+**Veredicto: GO CON EXCEPCIONES** (actualizado 22/09/2026 — ver §Veredicto). El bloqueante original
+(copia de seguridad sin restaurar) se resolvió el 22/09/2026: el titular ejecutó un `pg_dump` real
+del proyecto de producción y lo restauró en un proyecto Supabase temporal desde Google Cloud Shell,
+confirmando datos reales tras la restauración (`select count(*) from public.vitrinas` → **5**).
+El proyecto temporal se elimina tras la verificación; no queda infraestructura permanente nueva.
 
 Todo se verificó **ejecutando contra el despliegue real** (`bricks-virtual-collector.vercel.app`): `fetch`
 sobre la URL publicada, Playwright + axe-core, Lighthouse móvil, `npm audit`, lecturas con la anon key y un
@@ -86,7 +90,7 @@ Causa común: las fotos se guardan a calidad 90 sin **redimensionar** en `api/se
 | Seguimiento de errores recibiendo eventos | **FALLO** | No hay herramienta (sin Sentry o equivalente en `package.json`); `system_logs` vacía |
 | Alerta con destinatario real | **FALLO** | No configurada |
 | Comprobación de disponibilidad activa | **FALLO** | Existe `/api/health` (responde `200`) pero ningún monitor externo lo consulta |
-| **Copia de seguridad restaurada al menos una vez** | **FALLO — BLOQUEANTE** | Sin evidencia de copia ni de restauración. El plan gratuito de Supabase **no incluye copias automáticas** y no se ha hecho ninguna manual. En X2+ es bloqueante por definición |
+| **Copia de seguridad restaurada al menos una vez** | **OK (resuelto 22/09/2026)** | El plan gratuito de Supabase no incluye copias automáticas. El titular ejecutó `pg_dump --schema=public` sobre producción desde Google Cloud Shell y restauró el volcado con `psql` en un proyecto Supabase temporal, sin errores; `select count(*) from public.vitrinas` devolvió **5** filas reales. Proyecto temporal eliminado tras la comprobación. Queda como procedimiento manual, no automatizado — ver E5 |
 | Reversión escrita y ejecutada en < 10 min [X2+] | **FALLO** | No hay procedimiento escrito ni ejecutado (Vercel permite *instant rollback*, pero no se ha probado) |
 | Alerta de facturación | **PENDIENTE (autor)** | No verificable desde fuera |
 
@@ -119,25 +123,21 @@ Queda anotada; si reaparece se investiga antes de relanzar CI.
 
 ## Veredicto
 
-### **NO-GO**
+### **GO CON EXCEPCIONES**
 
-**Bloqueante (1):** no hay copia de seguridad de la base de datos **restaurada al menos una vez** (bloque 5). En X2
-es bloqueante siempre. Hoy, si la base de datos se corrompe o alguien borra datos, **no hay forma de recuperarlos**.
+**Cerrado el 22/09/2026.** El único bloqueante (copia de seguridad sin restaurar, bloque 5) quedó
+resuelto: `pg_dump` real de producción restaurado con éxito en un proyecto Supabase limpio, con
+datos verificados. Ningún otro hallazgo de este preflight es bloqueante por sí mismo en X2 — todos
+quedan como excepción aceptada (abajo) o ya se corrigieron durante el propio preflight.
 
-**Resueltos durante el preflight (pendientes de merge y re-verificación):**
-- PR **#12** — vulnerabilidades de dependencias (`next` crítica, `sharp` alta, `nanoid`).
+**Resueltos durante el preflight y mergeados a `main`:**
+- PR **#12** — vulnerabilidades de dependencias (`next` crítica, `sharp` alta, `nanoid`). `npm audit` = 0.
 - PR **#13** — accesibilidad nivel A (`link-name`), contraste AA y copy obsoleto.
+- Bloqueante de operación (copia de seguridad) — resuelto manualmente el 22/09/2026 (ver bloque 5).
 
-### Camino a GO CON EXCEPCIONES
+### Excepciones aceptadas (E1-E11)
 
-1. Mergear #12 y #13 y **repetir** `npm audit` y axe sobre el despliegue (deben dar 0 y sin violaciones).
-2. **Resolver el bloqueante**, con cualquiera de estas dos vías:
-   - **(a)** Hacer una copia manual con `pg_dump` y **restaurarla en un Postgres local** (Docker) para demostrar que
-     sirve. No requiere un proyecto nuevo de Supabase. Los ficheros de Storage no van en la copia de BD.
-   - **(b)** Pasar Supabase a **Pro** (copias diarias) y probar una restauración.
-3. Aceptar por escrito las excepciones de abajo.
-
-### Excepciones propuestas (requieren aceptación escrita del autor)
+Ninguna de las siguientes impide operar hoy; se aceptan como deuda conocida, no como bloqueante.
 
 | # | Fallo | Riesgo aceptado | Responsable | Fecha de corrección |
 |---|---|---|---|---|
@@ -153,4 +153,5 @@ es bloqueante siempre. Hoy, si la base de datos se corrompe o alguien borra dato
 | E10 | Perfiles públicos exponen `role`, `consentimiento_*` y `total_visitas` | Fuga menor de metadatos (sin email) | Claude | _a fijar_ |
 | E11 | Pendientes del autor: teclado en el flujo completo, DPA y región de Vercel, alerta de facturación | Sin evidencia | autor | _a fijar_ |
 
-**Aceptación del autor** (obligatoria para GO CON EXCEPCIONES): _pendiente — se anota aquí con nombre y fecha_.
+**Aceptación del autor:** Víctor Javier Corral, 22/09/2026 — confirmada en la sesión de trabajo tras
+resolver el bloqueante de copia de seguridad; ninguna de las 11 excepciones se objetó.
