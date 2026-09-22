@@ -76,9 +76,9 @@ export default async function ExposicionesIndexPage() {
                   <div className="p-5 flex flex-col flex-1">
                     <h2 className="font-display font-bold text-xl leading-tight mb-1">{expo.titulo}</h2>
                     <p className="text-sm font-medium text-foreground/70 line-clamp-2 mb-3">{expo.descripcion}</p>
-                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-foreground/60">
+                    <div className="mt-auto flex items-center justify-between text-xs font-bold text-foreground/75">
                       <span>{rangoFechasExposicion(expo)}</span>
-                      <span className="inline-flex items-center gap-1 text-brand-blue group-hover:gap-2 transition-all">
+                      <span className="inline-flex items-center gap-1 text-brand-blue dark:text-sky-300 group-hover:gap-2 transition-all">
                         {activa ? "Ver ranking" : "Ver palmarés"} <ArrowRight size={14} />
                       </span>
                     </div>

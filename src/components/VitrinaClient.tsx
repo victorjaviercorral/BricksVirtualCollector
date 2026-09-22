@@ -121,7 +121,7 @@ export default function VitrinaClient({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-8 pb-20">
       <div className="flex items-center gap-4">
-        <Link href="/" className="p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+        <Link href="/" aria-label="Volver al inicio" className="p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
           <ArrowLeft size={24} />
         </Link>
         <div>

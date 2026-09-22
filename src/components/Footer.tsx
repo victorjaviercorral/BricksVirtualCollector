@@ -43,7 +43,7 @@ export function Footer() {
           No es un producto comercial: no ofrece servicios de pago, no muestra publicidad y no
           admite el registro de nuevos usuarios. El contenido mostrado es ficticio.
         </p>
-        <p className="text-[11px] font-medium text-foreground/40 pt-2">
+        <p className="text-[11px] font-medium text-foreground/70 pt-2">
           &copy; {currentYear} Víctor Javier Corral
         </p>
       </div>
