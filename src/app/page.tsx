@@ -56,7 +56,7 @@ export default async function Home() {
       {exposicion && (
         <Link href={`/exposicion/${exposicion.id}`} className="block relative w-full h-[300px] sm:h-[400px] rounded-[2.5rem] overflow-hidden border-2 border-foreground shadow-[8px_8px_0px_0px_#0F172A] dark:shadow-[8px_8px_0px_0px_#F8F9FA] flex items-end p-8 group hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_0px_#0F172A] dark:hover:shadow-[10px_10px_0px_0px_#F8F9FA] transition-all">
            <img src={exposicion.imagen_url} alt={exposicion.titulo} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/85 to-black/45" />
            
            <div className="relative z-10 text-white w-full max-w-2xl">
               <div className="bg-brand-yellow text-black font-black text-xs px-3 py-1 rounded-full border-2 border-black inline-block mb-4 uppercase tracking-wider shadow-[2px_2px_0px_0px_#000]">
