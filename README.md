@@ -20,11 +20,12 @@ los metadatos EXIF de tus fotos eliminados antes de publicarlas.
 > [`docs/auditoria-arquitectura.md`](docs/auditoria-arquitectura.md). Si vienes a mirar el código,
 > ese es el documento que da contexto.
 
-<!--
-  CAPTURAS: insertar aquí 2-3 imágenes o un GIF corto del recorrido de invitado
-  (landing → "Probar sin registrarme" → crear vitrina/subir set → vitrina pública de la galería).
-  Guardar en `public/screenshots/`. Pendiente (Fase 8, requiere sesión real del titular).
--->
+<p align="center">
+  <img src="public/screenshots/01-home.jpg" width="32%" alt="Portada de BricksVirtualCollector con la exposición temporal activa" />
+  <img src="public/screenshots/02-modo-invitado.jpg" width="32%" alt="Hub del usuario en modo invitado, con el aviso de que la colección se borra a las 48h" />
+  <img src="public/screenshots/03-galeria.jpg" width="32%" alt="Galería pública de vitrinas de la comunidad" />
+</p>
+<p align="center"><sub>Portada · Hub en modo invitado (sandbox anónimo) · Galería pública de la comunidad</sub></p>
 
 ---
 
