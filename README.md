@@ -46,6 +46,13 @@ protagonista es lo que construyes, no quién eres.
   crea una vitrina, sube un set, vota, reclama un reto — en un sandbox propio que se borra solo a
   las 48 h. Ningún dato tuyo, ni siquiera un email.
 
+<p align="center">
+  <img src="public/screenshots/04-exposiciones.jpg" width="32%" alt="Exposiciones temáticas de la comunidad, activas y finalizadas" />
+  <img src="public/screenshots/05-bounties.jpg" width="32%" alt="Bounties comunitarios: retos con recompensa en Bricks" />
+  <img src="public/screenshots/06-mis-insignias.jpg" width="32%" alt="Mosaico comunitario de insignias conseguidas" />
+</p>
+<p align="center"><sub>Exposiciones temáticas · Bounties (retos con recompensa) · Mosaico comunitario de insignias</sub></p>
+
 ## Pruébalo tú mismo
 
 👉 **[bricks-virtual-collector.vercel.app](https://bricks-virtual-collector.vercel.app)**
