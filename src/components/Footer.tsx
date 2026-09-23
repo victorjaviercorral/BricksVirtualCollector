@@ -39,9 +39,10 @@ export function Footer() {
           registrada de The LEGO Group, que no patrocina, autoriza ni avala este sitio.
         </p>
         <p className="text-xs font-medium text-foreground/60 max-w-3xl mx-auto">
-          <strong className="text-foreground/80">Prototipo de demostración.</strong>{" "}
-          No es un producto comercial: no ofrece servicios de pago, no muestra publicidad y no
-          admite el registro de nuevos usuarios. El contenido mostrado es ficticio.
+          <strong className="text-foreground/80">Prototipo de demostración con fines de portfolio.</strong>{" "}
+          No es un producto comercial: no ofrece servicios de pago ni muestra publicidad. El
+          registro es real y abierto (también puedes probarlo sin registrarte); el contenido que
+          ves en la aplicación es real, no ficticio.
         </p>
         <p className="text-[11px] font-medium text-foreground/70 pt-2">
           &copy; {currentYear} Víctor Javier Corral

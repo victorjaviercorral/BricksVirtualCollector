@@ -1,124 +1,77 @@
-# BricksVirtualCollector
+<p align="center">
+  <img src="public/logo.jpg" width="96" alt="BricksVirtualCollector" />
+</p>
 
-**Museo virtual para coleccionistas de LEGO®.** Una plataforma donde exponer tu colección de sets
-en vitrinas públicas o privadas, sin exponerte a ti: sin nombre real, sin mensajería directa y con
-los metadatos EXIF de tus fotos eliminados antes de publicarlas.
-
-> ### ⚠️ Estado: prototipo
->
-> Este es un **prototipo de demostración técnica con fines de portfolio**. No es un producto
-> comercial: no ofrece servicios de pago ni muestra publicidad. Tres formas de entrar:
->
-> - **Visitante** — sin sesión, navega todo el contenido público (`/galeria`, `/exposiciones`,
->   `/bounties`, vitrinas públicas).
-> - **Probar sin registrarme** — sesión anónima de Supabase con un sandbox propio: puedes crear
->   una vitrina, subir un set, votar y reclamar un bounty de verdad. Nunca es público y se borra
->   por completo a las 48 h ([ADR-011](docs/06-decisiones/ADR-011-acceso-invitado-tres-niveles.md)).
-> - **Cuenta registrada** — con correo, para que tu colección sea permanente y pública.
->
-> Su estado real —incluidos los defectos conocidos— está documentado sin maquillaje en
-> [`docs/auditoria-arquitectura.md`](docs/auditoria-arquitectura.md). Si vienes a mirar el código,
-> ese es el documento que da contexto.
+<h1 align="center">BricksVirtualCollector</h1>
+<p align="center"><strong>El museo virtual para tu colección de LEGO®.</strong><br />Expón lo que construyes. Descubre lo que construyen otros. Sin exponerte a ti.</p>
 
 <p align="center">
-  <img src="public/screenshots/01-home.jpg" width="32%" alt="Portada de BricksVirtualCollector con la exposición temporal activa" />
-  <img src="public/screenshots/02-modo-invitado.jpg" width="32%" alt="Hub del usuario en modo invitado, con el aviso de que la colección se borra a las 48h" />
+  <a href="https://bricks-virtual-collector.vercel.app"><strong>🔗 Probar la demo en vivo →</strong></a>
+</p>
+
+<p align="center">
+  <img src="public/screenshots/01-home.jpg" width="32%" alt="Portada con la exposición temática activa" />
+  <img src="public/screenshots/02-modo-invitado.jpg" width="32%" alt="Tu Hub personal: sets destacados, bricks recibidos, insignias" />
   <img src="public/screenshots/03-galeria.jpg" width="32%" alt="Galería pública de vitrinas de la comunidad" />
 </p>
-<p align="center"><sub>Portada · Hub en modo invitado (sandbox anónimo) · Galería pública de la comunidad</sub></p>
 
 ---
 
-## Qué problema resuelve
+## El problema de todo AFOL
 
-Los coleccionistas quieren enseñar lo que construyen, pero las redes generalistas les obligan a
-elegir entre visibilidad y privacidad. Una foto de una estantería lleva coordenadas GPS en los
-metadatos y enseña el salón de tu casa. BricksVirtualCollector parte de una premisa distinta:
-**el anonimato no es una opción de configuración, es el diseño**.
+Terminas un MOC, le haces una foto orgulloso... ¿y ahora qué? Las redes generalistas te obligan
+a elegir: o compartes con tu nombre y tu cara, con desconocidos escribiéndote y coordenadas GPS
+de tu salón viajando dentro del EXIF de la foto, o guardas el modelo en una carpeta del móvil
+donde nadie más que tú lo vuelve a ver.
 
-- Perfiles seudónimos: no se pide ni se muestra el nombre real.
-- Sin mensajería directa entre usuarios: se elimina el vector de acoso.
-- Limpieza de metadatos EXIF/GPS en las fotos subidas.
-- Visibilidad por vitrina: pública, privada o accesible solo con enlace.
+**BricksVirtualCollector** parte de otra idea: un museo solo para tu colección, donde el
+protagonista es lo que construyes, no quién eres.
 
-## Cómo está construido
+## Cómo se vive por dentro
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Next.js 16 (App Router, Turbopack) · React 19 |
-| Lenguaje | TypeScript en modo `strict` |
-| Estilos | Tailwind CSS v4 (configuración CSS-first con `@theme`) |
-| Backend | Supabase — PostgreSQL, Auth y Storage, con RLS en todas las tablas |
-| Edge | `src/proxy.ts` (convención Next 16, sustituye a `middleware.ts`) |
-| Tests | Vitest + Testing Library (unitarios) · Playwright (E2E) |
-| CI | GitHub Actions con umbral de cobertura |
+- 🏛️ **Tus propias vitrinas.** Organiza tus sets por temática, escribe sus fichas, decide qué se
+  ve y qué no. Pública, privada, o solo con enlace para quien tú quieras.
+- 🎭 **Anonimato real, no una casilla de ajustes.** Alias en vez de tu nombre. Sin mensajería
+  directa entre usuarios. Y cada foto pasa por una limpieza de metadatos EXIF/GPS antes de
+  guardarse — nadie averigua dónde vives por una estantería de fondo.
+- 🧭 **Una galería que se explora.** Recorre las colecciones públicas de otros coleccionistas,
+  filtra por temática (Star Wars, Technic, Icons...) y descubre construcciones que no habrías
+  encontrado buscando por tu cuenta.
+- 🏆 **Exposiciones temáticas y retos comunitarios.** Participa en la exposición activa del
+  momento, sube el set que la comunidad está pidiendo y gana *Bricks* — la moneda de
+  reconocimiento entre coleccionistas, no dinero real.
+- 🎖️ **Progreso que se queda.** Insignias, un mosaico comunitario y un histórico de en qué
+  exposiciones has dejado huella. Tu trayectoria como coleccionista, visible de un vistazo.
+- ⚡ **Pruébalo antes de decidir nada.** Entra sin registrarte y recorre la aplicación entera —
+  crea una vitrina, sube un set, vota, reclama un reto — en un sandbox propio que se borra solo a
+  las 48 h. Ningún dato tuyo, ni siquiera un email.
 
-```
-src/
-├── app/            Rutas (App Router). Server Components por defecto.
-│   ├── api/        Route handlers
-│   ├── admin/      Panel de administración y observabilidad
-│   └── legal/      Documentos legales renderizados desde /legal
-├── components/     Componentes de cliente compartidos
-├── lib/            Clientes de Supabase, logger, rate limiting, lectura de docs
-└── proxy.ts        Rate limiting + sesión + protección de rutas
-supabase/migrations/  Esquema y políticas RLS
-docs/                 Documentación del proyecto (ver más abajo)
-legal/                Textos legales servidos en /legal/[slug]
-```
+<p align="center">
+  <img src="public/screenshots/04-exposiciones.jpg" width="32%" alt="Exposiciones temáticas de la comunidad, activas y finalizadas" />
+  <img src="public/screenshots/05-bounties.jpg" width="32%" alt="Bounties comunitarios: retos con recompensa en Bricks" />
+  <img src="public/screenshots/06-mis-insignias.jpg" width="32%" alt="Mosaico comunitario de insignias conseguidas" />
+</p>
+<p align="center"><sub>Exposiciones temáticas · Bounties (retos con recompensa) · Mosaico comunitario de insignias</sub></p>
 
-## Puesta en marcha
+## Pruébalo tú mismo
 
-**Requisitos:** Node.js 20+ y un proyecto de [Supabase](https://supabase.com).
+👉 **[bricks-virtual-collector.vercel.app](https://bricks-virtual-collector.vercel.app)**
 
-```bash
-git clone https://github.com/victorjaviercorral/BricksVirtualCollector.git
-cd BricksVirtualCollector
-npm ci
-cp .env.example .env.local   # rellena los valores de tu proyecto Supabase
-npx supabase db push         # aplica las migraciones
-npm run dev
-```
+Sin registro, sin email, sin tarjeta. Un clic en "Probar sin registrarme" y estás dentro.
 
-La aplicación queda en `http://localhost:3000`.
+## Por qué existe
 
-> **Aviso:** las migraciones de `supabase/migrations/` **no reproducen todavía el esquema
-> completo** — faltan las tablas del módulo de exposiciones e insignias. Está registrado como
-> hallazgo A1 de la auditoría y es trabajo pendiente. Hasta que se cierre, un clon limpio arranca
-> pero algunas secciones fallarán.
+Este proyecto nace de una pregunta sencilla: ¿por qué la privacidad y el orgullo de coleccionista
+tienen que ser incompatibles? Lo construí como pieza de portfolio para demostrar cómo pienso un
+producto de principio a fin — desde la propuesta de valor hasta el detalle de que una foto de tu
+estantería no debería delatar dónde vives — no solo cómo escribo código.
 
-### Comandos
+## Construido con
 
-```bash
-npm run dev             # servidor de desarrollo
-npm run build           # build de producción
-npm run lint            # ESLint
-npm test                # tests unitarios
-npm run test:coverage   # tests + informe de cobertura (umbral 85%)
-npm run test:e2e        # tests end-to-end con Playwright
-```
+Next.js (App Router) · React · TypeScript · Tailwind CSS · Supabase (Postgres, Auth, Storage con
+RLS) · Vitest & Playwright para testing · desplegado en Vercel.
 
-## Documentación
-
-El proyecto se gestiona con el
-[Spec VJC Framework](https://github.com/victorjaviercorral/spec-vjc-framework), que separa la
-definición de la implementación y deja rastro de cada decisión.
-
-| Documento | Contenido |
-|---|---|
-| [Auditoría de arquitectura](docs/auditoria-arquitectura.md) | Estado real del proyecto: hallazgos con evidencia, severidad y plan por fases |
-| [Historial de fases](docs/00-proyecto/FASES_Y_MEJORAS.md) | Registro de trazabilidad de todas las iniciativas |
-| [Especificación](docs/02-spec/spec.md) | Requisitos técnicos derivados del PRD |
-| [Decisiones (ADR)](docs/06-decisiones/) | 12 registros de decisión con alternativas descartadas |
-| [Guía de usuario](docs/09-guia-usuario/) | 12 secciones, servidas en `/como-funciona` |
-| [Estrategia de testing](docs/testing/) | Política de cobertura y diagnóstico |
-| [Textos legales](legal/) | Aviso legal, privacidad, cookies, términos y propiedad intelectual |
-
-Las reglas de trabajo del repositorio —política de testing, consolidación sin duplicación,
-documentación continua y versionado— están en [`AGENTS.md`](./AGENTS.md) y son de obligado
-cumplimiento para cualquier persona o agente que contribuya.
-
-## Marcas y licencia
+---
 
 **Proyecto independiente sin ánimo de lucro. No está afiliado, patrocinado ni avalado por The LEGO
 Group.** LEGO® es una marca registrada de The LEGO Group, que no patrocina, autoriza ni avala este
@@ -127,8 +80,6 @@ de The LEGO Group.
 
 El código se distribuye bajo licencia [Apache 2.0](LICENSE).
 
----
-
-Desarrollado por **Víctor Javier Corral** desde Málaga.
-Para incidencias sobre el proyecto, abre una
-[issue en GitHub](https://github.com/victorjaviercorral/BricksVirtualCollector/issues).
+<p align="center">
+  <sub>Desarrollado por <strong>Víctor Javier Corral</strong> desde Málaga · <a href="https://github.com/victorjaviercorral/BricksVirtualCollector/issues">Reportar un problema</a></sub>
+</p>
