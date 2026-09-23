@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     siteName: TITULO,
     locale: "es_ES",
     type: "website",
-    images: [{ url: "/logo.jpg", width: 1376, height: 768, alt: TITULO }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: TITULO }],
   },
   twitter: {
     card: "summary_large_image",
     title: TITULO,
     description: DESCRIPCION,
-    images: ["/logo.jpg"],
+    images: ["/og-image.png"],
   },
 };
 
