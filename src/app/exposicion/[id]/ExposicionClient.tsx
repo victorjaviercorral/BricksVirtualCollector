@@ -114,7 +114,7 @@ export default function ExposicionClient({
       {/* Hero Banner */}
       <section className="relative w-full h-[50vh] min-h-[400px] border-b-2 border-foreground overflow-hidden">
         <img src={exposicion.imagen_url} alt={exposicion.titulo} className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-black/30" />
         
         <div className="absolute top-6 left-6 z-20">
           <Link href="/" className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl border-2 border-black font-bold hover:bg-brand-yellow transition-colors shadow-[4px_4px_0px_0px_#000]">
