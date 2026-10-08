@@ -62,7 +62,9 @@ propios sets. La función borra **a mano** dos cosas que no cascadan: los `brick
 el invitado emitió sobre sets ajenos (hash = su uid, o `exposicion-…-user-<uid>`) y sus filas de
 `storage.objects` (por prefijo de carpeta `<uid>/`). El blob físico de Storage queda huérfano
 (limitación de Supabase) — gap conocido y acotado. Job `pg_cron` `purga-invitados` diario a las
-03:17 UTC. La misma migración reactiva `purge-system-logs` (hallazgo V4a).
+03:17 UTC. La misma migración reactiva `purge-system-logs` (hallazgo V4a). La función no se
+expone por `/rest/v1/rpc`: `20261008120000_revocar_rpc_purga_invitados.sql` retira EXECUTE a
+`public`, `anon` y `authenticated`; solo la ejecutan `postgres` (el job) y `service_role`.
 
 **Upgrade a cuenta real (Fase 4).** El banner `BannerInvitado` (layout raíz, si
 `user.is_anonymous`) abre `UpgradeCuentaModal` → `supabase.auth.updateUser({ email, password,

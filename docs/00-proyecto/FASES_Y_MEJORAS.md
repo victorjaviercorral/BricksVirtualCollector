@@ -56,4 +56,20 @@ brick normal. Los dos formatos nunca casaban → el voto en exposiciones no func
 
 ---
 
+## Hallazgo de seguridad: la purga de invitados se podía lanzar por RPC (08/10/2026)
+
+Detectado al montar el Supabase de pruebas `bvc-e2e` (lint de Supabase 0028/0029).
+`public.purgar_invitados_expirados` (`security definer`, migración `20260909120000`) borra invitados de
+`auth.users` y era ejecutable por `anon` y `authenticated` vía `/rest/v1/rpc` (EXECUTE por defecto a
+`PUBLIC` + default privileges de Supabase). Con la anon key bastaba para lanzar la purga, incluso
+con una ventana de 0 segundos.
+
+- **Corrección:** `supabase/migrations/20261008120000_revocar_rpc_purga_invitados.sql`: `revoke execute ... from
+  public, anon, authenticated`. Rama `fix/revocar-rpc-purga-invitados`.
+- **Sin impacto funcional:** nadie la llama por RPC (`src/`, `scripts/` y `e2e/` revisados). El job `pg_cron`
+  `purga-invitados` corre como `postgres`, que es el propietario, y conserva EXECUTE. `service_role` también.
+- **Pendiente de aplicar en producción** por el titular; verificación en la cabecera de la migración.
+
+---
+
 > **Atención Agentes:** Cada vez que se inicie un nuevo brainstorming, fase de diseño, auditoría o plan de mejora técnica, se **debe** añadir una nueva entrada en esta tabla. Además, los detalles generados deben guardarse de forma compartimentada en las carpetas respectivas dentro de `docs/` (ej: `docs/03-diseno/`, `docs/legal/`, etc.).

@@ -1,0 +1,35 @@
+-- Hallazgo de seguridad al montar el proyecto de pruebas bvc-e2e (08/10/2026), lint de Supabase
+-- 0028/0029 (security definer ejecutable por anon/authenticated): `public.purgar_invitados_expirados`
+-- (20260909120000) es security definer, borra usuarios invitados de auth.users y quedaba expuesta
+-- en /rest/v1/rpc/purgar_invitados_expirados para `anon` y `authenticated`. Postgres concede EXECUTE
+-- a PUBLIC al crear una función y los default privileges de Supabase en `public` la conceden además
+-- a anon, authenticated y service_role. Cualquiera con la anon key podía lanzar la purga (y con una
+-- ventana corta, p. ej. '0 seconds', borrar a TODOS los invitados en curso).
+--
+-- Nadie la llama por RPC: ni src/ ni scripts/ ni e2e/ usan `.rpc('purgar_invitados_expirados')`.
+-- Solo la ejecuta el job de pg_cron `purga-invitados`, que corre como `postgres` (el rol que lo
+-- programó, cron.job.username), propietario de la función. El propietario conserva EXECUTE, así que
+-- el job no se ve afectado. `service_role` también lo conserva (uso administrativo desde servidor).
+-- La ejecución manual desde el SQL Editor (rol postgres) sigue funcionando.
+
+revoke execute on function public.purgar_invitados_expirados(interval) from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------------------------
+-- Cómo verificar tras aplicar (SQL Editor):
+--
+--   select r.rolname,
+--          has_function_privilege(r.rolname, 'public.purgar_invitados_expirados(interval)', 'execute') as puede
+--   from pg_roles r
+--   where r.rolname in ('anon', 'authenticated', 'service_role', 'postgres')
+--   order by r.rolname;
+--   -- Esperado: anon = false, authenticated = false, postgres = true, service_role = true.
+--
+--   select jobname, username, active from cron.job where jobname = 'purga-invitados';
+--   -- Esperado: username = postgres (el job no se ve afectado).
+--
+--   Desde fuera, con la anon key:
+--     POST /rest/v1/rpc/purgar_invitados_expirados  → 401/403 (permission denied for function)
+--
+-- Rollback (reabre el agujero, solo si hiciera falta):
+--   grant execute on function public.purgar_invitados_expirados(interval) to public, anon, authenticated;
+-- ---------------------------------------------------------------------------------------------
