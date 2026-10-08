@@ -23,6 +23,29 @@
 -- (hash_visitante = auth.uid()). Los bricks de recompensa de bounties ya no pasan por esta
 -- política -- api/bounties/claim/route.ts los inserta con la service_role key (bypassa RLS),
 -- ver ese fichero.
+--
+-- Idempotencia desde cero (bvc-e2e, 08/10/2026): en un proyecto nuevo la política se llama
+-- "Anyone can insert a brick" (init_schema + 20260819110000). En producción se renombró a mano
+-- a "Anyone can insert a brick on public sets" antes de esta migración. Sin el rename condicional
+-- `alter policy` falla con ERROR 42704. El resultado final es idéntico en ambos caminos.
+do $$
+begin
+    if exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'bricks_recibidos'
+          and policyname = 'Anyone can insert a brick'
+    ) and not exists (
+        select 1 from pg_policies
+        where schemaname = 'public'
+          and tablename = 'bricks_recibidos'
+          and policyname = 'Anyone can insert a brick on public sets'
+    ) then
+        alter policy "Anyone can insert a brick" on public.bricks_recibidos
+            rename to "Anyone can insert a brick on public sets";
+    end if;
+end $$;
+
 alter policy "Anyone can insert a brick on public sets" on public.bricks_recibidos
     with check (
         exists (

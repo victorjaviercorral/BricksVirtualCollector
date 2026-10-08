@@ -66,3 +66,25 @@ CI: workflow `E2E invitado` (`.github/workflows/e2e-invitado.yml`), nocturno (04
   `E2E_*` o si `E2E_SUPABASE_URL` coincide con la URL de producción de `.env.local`.
 - `retries: 0`: es un flujo con estado; reintentar enmascararía fallos reales.
 - `npm run test:e2e` (config por defecto) ignora este spec.
+
+## Hallazgos al montar el proyecto de pruebas desde cero (`bvc-e2e`, 08/10/2026)
+
+Al aplicar todas las migraciones en orden sobre el proyecto de pruebas nuevo salieron dos migraciones que
+solo funcionaban sobre el estado de producción, más dos hallazgos de la purga de invitados:
+
+1. **`20260901120000` fallaba desde cero** — `ERROR 42704: policy "Anyone can insert a brick on public sets"
+   for table "bricks_recibidos" does not exist`. Ese nombre solo existe en producción (renombrada a mano);
+   desde cero la política se llama `"Anyone can insert a brick"`. **Corregido:** bloque `do` que renombra la
+   política antigua solo si existe y la nueva no (consulta `pg_policies`). En producción es un no-op.
+2. **`20260909120000` fallaba desde cero** — `ERROR 2BP01: dependent privileges exist`. Repetir
+   `create extension if not exists pg_cron` vuelve a disparar el event trigger de Supabase, que hace
+   `revoke all on table cron.job from postgres` y choca con el `grant all privileges on all tables in schema
+   cron to postgres` de `20260810130000`. **Corregido:** la extensión solo se crea si no está en
+   `pg_extension`. En producción (pg_cron ya instalada) es un no-op.
+3. **Seguridad:** `purgar_invitados_expirados` (security definer) es ejecutable por `anon` y `authenticated`
+   vía `/rest/v1/rpc` (lint de Supabase 0028/0029). Se corrige en una PR aparte, con una migración nueva
+   (rama `fix/revocar-rpc-purga-invitados`).
+4. **Pendiente, sin arreglar:** `purgar_invitados_expirados` borra directamente de `storage.objects`, y
+   Supabase lo bloquea con el trigger `protect_objects_delete`; la purga fallará en cuanto haya invitados
+   caducados con objetos en Storage. Hay que pasar el borrado de ficheros a la Storage API (p. ej. Edge
+   Function o `pg_net`).
