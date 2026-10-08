@@ -18,7 +18,18 @@
 -- ---------------------------------------------------------------------------------------------
 
 -- 1. pg_cron -------------------------------------------------------------------------------------
-create extension if not exists pg_cron with schema extensions;
+-- Solo crear la extensión si aún no existe. En un proyecto nuevo, `create extension if not exists
+-- pg_cron` tras `20260810130000` (que ya hizo `grant all ... on all tables in schema cron to
+-- postgres`) vuelve a disparar el event trigger de Supabase que hace `revoke all on table
+-- cron.job from postgres` y falla con ERROR 2BP01 (dependent privileges exist). Detectado al
+-- montar bvc-e2e desde cero (08/10/2026). Si ya está instalada, no se toca; los grants siguientes
+-- siguen siendo idempotentes.
+do $$
+begin
+    if not exists (select 1 from pg_extension where extname = 'pg_cron') then
+        create extension pg_cron with schema extensions;
+    end if;
+end $$;
 grant usage on schema cron to postgres;
 grant all privileges on all tables in schema cron to postgres;
 
