@@ -218,7 +218,10 @@ falso.
 
 `count(bricks_recibidos)`, en todas las pantallas.
 
-El trigger `increment_bricks` (`20260806000000`) **solo incrementa**: no hay `AFTER DELETE`.
+El trigger `increment_bricks` (`20260806000000`, reescrito en `20261019140000`, CI-2026-005) incrementa en
+`AFTER INSERT` y, desde CI-2026-005, decrementa en `AFTER DELETE` (la purga de invitados borra votos sobre sets
+ajenos). **Ojo:** hasta el 19/10/2026 el trigger no existía en producción (deriva) y `sets.bricks_recibidos`
+estaba a 0 en todos los sets; la migración `20261019140000` lo crea y recalcula los contadores.
 Borrar un set cascadea sus filas de `bricks_recibidos` pero deja
 `usuarios_perfil.total_bricks_recibidos` inflado. Esa columna **no se usa en ninguna parte**;
 `/perfil/[id]`, que era la última que la leía, pasa a contar (antes mostraba un número distinto

@@ -467,9 +467,9 @@ export type AgregadosDeSets = Pick<
  * Agregados que salen de los sets del usuario, en una sola pasada.
  *
  * Sobre `maxBricksUnSet`: usa la columna `sets.bricks_recibidos` que mantiene el trigger
- * `increment_bricks`, no un recuento de filas. **Por set** esa columna no puede desviarse (no
- * existe ningún camino de borrado de bricks en la aplicación, y borrar un set se lleva sus filas
- * por cascada junto con el propio contador). Lo que sí se desvía es
+ * `increment_bricks`, no un recuento de filas. **Por set** esa columna no se desvía: el trigger
+ * suma en INSERT y resta en DELETE (la purga de invitados borra votos; CI-2026-005), y borrar un
+ * set se lleva sus filas por cascada junto con el propio contador. Lo que sí se desvía es
  * `usuarios_perfil.total_bricks_recibidos`, que sobrevive al borrado de un set y por eso NO se
  * usa en ningún sitio: el total del usuario se cuenta siempre desde `bricks_recibidos`.
  */
