@@ -385,6 +385,11 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# CI-2026-004: la invoca pg_cron (pg_net) sin JWT; se autentica con el token `x-purga-token`, que la
+# propia función valida contra Vault (RPC validar_token_purga_ficheros, solo service_role).
+[functions.purgar-ficheros-invitados]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

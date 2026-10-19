@@ -84,7 +84,23 @@ solo funcionaban sobre el estado de producción, más dos hallazgos de la purga 
 3. **Seguridad:** `purgar_invitados_expirados` (security definer) es ejecutable por `anon` y `authenticated`
    vía `/rest/v1/rpc` (lint de Supabase 0028/0029). Se corrige en una PR aparte, con una migración nueva
    (rama `fix/revocar-rpc-purga-invitados`).
-4. **Pendiente, sin arreglar:** `purgar_invitados_expirados` borra directamente de `storage.objects`, y
-   Supabase lo bloquea con el trigger `protect_objects_delete`; la purga fallará en cuanto haya invitados
-   caducados con objetos en Storage. Hay que pasar el borrado de ficheros a la Storage API (p. ej. Edge
-   Function o `pg_net`).
+4. **Corregido (incidente CI-2026-004, 19/10/2026):** `purgar_invitados_expirados` borraba directamente de
+   `storage.objects` y Supabase lo bloquea con el trigger `protect_objects_delete` (por sentencia: falla aunque
+   no haya ficheros). En producción el job fallaba cada noche desde el 12/09/2026. Migración
+   `20261019120000_purga_invitados_storage_api.sql`: la función solo borra filas y encola las rutas en
+   `storage_borrados_pendientes`; la Edge Function `purgar-ficheros-invitados` las borra con la Storage API
+   (job `borrar-ficheros-invitados`, 03:27 UTC, vía `pg_net`).
+
+### Probar la purga completa en `bvc-e2e`
+
+Requiere `pg_cron` (paso 4) y, para los ficheros, la Edge Function desplegada en el proyecto de pruebas:
+
+1. `supabase functions deploy purgar-ficheros-invitados --project-ref <ref-de-pruebas>` (usa
+   `verify_jwt = false` de `supabase/config.toml`; se autentica con el token que la migración guarda en Vault).
+2. Una vez: `select vault.create_secret('https://<ref-de-pruebas>.supabase.co/functions/v1/purgar-ficheros-invitados', 'purga_ficheros_url');`
+3. Crear un invitado con algún fichero en `avatars/<uid>/` o `fotos_sets/<uid>/`, y envejecerlo:
+   `update auth.users set last_sign_in_at = now() - interval '3 days' where id = '<uid>' and is_anonymous;`
+4. `select * from public.purgar_invitados_expirados();` → `(invitados_borrados, bricks_ajenos_borrados, ficheros_encolados)`.
+5. `select public.lanzar_borrado_ficheros_pendientes();` y, unos segundos después,
+   `select status_code, content from net._http_response order by created desc limit 1;` → `200` con
+   `"fallidos":0`; `storage_borrados_pendientes` vacía y los objetos ya no están en `storage.objects`.
