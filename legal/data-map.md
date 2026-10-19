@@ -67,6 +67,11 @@ Según el código (formularios, interfaz y base de datos), el usuario entrega vo
   `purga-invitados` (48 h, Fase 3 del acceso de invitado, migración `20260909120000`) que la
   misma reprogramó de paso (hallazgo V4a: el job de logs nunca llegó a crearse hasta entonces
   porque `pg_cron` estaba deshabilitado).
+  **Incidente CI-2026-004 (19/10/2026):** `purga-invitados` falló cada noche entre el 12/09 y el
+  19/10/2026 (bloqueo de Supabase al borrar directamente de `storage.objects`), así que en ese periodo
+  los invitados caducados **no** se purgaron. Corregido en la migración `20261019120000`: las filas se
+  borran en SQL y los ficheros con la Storage API (Edge Function `purgar-ficheros-invitados`, job
+  `borrar-ficheros-invitados`). Efectivo cuando se aplique en producción.
 
 ---
 

@@ -44,6 +44,8 @@ export default defineConfig({
       'src/app/robots.{test,spec}.?(c|m)[jt]s?(x)',
       'src/app/sitemap.{test,spec}.?(c|m)[jt]s?(x)',
       'src/lib/site.{test,spec}.?(c|m)[jt]s?(x)',
+      // CI-2026-004: lógica de la Edge Function purgar-ficheros-invitados (sin Deno, testeable en Node)
+      'supabase/functions/purgar-ficheros-invitados/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
     exclude: ['node_modules', '.next', 'e2e/**'],
     alias: {
@@ -101,6 +103,8 @@ export default defineConfig({
         'src/app/robots.ts',
         'src/app/sitemap.ts',
         'src/lib/site.ts',
+        // CI-2026-004: borrado de ficheros de invitados con la Storage API (index.ts es el adaptador Deno)
+        'supabase/functions/purgar-ficheros-invitados/borrado.ts',
         // Iteración 3 (Bloque A): retirada de mock data
         'src/app/set/**',
         // Iteración 4 (D2/N7): fuente única de verdad para el rol de moderador
