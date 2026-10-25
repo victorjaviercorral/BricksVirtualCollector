@@ -156,7 +156,30 @@ describe('checkRateLimit — almacén compartido con Upstash Redis (S8/ADR-010, 
     expect(mockRedisConstructor).toHaveBeenCalledWith({
       url: 'https://fake-upstash.example.upstash.io',
       token: 'fake-token',
+      retry: { retries: 0 },
+      signal: expect.any(Function),
     });
+    // El tope es por petición (una señal nueva), no un AbortSignal creado al arrancar
+    // el módulo: ese quedaría abortado para siempre a los 1,5 s.
+    const signal = mockRedisConstructor.mock.calls[0][0].signal as () => AbortSignal;
+    const attempt = signal();
+    expect(attempt).toBeInstanceOf(AbortSignal);
+    expect(attempt.aborted).toBe(false);
+  });
+
+  it('recorta espacios en la URL y el token antes de construir el cliente', async () => {
+    process.env.UPSTASH_REDIS_REST_URL = '  https://fake-upstash.example.upstash.io\n';
+    process.env.UPSTASH_REDIS_REST_TOKEN = '\tfake-token  ';
+    mockSingle.mockResolvedValue({ data: { value: { requests: 5, window_seconds: 60 } }, error: null });
+    mockIncr.mockResolvedValue(1);
+    const checkRateLimit = await freshCheckRateLimit();
+
+    await checkRateLimit('1.2.3.4');
+
+    const config = mockRedisConstructor.mock.calls[0][0] as { url: string; token: string; retry: { retries: number } };
+    expect(config.url).toBe('https://fake-upstash.example.upstash.io');
+    expect(config.token).toBe('fake-token');
+    expect(config.retry).toEqual({ retries: 0 });
   });
 
   it('permite la primera petición de una IP e incrementa el contador compartido con TTL', async () => {

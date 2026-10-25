@@ -44,3 +44,15 @@ hallazgo S8 / E2 del preflight de 21/09/2026). El titular creó la cuenta y la b
 Verificado contra la API REST real de Upstash (`INCR`/`EXPIRE`/`DEL` sobre una clave de prueba,
 no solo mocks) antes de dar el cambio por probado. Detalle completo en ADR-010 §Rate limiting y
 en `docs/09-lanzamiento/preflight-2026-09-21.md` (E2).
+
+## Ajuste (25/10/2026) — el fallo abierto no puede costar los reintentos del SDK
+
+La decisión de degradar al `Map` si Upstash no responde sigue vigente. Lo que no estaba
+acotado era el tiempo de esa degradación: `@upstash/redis` reintenta los errores de red
+cinco veces con backoff exponencial (~4,3 s) antes de rechazar la promesa, y `proxy.ts`
+espera a `checkRateLimit` en cada ruta dinámica. Un Redis inalcanzable retenía la home,
+los 404 y las API unos 4,5 s (más el arranque en frío), con Supabase respondiendo en
+decenas de milisegundos. El cliente se construye con `retry: { retries: 0 }` y un
+`AbortSignal.timeout` de 1,5 s por intento. Si Redis responde, el contador compartido
+sigue igual (`INCR` + `EXPIRE`). Si no, se falla abierto en un solo intento. Detalle y
+mediciones en `docs/09-lanzamiento/ttfb-rate-limit-2026-10-25.md`.

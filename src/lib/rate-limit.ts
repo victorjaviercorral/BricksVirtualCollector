@@ -7,9 +7,25 @@ import { Redis } from "@upstash/redis";
 // degrada al `Map` en memoria de siempre: sigue sirviendo de mitigación, solo que no compartida
 // entre instancias. Un fallo de red hacia Upstash tampoco debe tumbar la petición: se falla
 // abierto (se permite) igual que la lectura de `system_config` de abajo.
-const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const redis = upstashUrl && upstashToken ? new Redis({ url: upstashUrl, token: upstashToken }) : null;
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+// Un fallo de red hacia Upstash debe degradar al Map (abajo), no retener la respuesta.
+// El cliente, si no se le dice lo contrario, reintenta 5 veces con backoff
+// `Math.exp(n) * 50` ms: ~4,3 s de espera antes de rechazar. Esa espera se suma al
+// TTFB de cada ruta que pasa por `proxy.ts` (la home, un 404 y `/api/health` medían
+// ~4,5–7 s el 25/10/2026, con la consulta a Supabase del health en ~60–110 ms).
+// Un solo intento, con tope, mantiene el contador compartido cuando Redis responde
+// y deja el fallo abierto en el tiempo de un round trip.
+const REDIS_ATTEMPT_TIMEOUT_MS = 1_500;
+const redis =
+  upstashUrl && upstashToken
+    ? new Redis({
+        url: upstashUrl,
+        token: upstashToken,
+        retry: { retries: 0 },
+        signal: () => AbortSignal.timeout(REDIS_ATTEMPT_TIMEOUT_MS),
+      })
+    : null;
 
 // Cache en memoria: fallback cuando no hay Upstash configurado (ver arriba).
 // Nota: esta caché se limpia en cada "arranque en frío" (cold boot) del Edge function.
