@@ -58,6 +58,26 @@ petición: si Redis responde, `INCR`/`EXPIRE` siguen igual; si no, el `catch` ex
 usa el `Map` en memoria. El matcher del proxy y `updateSession` no se tocan: la sesión,
 las rutas protegidas y el invitado se resuelven como antes.
 
+## Después (preview del mismo commit, región fra1)
+
+El preview tiene las mismas variables `UPSTASH_*` (target preview) y la misma región.
+Medido el 25/10/2026 ~07:59 UTC, con la protección de despliegue ya resuelta (la primera
+petición sin sesión de Vercel era un 302 y no cuenta). Producción, en el mismo minuto,
+seguía en el suelo anterior.
+
+| Petición | Producción | Preview |
+| :--- | ---: | ---: |
+| `GET /` en caliente | 4,66–7,39 s (7,17 s en el control de este minuto) | 0,46 / 0,49 / 0,46 s |
+| `GET` de una ruta inexistente | 4,55 s | 0,31 s (404) |
+| `GET /login` | 4,52 s | 0,30 s |
+| `GET /api/health` | 4,55–5,31 s (db 59–112 ms) | 0,55 / 0,44 / 0,34 s (db 91 / 42 / 58 ms) |
+| `GET /hero-vitrina.svg` | 0,13 s | 0,09 s |
+| `GET /dashboard` sin sesión | — | 0,14 s, 307 a `/login` |
+| `GET /admin/moderacion` sin sesión | — | 0,17 s, 307 a `/login` |
+
+El HTML del preview sigue en `no-store` y `x-vercel-cache: MISS`: no se ha cacheado la
+home. Baja el tiempo de la función, no el de un HIT de CDN.
+
 ## Qué mirar si el límite compartido importa
 
 Con Redis inalcanzable el límite vuelve a ser por instancia, que es el degradado que
